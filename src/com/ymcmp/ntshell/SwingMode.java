@@ -28,6 +28,7 @@ import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 import javax.swing.ScrollPaneConstants;
+
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultStyledDocument;
 import javax.swing.text.SimpleAttributeSet;
@@ -136,7 +137,7 @@ public class SwingMode implements Frontend {
 
         final String substr = input.substring(0, index);
         input.delete(0, index + 1); // consume the \n itself also
-        return substr;
+        return substr; // note: substr does *not* contain the \n
     }
 
     @Override

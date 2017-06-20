@@ -188,6 +188,8 @@ public class App {
             } catch (IllegalArgumentException ex) {
                 env.errWriteLine(ex);
                 break;
+            } catch (NullPointerException ex) {
+                env.errWriteLine("Syntax error?");
             } catch (LexerException | RuntimeException ex) {
                 env.errWriteLine(ex);
             }
@@ -532,8 +534,8 @@ public class App {
                 case '\n':
                     break;
                 case '#':
-                    while (arr[++i] != '\n') {
-                        // skip
+                    while (i < arr.length && arr[++i] != '\n') {
+                        // skip until end of line or end of input
                     }
                     break;
                 case '{':
