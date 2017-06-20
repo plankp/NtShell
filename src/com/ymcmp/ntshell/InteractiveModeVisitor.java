@@ -18,13 +18,14 @@ package com.ymcmp.ntshell;
 
 import com.ymcmp.ntshell.ast.*;
 
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Map;
+import java.util.Arrays;
 import java.util.HashMap;
-import java.util.function.BiFunction;
+import java.util.Collection;
 
 import java.util.function.Function;
+import java.util.function.BiFunction;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -34,6 +35,8 @@ import java.util.regex.Pattern;
  */
 public class InteractiveModeVisitor extends Visitor<Object> {
 
+    private static final Pattern LIM_ROUND_UP = Pattern.compile("9\\.9999|99\\.999|999\\.99|9999\\.9|99999");
+    private static final Pattern LIM_ROUND_DOWN = Pattern.compile("0\\.0000|00\\.000|000\\.00|0000\\.0|00000");
     private static final Map<String, Object> PREDEF = new HashMap<>();
 
     static {
@@ -259,9 +262,6 @@ public class InteractiveModeVisitor extends Visitor<Object> {
         throw new RuntimeException("Piecewise function did not handle all possible values!");
     }
 
-    private static final Pattern LIM_ROUND_UP = Pattern.compile("9\\.9999|99\\.999|999\\.99|9999\\.9|99999");
-    private static final Pattern LIM_ROUND_DOWN = Pattern.compile("0\\.0000|00\\.000|000\\.00|0000\\.0|00000");
-
     private static double limitRound(final double d) {
         final String s = Double.toString(Math.abs(d));
         final boolean positive = d >= 0;
@@ -316,17 +316,11 @@ public class InteractiveModeVisitor extends Visitor<Object> {
         }
         if (obj instanceof Double) {
             final double d = (Double) obj;
-            if (d == 0 || Double.isNaN(d)) {
-                return false;
-            }
-            return true;
+            return !(d == 0 || Double.isNaN(d));
         }
         if (obj instanceof Float) {
             final float f = (Float) obj;
-            if (f == 0 || Float.isNaN(f)) {
-                return false;
-            }
-            return true;
+            return !(f == 0 || Float.isNaN(f));
         }
         if (obj instanceof Long) {
             return ((Long) obj) != 0;
@@ -353,11 +347,11 @@ public class InteractiveModeVisitor extends Visitor<Object> {
     }
 
     @Override
-    public Object visitApplyExpr(final ApplyExpr anonFunc) {
-        final Object instance = visit(anonFunc.instance);
-        final Object[] params = Arrays.stream(anonFunc.params).map(this::visit).toArray();
+    public Object visitApplyExpr(final ApplyExpr apply) {
+        final Object instance = visit(apply.instance);
+        final Object[] params = Arrays.stream(apply.params).map(this::visit).toArray();
         if (instance instanceof Function<?, ?>) {
-            return ((Function<? super Object[], ? extends Object>) instance).apply(params);
+            return ((Function<Object[], ?>) instance).apply(params);
         }
         if (instance instanceof Double) {
             if (params.length == 1 || params[0] instanceof Double) {
@@ -392,7 +386,7 @@ public class InteractiveModeVisitor extends Visitor<Object> {
 
     private static Object percentageOperation(final Object base) {
         if (base instanceof Function<?, ?>) {
-            final Function<? super Object[], ? extends Object> f = (Function<? super Object[], ? extends Object>) base;
+            final Function<Object[], ?> f = (Function<Object[], ?>) base;
             return (Function<Object[], Object>) (p) -> percentageOperation(f.apply(p));
         }
         if (base instanceof Double) {
@@ -410,7 +404,7 @@ public class InteractiveModeVisitor extends Visitor<Object> {
 
     private static Object prefixMinusOperation(final Object base) {
         if (base instanceof Function<?, ?>) {
-            final Function<? super Object[], ? extends Object> f = (Function<? super Object[], ? extends Object>) base;
+            final Function<Object[], ?> f = (Function<Object[], ?>) base;
             return (Function<Object[], Object>) (p) -> prefixMinusOperation(f.apply(p));
         }
         if (base instanceof Double) {
@@ -478,8 +472,8 @@ public class InteractiveModeVisitor extends Visitor<Object> {
             return isTruthy(rhs);
         case COMPOSE:
             if (lhs instanceof Function<?, ?> && rhs instanceof Function<?, ?>) {
-                final Function<? super Object[], ? extends Object> f = (Function<? super Object[], ? extends Object>) lhs;
-                final Function<? super Object[], ? extends Object> g = (Function<? super Object[], ? extends Object>) rhs;
+                final Function<Object[], ?> f = (Function<Object[], ?>) lhs;
+                final Function<Object[], ?> g = (Function<Object[], ?>) rhs;
                 return (Function<Object[], Object>) (p) -> f.apply(new Object[]{g.apply(p)});
             }
             throw new DispatchException("Compose must be used on two functions");
@@ -520,8 +514,8 @@ public class InteractiveModeVisitor extends Visitor<Object> {
 
     private static Object powerOperation(final Object lhs, final Object rhs) {
         if (lhs instanceof Function<?, ?> && rhs instanceof Function<?, ?>) {
-            final Function<? super Object[], ? extends Object> f = (Function<? super Object[], ? extends Object>) lhs;
-            final Function<? super Object[], ? extends Object> g = (Function<? super Object[], ? extends Object>) rhs;
+            final Function<Object[], ?> f = (Function<Object[], ?>) lhs;
+            final Function<Object[], ?> g = (Function<Object[], ?>) rhs;
             return (Function<Object[], Object>) (p) -> powerOperation(f.apply(p), g.apply(p));
         }
         if (lhs instanceof Double && rhs instanceof Double) {
@@ -532,8 +526,8 @@ public class InteractiveModeVisitor extends Visitor<Object> {
 
     private static Object moduloOperation(final Object lhs, final Object rhs) {
         if (lhs instanceof Function<?, ?> && rhs instanceof Function<?, ?>) {
-            final Function<? super Object[], ? extends Object> f = (Function<? super Object[], ? extends Object>) lhs;
-            final Function<? super Object[], ? extends Object> g = (Function<? super Object[], ? extends Object>) rhs;
+            final Function<Object[], ?> f = (Function<Object[], ?>) lhs;
+            final Function<Object[], ?> g = (Function<Object[], ?>) rhs;
             return (Function<Object[], Object>) (p) -> moduloOperation(f.apply(p), g.apply(p));
         }
         if (lhs instanceof Double && rhs instanceof Double) {
@@ -544,8 +538,8 @@ public class InteractiveModeVisitor extends Visitor<Object> {
 
     private static Object divideOperation(final Object lhs, final Object rhs) {
         if (lhs instanceof Function<?, ?> && rhs instanceof Function<?, ?>) {
-            final Function<? super Object[], ? extends Object> f = (Function<? super Object[], ? extends Object>) lhs;
-            final Function<? super Object[], ? extends Object> g = (Function<? super Object[], ? extends Object>) rhs;
+            final Function<Object[], ?> f = (Function<Object[], ?>) lhs;
+            final Function<Object[], ?> g = (Function<Object[], ?>) rhs;
             return (Function<Object[], Object>) (p) -> divideOperation(f.apply(p), g.apply(p));
         }
         if (lhs instanceof Double && rhs instanceof Double) {
@@ -556,8 +550,8 @@ public class InteractiveModeVisitor extends Visitor<Object> {
 
     private static Object multiplyOperation(final Object lhs, final Object rhs) {
         if (lhs instanceof Function<?, ?> && rhs instanceof Function<?, ?>) {
-            final Function<? super Object[], ? extends Object> f = (Function<? super Object[], ? extends Object>) lhs;
-            final Function<? super Object[], ? extends Object> g = (Function<? super Object[], ? extends Object>) rhs;
+            final Function<Object[], ?> f = (Function<Object[], ?>) lhs;
+            final Function<Object[], ?> g = (Function<Object[], ?>) rhs;
             return (Function<Object[], Object>) (p) -> multiplyOperation(f.apply(p), g.apply(p));
         }
         if (lhs instanceof Double && rhs instanceof Double) {
@@ -568,8 +562,8 @@ public class InteractiveModeVisitor extends Visitor<Object> {
 
     private static Object subtractOperation(final Object lhs, final Object rhs) {
         if (lhs instanceof Function<?, ?> && rhs instanceof Function<?, ?>) {
-            final Function<? super Object[], ? extends Object> f = (Function<? super Object[], ? extends Object>) lhs;
-            final Function<? super Object[], ? extends Object> g = (Function<? super Object[], ? extends Object>) rhs;
+            final Function<Object[], ?> f = (Function<Object[], ?>) lhs;
+            final Function<Object[], ?> g = (Function<Object[], ?>) rhs;
             return (Function<Object[], Object>) (p) -> subtractOperation(f.apply(p), g.apply(p));
         }
         if (lhs instanceof Double && rhs instanceof Double) {
@@ -580,8 +574,8 @@ public class InteractiveModeVisitor extends Visitor<Object> {
 
     private static Object addOperation(final Object lhs, final Object rhs) {
         if (lhs instanceof Function<?, ?> && rhs instanceof Function<?, ?>) {
-            final Function<? super Object[], ? extends Object> f = (Function<? super Object[], ? extends Object>) lhs;
-            final Function<? super Object[], ? extends Object> g = (Function<? super Object[], ? extends Object>) rhs;
+            final Function<Object[], ?> f = (Function<Object[], ?>) lhs;
+            final Function<Object[], ?> g = (Function<Object[], ?>) rhs;
             return (Function<Object[], Object>) (p) -> addOperation(f.apply(p), g.apply(p));
         }
         if (lhs instanceof Double && rhs instanceof Double) {
@@ -597,7 +591,7 @@ public class InteractiveModeVisitor extends Visitor<Object> {
         return val;
     }
 
-    private static Function<Object[], Double> genLimitBody(final Function<? super Object[], ? extends Object> base,
+    private static Function<Object[], Double> genLimitBody(final Function<Object[], ?> base,
                                                            final BiFunction<Object, Object, Object> trans) {
         return y -> {
             final Object ret = base.apply(y);

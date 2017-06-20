@@ -40,7 +40,7 @@ public abstract class Visitor<T> {
 
     public abstract T visitPiecewiseFuncVal(PiecewiseFuncVal piecewiseFunc);
 
-    public abstract T visitApplyExpr(ApplyExpr anonFunc);
+    public abstract T visitApplyExpr(ApplyExpr apply);
 
     public abstract T visitUnaryExpr(UnaryExpr unary);
 
