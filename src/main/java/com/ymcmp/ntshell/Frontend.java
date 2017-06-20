@@ -61,4 +61,15 @@ public interface Frontend extends AutoCloseable {
     @Override
     public default void close() {
     }
+
+    /**
+     * Looks for a definition (typically a function or variable) that is
+     * specific to the particular front end. Search order is local definitions,
+     * then here, then predefinitions.
+     *
+     * @param name The name of the definition
+     * @return The value of the definition. Returns {@code null} if none was
+     * found.
+     */
+    public Object findDefinition(String name);
 }

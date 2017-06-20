@@ -87,7 +87,7 @@ public class App {
         boolean levelOp = true;
         boolean simplifyRat = true;
         boolean unfoldConst = true;
-        InteractiveModeVisitor session = new InteractiveModeVisitor();
+        InteractiveModeVisitor session = new InteractiveModeVisitor(env);
 
         while (true) {
             final String input = env.readLine();
@@ -128,7 +128,7 @@ public class App {
                 unfoldConst = false;
                 continue;
             case "~restart":
-                session = new InteractiveModeVisitor();
+                session = new InteractiveModeVisitor(env);
                 continue;
             case "":
                 continue;

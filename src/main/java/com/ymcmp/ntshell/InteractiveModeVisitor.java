@@ -44,6 +44,14 @@ public class InteractiveModeVisitor extends Visitor<Object> {
         PREDEF.put("pi", Math.PI);
         PREDEF.put("e", Math.E);
 
+        // Not-as-interesting Functions
+        PREDEF.put("id", (Function<Object[], Object>) x -> {
+               if (x.length == 1) {
+                   return x[0];
+               }
+               throw new DispatchException("id", "Expected one parameter but got " + x.length);
+           });
+
         // Math Functions
         PREDEF.put("rad", (Function<Object[], Object>) (Object... input) -> {
                if (input.length == 1 && input[0] instanceof Double) {
@@ -200,8 +208,16 @@ public class InteractiveModeVisitor extends Visitor<Object> {
         PREDEF.put("lim", (Function<Object[], Function<Object[], ?>>) (Object... x) -> {
                if (x.length == 1 && x[0] instanceof Function<?, ?>) {
                    return y -> {
-                       final double llim = genLimitBody((Function<Object[], Object>) x[0], InteractiveModeVisitor::subtractOperation).apply(y);
-                       final double rlim = genLimitBody((Function<Object[], Object>) x[0], InteractiveModeVisitor::addOperation).apply(y);
+                       // Re-apply limitRound:
+                       //   x -> (x^2 - 1)/(x - 1)
+                       //   despite already rounded, still yields pre-rounded
+                       //   value from lim_right
+                       final double llim = limitRound(genLimitBody((Function<Object[], Object>) x[0], InteractiveModeVisitor::subtractOperation).apply(y));
+                       final double rlim = limitRound(genLimitBody((Function<Object[], Object>) x[0], InteractiveModeVisitor::addOperation).apply(y));
+
+                       System.out.println("lim_left  = " + llim);
+                       System.out.println("lim_right = " + rlim);
+
                        if (llim == rlim && Double.isFinite(llim)) {
                            return llim;
                        }
@@ -212,13 +228,17 @@ public class InteractiveModeVisitor extends Visitor<Object> {
            });
     }
 
-    private final Map<String, Object> vars = new HashMap<>();
+    private final Map<String, Object> vars;
+    private final Frontend env;
 
-    public InteractiveModeVisitor() {
+    public InteractiveModeVisitor(final Frontend env) {
+        this.vars = new HashMap<>();
+        this.env = env;
     }
 
-    private InteractiveModeVisitor(Map<String, Object> vars) {
-        this.vars.putAll(vars);
+    private InteractiveModeVisitor(final Map<String, Object> vars, final Frontend env) {
+        this.vars = new HashMap<>(vars);
+        this.env = env;
     }
 
     @Override
@@ -228,11 +248,15 @@ public class InteractiveModeVisitor extends Visitor<Object> {
 
     @Override
     public Object visitVariableVal(final VariableVal variable) {
-        Object val = vars.get(variable.val.text);
+        final String name = variable.val.text;
+        Object val = vars.get(name);
         if (val == null) {
-            val = PREDEF.get(variable.val.text);
+            val = env.findDefinition(name);
             if (val == null) {
-                throw new RuntimeException("Variable " + variable.val.text + " has not been defined");
+                val = PREDEF.get(name);
+                if (val == null) {
+                    throw new RuntimeException("Variable " + name + " has not been defined");
+                }
             }
         }
         return val;
@@ -244,7 +268,7 @@ public class InteractiveModeVisitor extends Visitor<Object> {
             if (input.length != anonFunc.inputs.length) {
                 throw new DispatchException("Expected " + anonFunc.inputs.length + " parameter(s) but got " + input.length);
             }
-            final InteractiveModeVisitor vis = new InteractiveModeVisitor(vars);
+            final InteractiveModeVisitor vis = new InteractiveModeVisitor(vars, env);
             for (int i = 0; i < input.length; ++i) {
                 vis.vars.put(anonFunc.inputs[i].text, input[i]);
             }
@@ -262,7 +286,19 @@ public class InteractiveModeVisitor extends Visitor<Object> {
         throw new RuntimeException("Piecewise function did not handle all possible values!");
     }
 
+    /**
+     * Attempts to round a finite double when digits form a pattern of 99999 or
+     * 00000. The input is directly returned otherwise. This does not always
+     * round to the nearest non-floating point number.
+     *
+     * @param d The double being rounded
+     * @return The rounded value (or the value if not finite)
+     */
     private static double limitRound(final double d) {
+        if (!Double.isFinite(d)) {
+            return d;
+        }
+
         final String s = Double.toString(Math.abs(d));
         final boolean positive = d >= 0;
 

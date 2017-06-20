@@ -75,4 +75,9 @@ public class ConsoleMode implements Frontend {
         } catch (IOException ex) {
         }
     }
+
+    @Override
+    public Object findDefinition(String name) {
+        return null;
+    }
 }

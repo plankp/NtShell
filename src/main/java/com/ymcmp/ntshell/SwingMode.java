@@ -23,6 +23,7 @@ import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
 
 import java.awt.event.KeyEvent;
+import java.util.function.Function;
 
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
@@ -60,7 +61,6 @@ public class SwingMode implements Frontend {
     public SwingMode() {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(600, 400);
-        frame.setVisible(true);
 
         area.setEditable(false);
         area.setFont(Font.decode(Font.MONOSPACED));
@@ -95,6 +95,8 @@ public class SwingMode implements Frontend {
         KeyboardFocusManager
                 .getCurrentKeyboardFocusManager()
                 .addKeyEventDispatcher(ked);
+
+        frame.setVisible(true);
     }
 
     @Override
@@ -159,5 +161,22 @@ public class SwingMode implements Frontend {
     @Override
     public void close() {
         frame.dispose();
+    }
+
+    @Override
+    public Object findDefinition(final String name) {
+        // Add interfaces to jzy3d
+        if (name.equals("illuminati")) {
+            return (Function<Object[], ?>) x -> {
+                if (x.length == 3 && x[0].equals(3.0) && x[1].equals(3.0) && x[2].equals(3.0)) {
+                    area.setSelectionStart(document.getLength());
+                    area.setSelectionEnd(document.getLength());
+                    area.insertComponent(new javax.swing.JLabel(" ILLUMINATI CONFIRMED "));
+                    return 3.0;
+                }
+                return "";
+            };
+        }
+        return null;
     }
 }
