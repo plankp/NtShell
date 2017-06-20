@@ -16,13 +16,23 @@
  */
 package com.ymcmp.ntshell;
 
+import de.erichseifert.gral.data.DataTable;
+import de.erichseifert.gral.plots.DataPoint;
+import de.erichseifert.gral.plots.XYPlot;
+import de.erichseifert.gral.plots.lines.DefaultLineRenderer2D;
+import de.erichseifert.gral.plots.lines.LineRenderer;
+import de.erichseifert.gral.plots.points.PointData;
+import de.erichseifert.gral.ui.InteractivePanel;
+
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Font;
 import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
 
 import java.awt.event.KeyEvent;
+
 import java.util.function.Function;
 
 import javax.swing.JFrame;
@@ -145,7 +155,8 @@ public class SwingMode implements Frontend {
     @Override
     public void write(char c) {
         try {
-            document.insertString(document.getLength(), Character.toString(c), STYLE_OUT);
+            document.insertString(document.getLength(),
+                                  Character.toString(c), STYLE_OUT);
         } catch (BadLocationException ex) {
         }
     }
@@ -153,7 +164,8 @@ public class SwingMode implements Frontend {
     @Override
     public void errWrite(char c) {
         try {
-            document.insertString(document.getLength(), Character.toString(c), STYLE_ERR);
+            document.insertString(document.getLength(),
+                                  Character.toString(c), STYLE_ERR);
         } catch (BadLocationException ex) {
         }
     }
@@ -163,19 +175,84 @@ public class SwingMode implements Frontend {
         frame.dispose();
     }
 
+    public void appendComponent(final Component comp) {
+        area.setSelectionStart(document.getLength());
+        area.setSelectionEnd(document.getLength());
+        area.insertComponent(comp);
+    }
+
     @Override
     public Object findDefinition(final String name) {
         // Add interfaces to jzy3d
-        if (name.equals("illuminati")) {
+        switch (name) {
+        case "illuminati":
             return (Function<Object[], ?>) x -> {
-                if (x.length == 3 && x[0].equals(3.0) && x[1].equals(3.0) && x[2].equals(3.0)) {
-                    area.setSelectionStart(document.getLength());
-                    area.setSelectionEnd(document.getLength());
-                    area.insertComponent(new javax.swing.JLabel(" ILLUMINATI CONFIRMED "));
+                if (x.length == 3
+                        && x[0].equals(3.0)
+                        && x[1].equals(3.0)
+                        && x[2].equals(3.0)) {
+                    appendComponent(new javax.swing.JLabel(" ILLUMINATI CONFIRMED "));
                     return 3.0;
                 }
                 return "";
             };
+        case "plot":
+        case "plot2d":
+            return (Function<Object[], ?>) pf -> {
+                final Function<Object[], Object> f;
+                if (pf.length == 1 && pf[0] instanceof Function<?, ?>) {
+                    f = (Function<Object[], Object>) pf[0];
+                } else {
+                    throw new DispatchException("plot2d", "Expected a function, got " + pf.length + " instead");
+                }
+
+                return (Function<Object[], ?>) r -> {
+                    if (r.length == 3
+                            && r[0] instanceof Double
+                            && r[1] instanceof Double
+                            && r[2] instanceof Double) {
+
+                        double x = (Double) r[0];
+
+                        final double end = (Double) r[1];
+                        final double delta = (Double) r[2];
+                        if (delta == 0) {
+                            throw new DispatchException("delta cannot be zero: " + delta);
+                        }
+
+                        final int range = (int) Math.abs(end - x);
+
+                        final DataTable data = new DataTable(Double.class, Double.class);
+                        for (; x <= end; x += delta) {
+                            final Object ret = f.apply(new Object[]{x});
+                            if (ret instanceof Double) {
+                                data.add(x, (Double) ret);
+                            } else {
+                                data.add(x, Double.NaN);
+                            }
+                        }
+
+                        final XYPlot plot = new XYPlot(data);
+                        final InteractivePanel panel = new InteractivePanel(plot);
+                        final LineRenderer lines = new BrokenLineRenderer();
+                        plot.setLineRenderers(data, lines);
+
+                        final Color color = new Color(0.0f, 0.3f, 1.0f);
+                        plot.getPointRenderers(data).get(0).setColor(color);
+                        plot.getLineRenderers(data).get(0).setColor(color);
+
+                        final JFrame gframe = new JFrame();
+                        gframe.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+                        gframe.setSize(400, 300);
+                        gframe.getContentPane().add(panel);
+                        gframe.setVisible(true);
+                    } else {
+                        throw new DispatchException("Expected three numbers, found " + r.length + " instead");
+                    }
+                    return "";
+                };
+            };
+        default:
         }
         return null;
     }

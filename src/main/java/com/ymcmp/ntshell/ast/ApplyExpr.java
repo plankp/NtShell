@@ -83,7 +83,7 @@ public class ApplyExpr implements AST {
 
     @Override
     public AST unfoldConstant() {
-        final AST ninst = instance.toCanonicalOrder();
+        final AST ninst = instance.toCanonicalOrder().unfoldConstant();
         final AST[] nparams = Arrays.stream(params)
                 .map(AST::toCanonicalOrder)
                 .map(AST::unfoldConstant)

@@ -54,6 +54,13 @@ public class NumberVal implements AST {
     }
 
     public double toDouble() {
+        if (val.text.equalsIgnoreCase("infinity")) {
+            return Double.POSITIVE_INFINITY;
+        }
+        if (val.text.equalsIgnoreCase("nan")) {
+            return Double.NaN;
+        }
+
         if (val.text.contains(".")) {
             return Double.parseDouble(val.text);
         }

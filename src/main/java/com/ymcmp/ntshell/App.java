@@ -17,6 +17,7 @@
 package com.ymcmp.ntshell;
 
 import com.ymcmp.ntshell.ast.*;
+
 import java.awt.HeadlessException;
 
 import java.util.ArrayList;
@@ -187,7 +188,6 @@ public class App {
                 }
             } catch (IllegalArgumentException ex) {
                 env.errWriteLine(ex);
-                break;
             } catch (NullPointerException ex) {
                 env.errWriteLine("Syntax error?");
             } catch (LexerException | RuntimeException ex) {
