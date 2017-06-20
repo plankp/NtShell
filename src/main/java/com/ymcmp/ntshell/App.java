@@ -88,6 +88,7 @@ public class App {
         boolean levelOp = true;
         boolean simplifyRat = true;
         boolean unfoldConst = true;
+        boolean evaluate = true;
         InteractiveModeVisitor session = new InteractiveModeVisitor(env);
 
         while (true) {
@@ -96,7 +97,7 @@ public class App {
             case "~exit":
                 return;
             case "~help":
-                env.writeLine("Enter the expression you want to test\nEnd the line with `\\` to wrap on the next line\nWhen the expression is done, punch in a `;`\n\nCommands:\n  ~help ~exit ~restart ~showast ~hideast\n  ~transneg ~no-transneg ~levelop ~no-levelop\n  ~simprat ~no-simprat ~unfoldc ~no-unfoldc\n");
+                env.writeLine("Enter the expression you want to test\nEnd the line with `\\` to wrap on the next line\nWhen the expression is done, punch in a `;`\n\nCommands:\n  ~help ~exit ~restart ~showast ~hideast\n  ~transneg ~no-transneg ~levelop ~no-levelop\n  ~simprat ~no-simprat ~unfoldc ~no-unfoldc\n  ~eval ~no-eval");
                 continue;
             case "~showast":
                 showAST = true;
@@ -127,6 +128,12 @@ public class App {
                 continue;
             case "~no-unfoldc":
                 unfoldConst = false;
+                continue;
+            case "~eval":
+                evaluate = true;
+                continue;
+            case "~no-eval":
+                evaluate = false;
                 continue;
             case "~restart":
                 session = new InteractiveModeVisitor(env);
@@ -176,11 +183,13 @@ public class App {
                         }
                     }
 
-                    final Object ret = session.visit(ast);
-                    if (ret instanceof Function<?, ?>) {
-                        env.writeLine("<function@" + Integer.toHexString(ret.hashCode()) + ">");
-                    } else {
-                        env.writeLine(ret);
+                    if (evaluate) {
+                        final Object ret = session.visit(ast);
+                        if (ret instanceof Function<?, ?>) {
+                            env.writeLine("<function@" + Integer.toHexString(ret.hashCode()) + ">");
+                        } else {
+                            env.writeLine(ret);
+                        }
                     }
                     while (!toks.isEmpty() && toks.get(0).type == Token.Type.SEMI) {
                         toks.remove(0);

@@ -119,6 +119,16 @@ public class CommutativeExpr implements AST {
         return new CommutativeExpr(nnodes, op);
     }
 
+    private AST unfoldUnarySub() {
+        if (nodes.length == 2
+                && op.type == Token.Type.MUL
+                && nodes[0].equals(NumberVal.fromLong(-1))) {
+            // (* -1 a) => (- a)
+            return new UnaryExpr(nodes[1], new Token(Token.Type.SUB, null), true);
+        }
+        return this;
+    }
+
     @Override
     public AST unfoldConstant() {
         final CommutativeExpr nthis = this.toCanonicalOrder();
@@ -147,7 +157,7 @@ public class CommutativeExpr implements AST {
             if (nnodes.length == 1) {
                 return nnodes[0];
             }
-            return new CommutativeExpr(nnodes, nthis.op);
+            return new CommutativeExpr(nnodes, nthis.op).unfoldUnarySub();
         }
         if (nthis.op.type == Token.Type.ADD) {
             // (+ a b 0 c) => (+ a b c)

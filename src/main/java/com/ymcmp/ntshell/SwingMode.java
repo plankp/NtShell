@@ -36,6 +36,7 @@ import java.awt.event.KeyEvent;
 import java.util.function.Function;
 
 import javax.swing.JFrame;
+import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 import javax.swing.ScrollPaneConstants;
@@ -65,6 +66,7 @@ public class SwingMode implements Frontend {
     private JFrame frame = new JFrame();
     private DefaultStyledDocument document = new DefaultStyledDocument();
     private JTextPane area = new JTextPane(document);
+    private JScrollPane scroller = new JScrollPane(area, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     private StringBuffer input = new StringBuffer();
     private boolean inputOn = false;
 
@@ -75,7 +77,7 @@ public class SwingMode implements Frontend {
         area.setEditable(false);
         area.setFont(Font.decode(Font.MONOSPACED));
 
-        frame.add(new JScrollPane(area, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER), BorderLayout.CENTER);
+        frame.add(scroller, BorderLayout.CENTER);
 
         KeyEventDispatcher ked = e -> {
             if (inputOn && e.getID() == KeyEvent.KEY_PRESSED) {
@@ -95,6 +97,8 @@ public class SwingMode implements Frontend {
                 if (c != KeyEvent.CHAR_UNDEFINED) {
                     try {
                         document.insertString(document.getLength(), Character.toString(c), null);
+                        final JScrollBar bar = scroller.getVerticalScrollBar();
+                        bar.setValue(bar.getMaximum());
                     } catch (BadLocationException ex) {
                     }
                     input.append(c);
@@ -179,6 +183,8 @@ public class SwingMode implements Frontend {
         area.setSelectionStart(document.getLength());
         area.setSelectionEnd(document.getLength());
         area.insertComponent(comp);
+        final JScrollBar bar = scroller.getVerticalScrollBar();
+        bar.setValue(bar.getMaximum());
     }
 
     @Override
