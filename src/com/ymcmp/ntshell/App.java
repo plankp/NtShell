@@ -17,15 +17,13 @@
 package com.ymcmp.ntshell;
 
 import com.ymcmp.ntshell.ast.*;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.awt.HeadlessException;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import java.util.function.Function;
 
 /**
@@ -47,166 +45,170 @@ public class App {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        interactiveMode();
-    }
-
-    private static String readLine(final BufferedReader br) {
-        try {
-            final StringBuilder sb = new StringBuilder();
-            while (true) {
-                System.out.print("> ");
-                String s;
-                if ((s = br.readLine()) != null) {
-                    if (s.isEmpty()) {
-                        break;
-                    }
-
-                    sb.append(s);
-                    if (sb.charAt(sb.length() - 1) == '\\') {
-                        sb.setCharAt(sb.length() - 1, '\n');
-                    } else {
-                        break;
-                    }
-                }
+        boolean gui = true; // terminal as fallback
+        if (args.length == 1) {
+            switch (args[0]) {
+            case "-t":
+            case "--term":
+                gui = false;
+                break;
+            case "-g":
+            case "--gui":
+                gui = true;
+                break;
+            default:
+                System.out.println("Unrecognized option " + args[0]);
+            // FALLTHROUGH
+            case "-h":
+            case "--help":
+                System.out.println("Options are --term -t --gui -g --help -h");
+                return;
             }
-            return sb.toString();
-        } catch (IOException ex) {
-            return null;
+        }
+
+        if (gui) {
+            try (final Frontend inst = new SwingMode()) {
+                interactiveMode(inst);
+                return;
+            } catch (HeadlessException ex) {
+                System.err.println("Fallback to terminal!");
+            }
+        }
+
+        try (final Frontend inst = new ConsoleMode()) {
+            interactiveMode(inst);
         }
     }
 
-    public static void interactiveMode() {
-        System.out.println("NtShell (interactive mode)\nType `~help` for help\n");
-        try (final BufferedReader br = new BufferedReader(new InputStreamReader(System.in))) {
-            boolean showAST = false;
-            boolean transNeg = true;
-            boolean levelOp = true;
-            boolean simplifyRat = true;
-            boolean unfoldConst = true;
-            InteractiveModeVisitor session = new InteractiveModeVisitor();
+    public static void interactiveMode(final Frontend env) {
+        env.writeLine("NtShell (interactive mode)\nType `~help` for help\n");
+        boolean showAST = false;
+        boolean transNeg = true;
+        boolean levelOp = true;
+        boolean simplifyRat = true;
+        boolean unfoldConst = true;
+        InteractiveModeVisitor session = new InteractiveModeVisitor();
 
-            while (true) {
-                final String input = readLine(br);
-                switch (input) {
-                case "~exit":
-                    return;
-                case "~help":
-                    System.out.println("Enter the expression you want to test\nEnd the line with `\\` to wrap on the next line\nWhen the expression is done, punch in a `;`\n\nCommands:\n  ~help ~exit ~restart ~showast ~hideast\n  ~transneg ~no-transneg ~levelop ~no-levelop\n  ~simprat ~no-simprat ~unfoldc ~no-unfoldc\n");
+        while (true) {
+            final String input = env.readLine();
+            switch (input) {
+            case "~exit":
+                return;
+            case "~help":
+                env.writeLine("Enter the expression you want to test\nEnd the line with `\\` to wrap on the next line\nWhen the expression is done, punch in a `;`\n\nCommands:\n  ~help ~exit ~restart ~showast ~hideast\n  ~transneg ~no-transneg ~levelop ~no-levelop\n  ~simprat ~no-simprat ~unfoldc ~no-unfoldc\n");
+                continue;
+            case "~showast":
+                showAST = true;
+                continue;
+            case "~hideast":
+                showAST = false;
+                continue;
+            case "~transneg":
+                transNeg = true;
+                continue;
+            case "~no-transneg":
+                transNeg = false;
+                continue;
+            case "~levelop":
+                levelOp = true;
+                continue;
+            case "~no-levelop":
+                levelOp = false;
+                continue;
+            case "~simprat":
+                simplifyRat = true;
+                continue;
+            case "~no-simprat":
+                simplifyRat = false;
+                continue;
+            case "~unfoldc":
+                unfoldConst = true;
+                continue;
+            case "~no-unfoldc":
+                unfoldConst = false;
+                continue;
+            case "~restart":
+                session = new InteractiveModeVisitor();
+                continue;
+            case "":
+                continue;
+            default:
+                if (input.charAt(0) == '~') {
+                    env.errWriteLine("Unrecognized command " + input);
+                    env.errWriteLine("Type `~help` for help");
                     continue;
-                case "~showast":
-                    showAST = true;
-                    continue;
-                case "~hideast":
-                    showAST = false;
-                    continue;
-                case "~transneg":
-                    transNeg = true;
-                    continue;
-                case "~no-transneg":
-                    transNeg = false;
-                    continue;
-                case "~levelop":
-                    levelOp = true;
-                    continue;
-                case "~no-levelop":
-                    levelOp = false;
-                    continue;
-                case "~simprat":
-                    simplifyRat = true;
-                    continue;
-                case "~no-simprat":
-                    simplifyRat = false;
-                    continue;
-                case "~unfoldc":
-                    unfoldConst = true;
-                    continue;
-                case "~no-unfoldc":
-                    unfoldConst = false;
-                    continue;
-                case "~restart":
-                    session = new InteractiveModeVisitor();
-                    continue;
-                case "":
-                    continue;
-                default:
-                    if (input.charAt(0) == '~') {
-                        System.err.println("Unrecognized command " + input);
-                        System.err.println("Type `~help` for help");
-                        continue;
-                    }
                 }
+            }
 
-                try {
-                    final List<Token> toks = lexString(input, br);
+            try {
+                final List<Token> toks = lexString(input, env);
 
-                    while (!toks.isEmpty()) {
-                        AST ast = consumeExpr(toks, br);
+                while (!toks.isEmpty()) {
+                    AST ast = consumeExpr(toks, env);
+                    if (showAST) {
+                        env.writeLine("showast:  " + ast);
+                    }
+                    ast = ast.unfoldConstant();
+
+                    if (transNeg) {
+                        ast = ast.transformNegatives();
                         if (showAST) {
-                            System.out.println("showast:  " + ast);
-                        }
-                        ast = ast.unfoldConstant();
-
-                        if (transNeg) {
-                            ast = ast.transformNegatives();
-                            if (showAST) {
-                                System.out.println("transneg: " + ast);
-                            }
-                        }
-                        if (levelOp) {
-                            ast = ast.levelOperators();
-                            if (showAST) {
-                                System.out.println("levelop:  " + ast);
-                            }
-                        }
-                        if (simplifyRat) {
-                            ast = ast.simplifyRationals();
-                            if (showAST) {
-                                System.out.println("simprat:  " + ast);
-                            }
-                        }
-                        if (unfoldConst) {
-                            ast = ast.toCanonicalOrder().unfoldConstant();
-                            if (showAST) {
-                                System.out.println("unfoldc:  " + ast);
-                            }
-                        }
-
-                        final Object ret = session.visit(ast);
-                        if (ret instanceof Function<?, ?>) {
-                            System.out.println("<function@" + Integer.toHexString(ret.hashCode()) + ">");
-                        } else {
-                            System.out.println(ret);
-                        }
-                        while (!toks.isEmpty() && toks.get(0).type == Token.Type.SEMI) {
-                            toks.remove(0);
+                            env.writeLine("transneg: " + ast);
                         }
                     }
-                } catch (IllegalArgumentException ex) {
-                    System.err.println(ex);
-                    break;
-                } catch (LexerException | RuntimeException ex) {
-                    System.err.println(ex);
+                    if (levelOp) {
+                        ast = ast.levelOperators();
+                        if (showAST) {
+                            env.writeLine("levelop:  " + ast);
+                        }
+                    }
+                    if (simplifyRat) {
+                        ast = ast.simplifyRationals();
+                        if (showAST) {
+                            env.writeLine("simprat:  " + ast);
+                        }
+                    }
+                    if (unfoldConst) {
+                        ast = ast.toCanonicalOrder().unfoldConstant();
+                        if (showAST) {
+                            env.writeLine("unfoldc:  " + ast);
+                        }
+                    }
+
+                    final Object ret = session.visit(ast);
+                    if (ret instanceof Function<?, ?>) {
+                        env.writeLine("<function@" + Integer.toHexString(ret.hashCode()) + ">");
+                    } else {
+                        env.writeLine(ret);
+                    }
+                    while (!toks.isEmpty() && toks.get(0).type == Token.Type.SEMI) {
+                        toks.remove(0);
+                    }
                 }
+            } catch (IllegalArgumentException ex) {
+                env.errWriteLine(ex);
+                break;
+            } catch (LexerException | RuntimeException ex) {
+                env.errWriteLine(ex);
             }
-        } catch (IOException ex) {
         }
     }
 
-    public static AST consumeExpr(final List<Token> tokens, final BufferedReader src) {
-        return consumeAddLikeExpr(tokens, src);
+    public static AST consumeExpr(final List<Token> tokens, final Frontend env) {
+        return consumeAddLikeExpr(tokens, env);
     }
 
-    public static AST consumeAddLikeExpr(final List<Token> tokens, final BufferedReader src) {
+    public static AST consumeAddLikeExpr(final List<Token> tokens, final Frontend env) {
         // = <mullike>
         // | <mullike> ((ADD | SUB) <mullike>)+
-        AST lhs = consumeMulLikeExpr(tokens, src);
+        AST lhs = consumeMulLikeExpr(tokens, env);
         cons_loop:
         while (true) {
-            switch (peekNextToken(tokens, src).type) {
+            switch (peekNextToken(tokens, env).type) {
             case ADD:
             case SUB:
                 final Token op = tokens.remove(0);
-                lhs = new BinaryExpr(lhs, consumeMulLikeExpr(tokens, src), op);
+                lhs = new BinaryExpr(lhs, consumeMulLikeExpr(tokens, env), op);
                 break;
             default:
                 break cons_loop;
@@ -215,22 +217,22 @@ public class App {
         return lhs;
     }
 
-    public static AST consumeMulLikeExpr(final List<Token> tokens, final BufferedReader src) {
+    public static AST consumeMulLikeExpr(final List<Token> tokens, final Frontend env) {
         // = <upre>
         // | <upre> <pow>
         // | <upre> ((MUL | DIV | MOD) <upre>)+
-        AST lhs = consumeUPreExpr(tokens, src);
+        AST lhs = consumeUPreExpr(tokens, env);
         cons_loop:
         while (true) {
-            switch (peekNextToken(tokens, src).type) {
+            switch (peekNextToken(tokens, env).type) {
             case MUL:
             case DIV:
             case MOD:
                 final Token op = tokens.remove(0);
-                lhs = new BinaryExpr(lhs, consumeUPreExpr(tokens, src), op);
+                lhs = new BinaryExpr(lhs, consumeUPreExpr(tokens, env), op);
                 break;
             default:
-                final AST mulexpr = consumePowExpr(tokens, src);
+                final AST mulexpr = consumePowExpr(tokens, env);
                 if (mulexpr == null) {
                     break cons_loop;
                 }
@@ -241,35 +243,35 @@ public class App {
         return lhs;
     }
 
-    public static AST consumeUPreExpr(final List<Token> tokens, final BufferedReader src) {
+    public static AST consumeUPreExpr(final List<Token> tokens, final Frontend env) {
         // = <pow>
         // | (ADD | SUB) <pow>
-        switch (peekNextToken(tokens, src).type) {
+        switch (peekNextToken(tokens, env).type) {
         case ADD:
         case SUB:
             final Token op = tokens.remove(0);
-            final AST base = consumePowExpr(tokens, src);
+            final AST base = consumePowExpr(tokens, env);
             return new UnaryExpr(base, op, true);
         default:
-            return consumePowExpr(tokens, src);
+            return consumePowExpr(tokens, env);
         }
     }
 
-    public static AST consumePowExpr(final List<Token> tokens, final BufferedReader src) {
+    public static AST consumePowExpr(final List<Token> tokens, final Frontend env) {
         // = <upost>
         // | <upost> POW <pow>
-        final AST base = consumeUPostExpr(tokens, src);
-        if (peekNextToken(tokens, src).type == Token.Type.POW) {
+        final AST base = consumeUPostExpr(tokens, env);
+        if (peekNextToken(tokens, env).type == Token.Type.POW) {
             final Token pow = tokens.remove(0);
-            return new BinaryExpr(base, consumePowExpr(tokens, src), pow);
+            return new BinaryExpr(base, consumePowExpr(tokens, env), pow);
         }
         return base;
     }
 
-    public static AST consumeUPostExpr(final List<Token> tokens, final BufferedReader src) {
+    public static AST consumeUPostExpr(final List<Token> tokens, final Frontend env) {
         // = <compose> PERCENT?
-        final AST base = consumeCompose(tokens, src);
-        switch (peekNextToken(tokens, src).type) {
+        final AST base = consumeCompose(tokens, env);
+        switch (peekNextToken(tokens, env).type) {
         case PERCENT:
             return new UnaryExpr(base, tokens.remove(0), false);
         default:
@@ -277,32 +279,32 @@ public class App {
         }
     }
 
-    public static AST consumeCompose(final List<Token> tokens, final BufferedReader src) {
+    public static AST consumeCompose(final List<Token> tokens, final Frontend env) {
         // = <apply> COMPOSE <apply>
         // | <apply>
-        AST base = consumeApplyExpr(tokens, src);
+        AST base = consumeApplyExpr(tokens, env);
         while (true) {
-            if (peekNextToken(tokens, src).type == Token.Type.COMPOSE) {
+            if (peekNextToken(tokens, env).type == Token.Type.COMPOSE) {
                 final Token op = tokens.remove(0);
-                base = new BinaryExpr(base, consumeApplyExpr(tokens, src), op);
+                base = new BinaryExpr(base, consumeApplyExpr(tokens, env), op);
             } else {
                 return base;
             }
         }
     }
 
-    public static AST consumeApplyExpr(final List<Token> tokens, final BufferedReader src) {
+    public static AST consumeApplyExpr(final List<Token> tokens, final Frontend env) {
         // = <val>
         // | <val> LBRACE RBRACE
         // | <val> LBRACE <expr> (COMMA <expr>)* COMMA? RBRACE
-        AST base = consumeVal(tokens, src);
-        while (peekNextToken(tokens, src).type == Token.Type.LBRACE) {
+        AST base = consumeVal(tokens, env);
+        while (peekNextToken(tokens, env).type == Token.Type.LBRACE) {
             tokens.remove(0);
             final List<AST> applicants = new ArrayList<>();
-            while (peekNextToken(tokens, src).type != Token.Type.RBRACE) {
+            while (peekNextToken(tokens, env).type != Token.Type.RBRACE) {
                 try {
-                    applicants.add(consumeExpr(tokens, src));
-                    if (peekNextToken(tokens, src).type == Token.Type.COMMA) {
+                    applicants.add(consumeExpr(tokens, env));
+                    if (peekNextToken(tokens, env).type == Token.Type.COMMA) {
                         tokens.remove(0);
                     }
                 } catch (RuntimeException ex) {
@@ -315,12 +317,12 @@ public class App {
         return base;
     }
 
-    public static AST consumeVal(final List<Token> tokens, final BufferedReader src) {
+    public static AST consumeVal(final List<Token> tokens, final Frontend env) {
         if (tokens.isEmpty()) {
             return null;
         }
 
-        switch (peekNextToken(tokens, src).type) {
+        switch (peekNextToken(tokens, env).type) {
         case NUMBER:
             return new NumberVal(tokens.remove(0));
         case IDENT: {
@@ -328,14 +330,14 @@ public class App {
             // = IDENT YIELD <expr>  (0)
             // | IDENT SET <expr>    (1)
             // | IDENT               (2)
-            switch (peekNextToken(tokens, src).type) {
+            switch (peekNextToken(tokens, env).type) {
             case YIELD:
                 // (0)
-                return new AnonFuncVal(name, consumeYield(tokens, src));
+                return new AnonFuncVal(name, consumeYield(tokens, env));
             case SET:
                 // (1)
                 tokens.remove(0);
-                return new AssignExpr(name, consumeExpr(tokens, src));
+                return new AssignExpr(name, consumeExpr(tokens, env));
             default:
                 // (2)
                 return new VariableVal(name);
@@ -346,16 +348,16 @@ public class App {
             tokens.remove(0);
             final List<PiecewiseFuncVal.CaseBlock> cases = new ArrayList<>();
             cons_loop:
-            while (peekNextToken(tokens, src).type != Token.Type.RCURL) {
-                cases.add(consumeCase(tokens, src));
-                switch (peekNextToken(tokens, src).type) {
+            while (peekNextToken(tokens, env).type != Token.Type.RCURL) {
+                cases.add(consumeCase(tokens, env));
+                switch (peekNextToken(tokens, env).type) {
                 case COMMA:
                     tokens.remove(0);
                     break;
                 case RCURL:
                     break cons_loop;
                 default:
-                    throw new RuntimeException("Case statements are split with commas, found " + peekNextToken(tokens, src));
+                    throw new RuntimeException("Case statements are split with commas, found " + peekNextToken(tokens, env));
                 }
             }
             tokens.remove(0);
@@ -373,10 +375,10 @@ public class App {
             case RBRACE:
                 // (1)
                 tokens.remove(0);
-                return new AnonFuncVal(new Token[0], consumeYield(tokens, src));
+                return new AnonFuncVal(new Token[0], consumeYield(tokens, env));
             case IDENT: {
                 final Token first = tokens.remove(0);
-                switch (peekNextToken(tokens, src).type) {
+                switch (peekNextToken(tokens, env).type) {
                 case RBRACE:
                     // (0)
                     tokens.remove(0);
@@ -386,18 +388,18 @@ public class App {
                     final List<Token> inputs = new ArrayList<>();
                     inputs.add(first);
                     tokens.remove(0);
-                    while (peekNextToken(tokens, src).type == Token.Type.IDENT) {
+                    while (peekNextToken(tokens, env).type == Token.Type.IDENT) {
                         inputs.add(tokens.remove(0));
-                        if (peekNextToken(tokens, src).type == Token.Type.COMMA) {
+                        if (peekNextToken(tokens, env).type == Token.Type.COMMA) {
                             tokens.remove(0);
                         } else {
                             break;
                         }
                     }
-                    if (peekNextToken(tokens, src).type == Token.Type.RBRACE) {
+                    if (peekNextToken(tokens, env).type == Token.Type.RBRACE) {
                         tokens.remove(0);
                         return new AnonFuncVal(inputs.toArray(new Token[inputs.size()]),
-                                               consumeYield(tokens, src));
+                                               consumeYield(tokens, env));
                     } else {
                         throw new RuntimeException("Anonymous function parameter list unclosed");
                     }
@@ -405,11 +407,11 @@ public class App {
                 default:
                     // (0)
                     tokens.add(0, first);
-                    return consumeTrailBrace(tokens, src);
+                    return consumeTrailBrace(tokens, env);
                 }
             }
             default:
-                return consumeTrailBrace(tokens, src);
+                return consumeTrailBrace(tokens, env);
             }
         }
         default:
@@ -417,10 +419,10 @@ public class App {
         }
     }
 
-    private static AST consumeTrailBrace(final List<Token> tokens, final BufferedReader src) {
+    private static AST consumeTrailBrace(final List<Token> tokens, final Frontend env) {
         // try (0)
-        final AST expr = consumeExpr(tokens, src);
-        if (peekNextToken(tokens, src).type == Token.Type.RBRACE) {
+        final AST expr = consumeExpr(tokens, env);
+        if (peekNextToken(tokens, env).type == Token.Type.RBRACE) {
             tokens.remove(0);
             return expr;
         } else {
@@ -428,61 +430,61 @@ public class App {
         }
     }
 
-    private static AST consumeYield(final List<Token> tokens, final BufferedReader src) {
-        if (peekNextToken(tokens, src).type == Token.Type.YIELD) {
+    private static AST consumeYield(final List<Token> tokens, final Frontend env) {
+        if (peekNextToken(tokens, env).type == Token.Type.YIELD) {
             tokens.remove(0);
-            return consumeExpr(tokens, src);
+            return consumeExpr(tokens, env);
         } else {
             throw new RuntimeException("Missing -> for input-less function");
         }
     }
 
-    private static PiecewiseFuncVal.CaseBlock consumeCase(final List<Token> tokens, final BufferedReader src) {
-        final AST action = consumeExpr(tokens, src);
-        if (peekNextToken(tokens, src).type == Token.Type.K_IF) {
+    private static PiecewiseFuncVal.CaseBlock consumeCase(final List<Token> tokens, final Frontend env) {
+        final AST action = consumeExpr(tokens, env);
+        if (peekNextToken(tokens, env).type == Token.Type.K_IF) {
             tokens.remove(0);
-            return new PiecewiseFuncVal.CaseBlock(consumePred(tokens, src), action);
+            return new PiecewiseFuncVal.CaseBlock(consumePred(tokens, env), action);
         }
         throw new RuntimeException("Each piecewise case requires a condition");
     }
 
-    private static AST consumePred(final List<Token> tokens, final BufferedReader src) {
-        return consumeOr(tokens, src);
+    private static AST consumePred(final List<Token> tokens, final Frontend env) {
+        return consumeOr(tokens, env);
     }
 
-    private static AST consumeOr(final List<Token> tokens, final BufferedReader src) {
+    private static AST consumeOr(final List<Token> tokens, final Frontend env) {
         // = <and> (OR <and>)+
         // | <and>
-        AST base = consumeAnd(tokens, src);
+        AST base = consumeAnd(tokens, env);
         while (true) {
-            if (peekNextToken(tokens, src).type == Token.Type.K_OR) {
+            if (peekNextToken(tokens, env).type == Token.Type.K_OR) {
                 final Token op = tokens.remove(0);
-                base = new BinaryExpr(base, consumeAnd(tokens, src), op);
+                base = new BinaryExpr(base, consumeAnd(tokens, env), op);
             } else {
                 return base;
             }
         }
     }
 
-    private static AST consumeAnd(final List<Token> tokens, final BufferedReader src) {
+    private static AST consumeAnd(final List<Token> tokens, final Frontend end) {
         // = <rel> (AND <rel>)+
         // | <rel>
-        AST base = consumeRel(tokens, src);
+        AST base = consumeRel(tokens, end);
         while (true) {
-            if (peekNextToken(tokens, src).type == Token.Type.K_AND) {
+            if (peekNextToken(tokens, end).type == Token.Type.K_AND) {
                 final Token op = tokens.remove(0);
-                base = new BinaryExpr(base, consumeRel(tokens, src), op);
+                base = new BinaryExpr(base, consumeRel(tokens, end), op);
             } else {
                 return base;
             }
         }
     }
 
-    private static AST consumeRel(final List<Token> tokens, final BufferedReader src) {
+    private static AST consumeRel(final List<Token> tokens, final Frontend env) {
         // = <expr> (LT | LE | GE | GT | EQL | NEQ) <expr>
         // | <expr>
-        final AST lhs = consumeExpr(tokens, src);
-        switch (peekNextToken(tokens, src).type) {
+        final AST lhs = consumeExpr(tokens, env);
+        switch (peekNextToken(tokens, env).type) {
         case LT:
         case LE:
         case GE:
@@ -490,31 +492,31 @@ public class App {
         case EQL:
         case NEQ:
             final Token op = tokens.remove(0);
-            return new BinaryExpr(lhs, consumeExpr(tokens, src), op);
+            return new BinaryExpr(lhs, consumeExpr(tokens, env), op);
         }
         return lhs;
     }
 
-    public static Token peekNextToken(final List<Token> toks, final BufferedReader src) {
+    public static Token peekNextToken(final List<Token> toks, final Frontend env) {
         while (toks.isEmpty()) {
-            if (src == null) {
+            if (env == null) {
                 return Token.getNilToken();
             }
-            final String line = readLine(src);
+            final String line = env.readLine();
             if (line == null || line.isEmpty()) {
                 return Token.getNilToken();
             }
             try {
-                toks.addAll(lexString(line, src));
+                toks.addAll(lexString(line, env));
             } catch (LexerException ex) {
-                System.err.println(ex.getMessage());
-                System.err.println("That line will be ignored!");
+                env.errWriteLine(ex.getMessage());
+                env.errWriteLine("That line will be ignored!");
             }
         }
         return toks.get(0);
     }
 
-    public static List<Token> lexString(final String str, final BufferedReader src) throws LexerException {
+    public static List<Token> lexString(final String str, final Frontend env) throws LexerException {
         if (str == null) {
             throw new IllegalArgumentException("Cannot lex a null string");
         }
@@ -685,7 +687,7 @@ public class App {
                 }
                 }
             } catch (ArrayIndexOutOfBoundsException ex) {
-                arr = readLine(src).toCharArray();
+                arr = env.readLine().toCharArray();
                 i = -1;
             }
         }
