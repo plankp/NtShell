@@ -18,217 +18,279 @@ package com.ymcmp.ntshell;
 
 import com.ymcmp.ntshell.ast.*;
 
+import com.ymcmp.ntshell.value.*;
+
 import java.util.Map;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Collection;
-
-import java.util.function.Function;
-import java.util.function.BiFunction;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import java.util.function.Function;
 
 /**
  *
  * @author YTENG
  */
-public class InteractiveModeVisitor extends Visitor<Object> {
+public class InteractiveModeVisitor extends Visitor<NtValue> {
 
     private static final Pattern LIM_ROUND_UP = Pattern.compile("9\\.9999|99\\.999|999\\.99|9999\\.9|99999");
     private static final Pattern LIM_ROUND_DOWN = Pattern.compile("0\\.0000|00\\.000|000\\.00|0000\\.0|00000");
-    private static final Map<String, Object> PREDEF = new HashMap<>();
+    private static final Map<String, NtValue> PREDEF = new HashMap<>();
 
     static {
         // Constants
-        PREDEF.put("pi", Math.PI);
-        PREDEF.put("e", Math.E);
+        PREDEF.put("pi", CoreNumber.getPi());
+        PREDEF.put("e", CoreNumber.getE());
 
         // Not-as-interesting Functions
-        PREDEF.put("id", (Function<Object[], Object>) x -> {
-               if (x.length == 1) {
-                   return x[0];
-               }
-               throw new DispatchException("id", "Expected one parameter but got " + x.length);
-           });
+        PREDEF.put("id", CoreLambda.getIdentityFunction());
 
         // Math Functions
-        PREDEF.put("rad", (Function<Object[], Object>) (Object... input) -> {
-               if (input.length == 1 && input[0] instanceof Double) {
-                   return Math.toRadians((Double) input[0]);
+        PREDEF.put("rad", new CoreLambda() {
+               @Override
+               public NtValue applyCall(NtValue[] input) {
+                   if (input.length == 1 && input[0] instanceof CoreNumber) {
+                       return CoreNumber.from(Math.toRadians(((CoreNumber) input[0]).toDouble()));
+                   }
+                   throw new DispatchException("rad", "Expected a number but got " + input.length);
                }
-               throw new DispatchException("rad", "Expected a number but got " + input.length);
            });
-        PREDEF.put("deg", (Function<Object[], Object>) (Object... input) -> {
-               if (input.length == 1 && input[0] instanceof Double) {
-                   return Math.toDegrees((Double) input[0]);
+        PREDEF.put("deg", new CoreLambda() {
+               @Override
+               public NtValue applyCall(NtValue[] input) {
+                   if (input.length == 1 && input[0] instanceof CoreNumber) {
+                       return CoreNumber.from(Math.toDegrees(((CoreNumber) input[0]).toDouble()));
+                   }
+                   throw new DispatchException("rad", "Expected a number but got " + input.length);
                }
-               throw new DispatchException("rad", "Expected a number but got " + input.length);
            });
-        PREDEF.put("sin", (Function<Object[], Object>) (Object... input) -> {
-               if (input.length == 1 && input[0] instanceof Double) {
-                   return Math.sin((Double) input[0]);
+        PREDEF.put("sin", new CoreLambda() {
+               @Override
+               public NtValue applyCall(NtValue[] input) {
+                   if (input.length == 1 && input[0] instanceof CoreNumber) {
+                       return CoreNumber.from(Math.sin(((CoreNumber) input[0]).toDouble()));
+                   }
+                   throw new DispatchException("sin", "Expected a number but got " + input.length);
                }
-               throw new DispatchException("sin", "Expected a number but got " + input.length);
            });
-        PREDEF.put("sinh", (Function<Object[], Object>) (Object... input) -> {
-               if (input.length == 1 && input[0] instanceof Double) {
-                   return Math.sinh((Double) input[0]);
+        PREDEF.put("sinh", new CoreLambda() {
+               @Override
+               public NtValue applyCall(NtValue[] input) {
+                   if (input.length == 1 && input[0] instanceof CoreNumber) {
+                       return CoreNumber.from(Math.sinh(((CoreNumber) input[0]).toDouble()));
+                   }
+                   throw new DispatchException("sinh", "Expected a number but got " + input.length);
                }
-               throw new DispatchException("sinh", "Expected a number but got " + input.length);
            });
-        PREDEF.put("cos", (Function<Object[], Object>) (Object... input) -> {
-               if (input.length == 1 && input[0] instanceof Double) {
-                   return Math.cos((Double) input[0]);
+        PREDEF.put("cos", new CoreLambda() {
+               @Override
+               public NtValue applyCall(NtValue[] input) {
+                   if (input.length == 1 && input[0] instanceof CoreNumber) {
+                       return CoreNumber.from(Math.cos(((CoreNumber) input[0]).toDouble()));
+                   }
+                   throw new DispatchException("cos", "Expected a number but got " + input.length);
                }
-               throw new DispatchException("cos", "Expected a number but got " + input.length);
            });
-        PREDEF.put("cosh", (Function<Object[], Object>) (Object... input) -> {
-               if (input.length == 1 && input[0] instanceof Double) {
-                   return Math.cosh((Double) input[0]);
+        PREDEF.put("cosh", new CoreLambda() {
+               @Override
+               public NtValue applyCall(NtValue[] input) {
+                   if (input.length == 1 && input[0] instanceof CoreNumber) {
+                       return CoreNumber.from(Math.cosh(((CoreNumber) input[0]).toDouble()));
+                   }
+                   throw new DispatchException("cosh", "Expected a number but got " + input.length);
                }
-               throw new DispatchException("cosh", "Expected a number but got " + input.length);
            });
-        PREDEF.put("tan", (Function<Object[], Object>) (Object... input) -> {
-               if (input.length == 1 && input[0] instanceof Double) {
-                   return Math.tan((Double) input[0]);
+        PREDEF.put("tan", new CoreLambda() {
+               @Override
+               public NtValue applyCall(NtValue[] input) {
+                   if (input.length == 1 && input[0] instanceof CoreNumber) {
+                       return CoreNumber.from(Math.tan(((CoreNumber) input[0]).toDouble()));
+                   }
+                   throw new DispatchException("tan", "Expected a number but got " + input.length);
                }
-               throw new DispatchException("tan", "Expected a number but got " + input.length);
            });
-        PREDEF.put("tanh", (Function<Object[], Object>) (Object... input) -> {
-               if (input.length == 1 && input[0] instanceof Double) {
-                   return Math.tanh((Double) input[0]);
+        PREDEF.put("tanh", new CoreLambda() {
+               @Override
+               public NtValue applyCall(NtValue[] input) {
+                   if (input.length == 1 && input[0] instanceof CoreNumber) {
+                       return CoreNumber.from(Math.tanh(((CoreNumber) input[0]).toDouble()));
+                   }
+                   throw new DispatchException("tanh", "Expected a number but got " + input.length);
                }
-               throw new DispatchException("tanh", "Expected a number but got " + input.length);
            });
-        PREDEF.put("asin", (Function<Object[], Object>) (Object... input) -> {
-               if (input.length == 1 && input[0] instanceof Double) {
-                   return Math.asin((Double) input[0]);
+        PREDEF.put("asin", new CoreLambda() {
+               @Override
+               public NtValue applyCall(NtValue[] input) {
+                   if (input.length == 1 && input[0] instanceof CoreNumber) {
+                       return CoreNumber.from(Math.asin(((CoreNumber) input[0]).toDouble()));
+                   }
+                   throw new DispatchException("asin", "Expected a number but got " + input.length);
                }
-               throw new DispatchException("asin", "Expected a number but got " + input.length);
            });
-        PREDEF.put("acos", (Function<Object[], Object>) (Object... input) -> {
-               if (input.length == 1 && input[0] instanceof Double) {
-                   return Math.acos((Double) input[0]);
+        PREDEF.put("acos", new CoreLambda() {
+               @Override
+               public NtValue applyCall(NtValue[] input) {
+                   if (input.length == 1 && input[0] instanceof CoreNumber) {
+                       return CoreNumber.from(Math.acos(((CoreNumber) input[0]).toDouble()));
+                   }
+                   throw new DispatchException("acos", "Expected a number but got " + input.length);
                }
-               throw new DispatchException("acos", "Expected a number but got " + input.length);
            });
-        PREDEF.put("atan", (Function<Object[], Object>) (Object... input) -> {
-               if (input.length == 1 && input[0] instanceof Double) {
-                   return Math.atan((Double) input[0]);
+        PREDEF.put("atan", new CoreLambda() {
+               @Override
+               public NtValue applyCall(NtValue[] input) {
+                   if (input.length == 1 && input[0] instanceof CoreNumber) {
+                       return CoreNumber.from(Math.atan(((CoreNumber) input[0]).toDouble()));
+                   }
+                   if (input.length == 2
+                           && input[0] instanceof CoreNumber
+                           && input[1] instanceof CoreNumber) {
+                       return CoreNumber.from(Math.atan2(((CoreNumber) input[0]).toDouble(),
+                                                         ((CoreNumber) input[1]).toDouble()));
+                   }
+                   throw new DispatchException("atan", "Expected one or two numbers but got " + input.length);
                }
-               throw new DispatchException("atan", "Expected a number but got " + input.length);
            });
-        PREDEF.put("atan2", (Function<Object[], Object>) (Object... input) -> {
-               if (input.length == 2 && input[0] instanceof Double && input[1] instanceof Double) {
-                   return Math.atan2((Double) input[0], (Double) input[1]);
+        PREDEF.put("sqrt", new CoreLambda() {
+               @Override
+               public NtValue applyCall(NtValue[] input) {
+                   if (input.length == 1 && input[0] instanceof CoreNumber) {
+                       return CoreNumber.from(Math.sqrt(((CoreNumber) input[0]).toDouble()));
+                   }
+                   throw new DispatchException("sqrt", "Expected a number but got " + input.length);
                }
-               throw new DispatchException("atan2", "Expected two numbers but got " + input.length);
            });
-        PREDEF.put("sqrt", (Function<Object[], Object>) (Object... input) -> {
-               if (input.length == 1 && input[0] instanceof Double) {
-                   return Math.sqrt((Double) input[0]);
+        PREDEF.put("cbrt", new CoreLambda() {
+               @Override
+               public NtValue applyCall(NtValue[] input) {
+                   if (input.length == 1 && input[0] instanceof CoreNumber) {
+                       return CoreNumber.from(Math.cbrt(((CoreNumber) input[0]).toDouble()));
+                   }
+                   throw new DispatchException("cbrt", "Expected a number but got " + input.length);
                }
-               throw new DispatchException("sqrt", "Expected a number but got " + input.length);
            });
-        PREDEF.put("cbrt", (Function<Object[], Object>) (Object... input) -> {
-               if (input.length == 1 && input[0] instanceof Double) {
-                   return Math.cbrt((Double) input[0]);
+        PREDEF.put("abs", new CoreLambda() {
+               @Override
+               public NtValue applyCall(NtValue[] input) {
+                   if (input.length == 1 && input[0] instanceof CoreNumber) {
+                       return CoreNumber.from(Math.abs(((CoreNumber) input[0]).toDouble()));
+                   }
+                   throw new DispatchException("abs", "Expected a number but got " + input.length);
                }
-               throw new DispatchException("cbrt", "Expected a number but got " + input.length);
            });
-        PREDEF.put("abs", (Function<Object[], Object>) (Object... input) -> {
-               if (input.length == 1 && input[0] instanceof Double) {
-                   return Math.abs((Double) input[0]);
+        PREDEF.put("ceil", new CoreLambda() {
+               @Override
+               public NtValue applyCall(NtValue[] input) {
+                   if (input.length == 1 && input[0] instanceof CoreNumber) {
+                       return CoreNumber.from(Math.ceil(((CoreNumber) input[0]).toDouble()));
+                   }
+                   throw new DispatchException("ceil", "Expected a number but got " + input.length);
                }
-               throw new DispatchException("abs", "Expected a number but got " + input.length);
            });
-        PREDEF.put("ceil", (Function<Object[], Object>) (Object... input) -> {
-               if (input.length == 1 && input[0] instanceof Double) {
-                   return Math.ceil((Double) input[0]);
+        PREDEF.put("floor", new CoreLambda() {
+               @Override
+               public NtValue applyCall(NtValue[] input) {
+                   if (input.length == 1 && input[0] instanceof CoreNumber) {
+                       return CoreNumber.from(Math.floor(((CoreNumber) input[0]).toDouble()));
+                   }
+                   throw new DispatchException("floor", "Expected a number but got " + input.length);
                }
-               throw new DispatchException("ceil", "Expected a number but got " + input.length);
            });
-        PREDEF.put("floor", (Function<Object[], Object>) (Object... input) -> {
-               if (input.length == 1 && input[0] instanceof Double) {
-                   return Math.floor((Double) input[0]);
+        PREDEF.put("round", new CoreLambda() {
+               @Override
+               public NtValue applyCall(NtValue[] input) {
+                   if (input.length == 1 && input[0] instanceof CoreNumber) {
+                       return CoreNumber.from(Math.round(((CoreNumber) input[0]).toDouble()));
+                   }
+                   throw new DispatchException("round", "Expected a number but got " + input.length);
                }
-               throw new DispatchException("floor", "Expected a number but got " + input.length);
            });
-        PREDEF.put("round", (Function<Object[], Object>) (Object... input) -> {
-               if (input.length == 1 && input[0] instanceof Double) {
-                   return Math.round((Double) input[0]);
+        PREDEF.put("ln", new CoreLambda() {
+               @Override
+               public NtValue applyCall(NtValue[] input) {
+                   if (input.length == 1 && input[0] instanceof CoreNumber) {
+                       return CoreNumber.from(Math.log(((CoreNumber) input[0]).toDouble()));
+                   }
+                   throw new DispatchException("ln", "Expected a number but got " + input.length);
                }
-               throw new DispatchException("round", "Expected a number but got " + input.length);
            });
-        PREDEF.put("ln", (Function<Object[], Object>) (Object... input) -> {
-               if (input.length == 1 && input[0] instanceof Double) {
-                   return Math.log((Double) input[0]);
+        PREDEF.put("log", new CoreLambda() {
+               @Override
+               public NtValue applyCall(NtValue[] input) {
+                   if (input.length == 1 && input[0] instanceof CoreNumber) {
+                       return CoreNumber.from(Math.log10(((CoreNumber) input[0]).toDouble()));
+                   }
+                   throw new DispatchException("log", "Expected a number but got " + input.length);
                }
-               throw new DispatchException("ln", "Expected a number but got " + input.length);
            });
-        PREDEF.put("log", (Function<Object[], Object>) (Object... input) -> {
-               if (input.length == 1 && input[0] instanceof Double) {
-                   // log (100) => 2
-                   return Math.log10((Double) input[0]);
+        PREDEF.put("log_base", new CoreLambda() {
+               @Override
+               public NtValue applyCall(NtValue... params) {
+                   if (params.length == 1 && params[0] instanceof CoreNumber) {
+                       // log_base (10)(100) => 2
+                       final double base = ((CoreNumber) params[0]).toDouble();
+                       return new CoreLambda() {
+                           @Override
+                           public NtValue applyCall(NtValue... params) {
+                               if (params.length == 1 && params[0] instanceof CoreNumber) {
+                                   return CoreNumber.from(Math.log(((CoreNumber) params[0]).toDouble()) / Math.log(base));
+                               }
+                               throw new DispatchException("Expected one number but got " + params.length);
+                           }
+                       };
+                   }
+                   throw new DispatchException("log_base", "Expected one number but got " + params.length);
                }
-               if (input.length == 2 && input[0] instanceof Double && input[1] instanceof Double) {
-                   // log (10, 100) => 2
-                   return Math.log((Double) input[1]) / Math.log((Double) input[0]);
-               }
-               throw new DispatchException("log", "Expected one or two number but got " + input.length);
            });
-        PREDEF.put("log_base", (Function<Object[], Function<Object[], Object>>) (Object... x) -> {
-               if (x.length == 1 && x[0] instanceof Double) {
-                   // log_base (10)(100) => 2
-                   final double base = (Double) x[0];
-                   return (Object... y) -> {
-                       if (y.length == 1 && y[0] instanceof Double) {
-                           return Math.log((Double) y[0]) / Math.log(base);
-                       }
-                       throw new DispatchException("Expected one number but got " + y.length);
-                   };
+        PREDEF.put("lim_left", new CoreLambda() {
+               @Override
+               public NtValue applyCall(NtValue... f) {
+                   if (f.length == 1) {
+                       // lim_left (x -> 1/x)(0) => -Inf
+                       return genLimitBody(f[0], true);
+                   }
+                   throw new DispatchException("lim_left", "Expected one parameter but got " + f.length);
                }
-               throw new DispatchException("log_base", "Expected one number but got " + x.length);
            });
-        PREDEF.put("lim_left", (Function<Object[], Function<Object[], ?>>) (Object... x) -> {
-               if (x.length == 1 && x[0] instanceof Function<?, ?>) {
-                   // lim_left(x -> 1/x)(0) => test 0.001, 0.0001, 0.00001, 0.000001 => -Inf
-                   return genLimitBody((Function<Object[], Object>) x[0], InteractiveModeVisitor::subtractOperation);
+        PREDEF.put("lim_right", new CoreLambda() {
+               @Override
+               public NtValue applyCall(NtValue... f) {
+                   if (f.length == 1) {
+                       // lim_right (x -> 1/x)(0) => Inf
+                       return genLimitBody(f[0], false);
+                   }
+                   throw new DispatchException("lim_right", "Expected one parameter but got " + f.length);
                }
-               throw new DispatchException("lim_left", "Expected one function but got " + x.length);
            });
-        PREDEF.put("lim_right", (Function<Object[], Function<Object[], ?>>) (Object... x) -> {
-               if (x.length == 1 && x[0] instanceof Function<?, ?>) {
-                   // see lim_left
-                   return genLimitBody((Function<Object[], Object>) x[0], InteractiveModeVisitor::addOperation);
+        PREDEF.put("lim", new CoreLambda() {
+               @Override
+               public NtValue applyCall(NtValue[] f) {
+                   if (f.length == 1) {
+                       return new CoreLambda() {
+                           @Override
+                           public NtValue applyCall(NtValue[] x) {
+                               final NtValue[] xRight = Arrays.copyOf(x, x.length);
+                               System.out.println("APP-LEFT:  " + Arrays.toString(x));
+                               final NtValue llim = genLimitBody(f[0], true).applyCall(x);
+                               System.out.println("APP-RIGHT: " + Arrays.toString(xRight));
+                               final NtValue rlim = genLimitBody(f[0], false).applyCall(xRight);
+                               if (llim instanceof CoreNumber && rlim instanceof CoreNumber) {
+                                   if (llim.equals(rlim) && ((CoreNumber) llim).isFinite()) {
+                                       return llim;
+                                   }
+                               }
+                               return CoreNumber.from(Double.NaN);
+                           }
+                       };
+                   }
+                   throw new DispatchException("lim", "Expected one parameter but got " + f.length);
                }
-               throw new DispatchException("lim_right", "Expected one function but got " + x.length);
-           });
-        PREDEF.put("lim", (Function<Object[], Function<Object[], ?>>) (Object... x) -> {
-               if (x.length == 1 && x[0] instanceof Function<?, ?>) {
-                   return y -> {
-                       // Re-apply limitRound:
-                       //   x -> (x^2 - 1)/(x - 1)
-                       //   despite already rounded, still yields pre-rounded
-                       //   value from lim_right
-                       final double llim = limitRound(genLimitBody((Function<Object[], Object>) x[0], InteractiveModeVisitor::subtractOperation).apply(y));
-                       final double rlim = limitRound(genLimitBody((Function<Object[], Object>) x[0], InteractiveModeVisitor::addOperation).apply(y));
-
-                       System.out.println("lim_left  = " + llim);
-                       System.out.println("lim_right = " + rlim);
-
-                       if (llim == rlim && Double.isFinite(llim)) {
-                           return llim;
-                       }
-                       return Double.NaN;
-                   };
-               }
-               throw new DispatchException("lim", "Expected one function but got " + x.length);
            });
     }
 
-    private final Map<String, Object> vars;
+    private final Map<String, NtValue> vars;
     private final Frontend env;
 
     public InteractiveModeVisitor(final Frontend env) {
@@ -236,20 +298,20 @@ public class InteractiveModeVisitor extends Visitor<Object> {
         this.env = env;
     }
 
-    private InteractiveModeVisitor(final Map<String, Object> vars, final Frontend env) {
+    private InteractiveModeVisitor(final Map<String, NtValue> vars, final Frontend env) {
         this.vars = new HashMap<>(vars);
         this.env = env;
     }
 
     @Override
-    public Double visitNumberVal(final NumberVal number) {
-        return number.toDouble();
+    public NtValue visitNumberVal(final NumberVal number) {
+        return CoreNumber.from(number.toDouble());
     }
 
     @Override
-    public Object visitVariableVal(final VariableVal variable) {
+    public NtValue visitVariableVal(final VariableVal variable) {
         final String name = variable.val.text;
-        Object val = vars.get(name);
+        NtValue val = vars.get(name);
         if (val == null) {
             val = env.findDefinition(name);
             if (val == null) {
@@ -263,23 +325,26 @@ public class InteractiveModeVisitor extends Visitor<Object> {
     }
 
     @Override
-    public Function<Object[], Object> visitAnonFuncVal(final AnonFuncVal anonFunc) {
-        return (Object... input) -> {
-            if (input.length != anonFunc.inputs.length) {
-                throw new DispatchException("Expected " + anonFunc.inputs.length + " parameter(s) but got " + input.length);
+    public CoreLambda visitAnonFuncVal(final AnonFuncVal anonFunc) {
+        return new CoreLambda() {
+            @Override
+            public NtValue applyCall(NtValue... params) {
+                if (params.length != anonFunc.inputs.length) {
+                    throw new DispatchException("Expected " + anonFunc.inputs.length + " parameter(s) but got " + params.length);
+                }
+                final InteractiveModeVisitor vis = new InteractiveModeVisitor(vars, env);
+                for (int i = 0; i < params.length; ++i) {
+                    vis.vars.put(anonFunc.inputs[i].text, params[i]);
+                }
+                return vis.visit(anonFunc.output);
             }
-            final InteractiveModeVisitor vis = new InteractiveModeVisitor(vars, env);
-            for (int i = 0; i < input.length; ++i) {
-                vis.vars.put(anonFunc.inputs[i].text, input[i]);
-            }
-            return vis.visit(anonFunc.output);
         };
     }
 
     @Override
-    public Object visitPiecewiseFuncVal(final PiecewiseFuncVal piecewiseFunc) {
+    public NtValue visitPiecewiseFuncVal(final PiecewiseFuncVal piecewiseFunc) {
         for (final PiecewiseFuncVal.CaseBlock test : piecewiseFunc.cases) {
-            if (isTruthy(visit(test.pred))) {
+            if (visit(test.pred).isTruthy()) {
                 return visit(test.expr);
             }
         }
@@ -343,202 +408,116 @@ public class InteractiveModeVisitor extends Visitor<Object> {
         return d;
     }
 
-    private static boolean isTruthy(final Object obj) {
-        if (obj == null) {
-            return false;
-        }
-        if (obj instanceof Boolean) {
-            return (Boolean) obj;
-        }
-        if (obj instanceof Double) {
-            final double d = (Double) obj;
-            return !(d == 0 || Double.isNaN(d));
-        }
-        if (obj instanceof Float) {
-            final float f = (Float) obj;
-            return !(f == 0 || Float.isNaN(f));
-        }
-        if (obj instanceof Long) {
-            return ((Long) obj) != 0;
-        }
-        if (obj instanceof Integer) {
-            return ((Integer) obj) != 0;
-        }
-        if (obj instanceof Short) {
-            return ((Short) obj) != 0;
-        }
-        if (obj instanceof Byte) {
-            return ((Byte) obj) != 0;
-        }
-        if (obj instanceof Character) {
-            return ((Character) obj) != 0;
-        }
-        if (obj instanceof CharSequence) {
-            return ((CharSequence) obj).length() != 0;
-        }
-        if (obj instanceof Collection<?>) {
-            return !((Collection<?>) obj).isEmpty();
-        }
-        return true;
+    @Override
+    public NtValue visitApplyExpr(final ApplyExpr apply) {
+        final NtValue instance = visit(apply.instance);
+        final NtValue[] params = Arrays.stream(apply.params)
+                .map(this::visit)
+                .toArray(NtValue[]::new);
+        return instance.applyCall(params);
     }
 
     @Override
-    public Object visitApplyExpr(final ApplyExpr apply) {
-        final Object instance = visit(apply.instance);
-        final Object[] params = Arrays.stream(apply.params).map(this::visit).toArray();
-        if (instance instanceof Function<?, ?>) {
-            return ((Function<Object[], ?>) instance).apply(params);
-        }
-        if (instance instanceof Double) {
-            if (params.length == 1 || params[0] instanceof Double) {
-                return ((Double) instance) * ((Double) params[0]);
-            }
-            throw new DispatchException("Numerical multiplication is restricted to one rhs number");
-        }
-        throw new DispatchException("Type of " + instance.getClass() + " cannot be dispatched");
-    }
-
-    @Override
-    public Object visitUnaryExpr(final UnaryExpr unary) {
-        final Object base = visit(unary.base);
+    public NtValue visitUnaryExpr(final UnaryExpr unary) {
+        final NtValue base = visit(unary.base);
         if (unary.prefix) {
             switch (unary.op.type) {
             case ADD:
-                return prefixPlusOperation(base);
+                return base.applyPositive();
             case SUB:
-                return prefixMinusOperation(base);
+                return base.applyNegative();
             default:
                 throw new UnsupportedOperationException("Illegal usage operator of " + unary.op + " as prefix");
             }
         } else {
             switch (unary.op.type) {
             case PERCENT:
-                return percentageOperation(base);
+                return base.applyPercentage();
             default:
                 throw new UnsupportedOperationException("Illegal usage operator of " + unary.op + " as postfix");
             }
         }
     }
 
-    private static Object percentageOperation(final Object base) {
-        if (base instanceof Function<?, ?>) {
-            final Function<Object[], ?> f = (Function<Object[], ?>) base;
-            return (Function<Object[], Object>) (p) -> percentageOperation(f.apply(p));
-        }
-        if (base instanceof Double) {
-            return ((Double) base) / 100.0;
-        }
-        throw new DispatchException("Percentage must be used on either a function or a number");
-    }
-
-    private static Object prefixPlusOperation(final Object base) {
-        if (base instanceof Function<?, ?> || base instanceof Double) {
-            return base;
-        }
-        throw new DispatchException("Prefix plus must be used on either a function or a number");
-    }
-
-    private static Object prefixMinusOperation(final Object base) {
-        if (base instanceof Function<?, ?>) {
-            final Function<Object[], ?> f = (Function<Object[], ?>) base;
-            return (Function<Object[], Object>) (p) -> prefixMinusOperation(f.apply(p));
-        }
-        if (base instanceof Double) {
-            return -((Double) base);
-        }
-        throw new DispatchException("Prefix minus must be used on either a function or a number");
-    }
-
     @Override
-    public Object visitBinaryExpr(final BinaryExpr binary) {
-        final Object lhs = visit(binary.lhs);
-        final Object rhs = visit(binary.rhs);
+    public NtValue visitBinaryExpr(final BinaryExpr binary) {
+        final NtValue lhs = visit(binary.lhs);
+        final NtValue rhs = visit(binary.rhs);
         switch (binary.op.type) {
         case ADD:
-            return addOperation(lhs, rhs);
+            return lhs.applyAdd(rhs);
         case SUB:
-            return subtractOperation(lhs, rhs);
+            return lhs.applySub(rhs);
         case MUL:
-            return multiplyOperation(lhs, rhs);
+            return lhs.applyMul(rhs);
         case DIV:
-            return divideOperation(lhs, rhs);
+            return lhs.applyDiv(rhs);
         case MOD:
-            return moduloOperation(lhs, rhs);
+            return lhs.applyMod(rhs);
         case POW:
-            return powerOperation(lhs, rhs);
+            return lhs.applyPow(rhs);
         case LT:
-            if (lhs instanceof Double && rhs instanceof Double) {
-                return ((Double) lhs) < ((Double) rhs);
+            if (lhs instanceof Comparable && rhs instanceof Comparable) {
+                return CoreNumber.from(((Comparable<NtValue>) lhs).compareTo(rhs) < 0);
             }
-            throw new DispatchException("< must be used on two numbers");
+            throw new DispatchException("< must be used on two comparables");
         case LE:
-            if (lhs instanceof Double && rhs instanceof Double) {
-                return ((Double) lhs) <= ((Double) rhs);
+            if (lhs instanceof Comparable && rhs instanceof Comparable) {
+                return CoreNumber.from(((Comparable<NtValue>) lhs).compareTo(rhs) <= 0);
             }
-            throw new DispatchException("<= must be used on two numbers");
+            throw new DispatchException("<= must be used on two comparables");
         case GE:
-            if (lhs instanceof Double && rhs instanceof Double) {
-                return ((Double) lhs) >= ((Double) rhs);
+            if (lhs instanceof Comparable && rhs instanceof Comparable) {
+                return CoreNumber.from(((Comparable<NtValue>) lhs).compareTo(rhs) >= 0);
             }
-            throw new DispatchException(">= must be used on two numbers");
+            throw new DispatchException(">= must be used on two comparables");
         case GT:
-            if (lhs instanceof Double && rhs instanceof Double) {
-                return ((Double) lhs) > ((Double) rhs);
+            if (lhs instanceof Comparable && rhs instanceof Comparable) {
+                return CoreNumber.from(((Comparable<NtValue>) lhs).compareTo(rhs) > 0);
             }
-            throw new DispatchException("> must be used on two numbers");
+            throw new DispatchException("> must be used on two comparables");
         case EQL:
-            if (lhs instanceof Double && rhs instanceof Double) {
-                return ((Double) lhs).doubleValue() == ((Double) rhs).doubleValue();
-            }
-            throw new DispatchException("== must be used on two numbers");
+            return CoreNumber.from(lhs.equals(rhs));
         case NEQ:
-            if (lhs instanceof Double && rhs instanceof Double) {
-                return ((Double) lhs).doubleValue() != ((Double) rhs).doubleValue();
-            }
-            throw new DispatchException("/= must be used on two numbers");
+            return CoreNumber.from(!lhs.equals(rhs));
         case K_AND: // Shorthanded
-            if (isTruthy(lhs)) {
-                return isTruthy(rhs);
+            if (lhs.isTruthy()) {
+                return CoreNumber.from(rhs.isTruthy());
             }
-            return false;
+            return CoreNumber.from(false);
         case K_OR: // Shorthanded
-            if (isTruthy(lhs)) {
-                return true;
+            if (lhs.isTruthy()) {
+                return CoreNumber.from(true);
             }
-            return isTruthy(rhs);
+            return CoreNumber.from(rhs.isTruthy());
         case COMPOSE:
-            if (lhs instanceof Function<?, ?> && rhs instanceof Function<?, ?>) {
-                final Function<Object[], ?> f = (Function<Object[], ?>) lhs;
-                final Function<Object[], ?> g = (Function<Object[], ?>) rhs;
-                return (Function<Object[], Object>) (p) -> f.apply(new Object[]{g.apply(p)});
-            }
-            throw new DispatchException("Compose must be used on two functions");
+            return lhs.applyCompose(rhs);
         default:
             throw new UnsupportedOperationException("Illegal usage operator of " + binary.op + " as infix");
         }
     }
 
     @Override
-    public Object visitCommutativeExpr(final CommutativeExpr commutative) {
+    public NtValue visitCommutativeExpr(final CommutativeExpr commutative) {
         switch (commutative.op.type) {
         case ADD: {
-            Object ret = null;
+            NtValue ret = null;
             for (int i = 0; i < commutative.nodes.length; ++i) {
                 if (ret == null) {
                     ret = visit(commutative.nodes[i]);
                 } else {
-                    ret = addOperation(ret, visit(commutative.nodes[i]));
+                    ret = ret.applyAdd(visit(commutative.nodes[i]));
                 }
             }
             return ret;
         }
         case MUL: {
-            Object ret = null;
+            NtValue ret = null;
             for (int i = 0; i < commutative.nodes.length; ++i) {
                 if (ret == null) {
                     ret = visit(commutative.nodes[i]);
                 } else {
-                    ret = multiplyOperation(ret, visit(commutative.nodes[i]));
+                    ret = ret.applyMul(visit(commutative.nodes[i]));
                 }
             }
             return ret;
@@ -548,119 +527,54 @@ public class InteractiveModeVisitor extends Visitor<Object> {
         }
     }
 
-    private static Object powerOperation(final Object lhs, final Object rhs) {
-        if (lhs instanceof Function<?, ?> && rhs instanceof Function<?, ?>) {
-            final Function<Object[], ?> f = (Function<Object[], ?>) lhs;
-            final Function<Object[], ?> g = (Function<Object[], ?>) rhs;
-            return (Function<Object[], Object>) (p) -> powerOperation(f.apply(p), g.apply(p));
-        }
-        if (lhs instanceof Double && rhs instanceof Double) {
-            return Math.pow((Double) lhs, (Double) rhs);
-        }
-        throw new DispatchException("Modulo must be used on either two functions or two numbers");
-    }
-
-    private static Object moduloOperation(final Object lhs, final Object rhs) {
-        if (lhs instanceof Function<?, ?> && rhs instanceof Function<?, ?>) {
-            final Function<Object[], ?> f = (Function<Object[], ?>) lhs;
-            final Function<Object[], ?> g = (Function<Object[], ?>) rhs;
-            return (Function<Object[], Object>) (p) -> moduloOperation(f.apply(p), g.apply(p));
-        }
-        if (lhs instanceof Double && rhs instanceof Double) {
-            return ((Double) lhs) % ((Double) rhs);
-        }
-        throw new DispatchException("Modulo must be used on either two functions or two numbers");
-    }
-
-    private static Object divideOperation(final Object lhs, final Object rhs) {
-        if (lhs instanceof Function<?, ?> && rhs instanceof Function<?, ?>) {
-            final Function<Object[], ?> f = (Function<Object[], ?>) lhs;
-            final Function<Object[], ?> g = (Function<Object[], ?>) rhs;
-            return (Function<Object[], Object>) (p) -> divideOperation(f.apply(p), g.apply(p));
-        }
-        if (lhs instanceof Double && rhs instanceof Double) {
-            return ((Double) lhs) / ((Double) rhs);
-        }
-        throw new DispatchException("Divide must be used on either two functions or two numbers");
-    }
-
-    private static Object multiplyOperation(final Object lhs, final Object rhs) {
-        if (lhs instanceof Function<?, ?> && rhs instanceof Function<?, ?>) {
-            final Function<Object[], ?> f = (Function<Object[], ?>) lhs;
-            final Function<Object[], ?> g = (Function<Object[], ?>) rhs;
-            return (Function<Object[], Object>) (p) -> multiplyOperation(f.apply(p), g.apply(p));
-        }
-        if (lhs instanceof Double && rhs instanceof Double) {
-            return ((Double) lhs) * ((Double) rhs);
-        }
-        throw new DispatchException("Multiply must be used on either two functions or two numbers");
-    }
-
-    private static Object subtractOperation(final Object lhs, final Object rhs) {
-        if (lhs instanceof Function<?, ?> && rhs instanceof Function<?, ?>) {
-            final Function<Object[], ?> f = (Function<Object[], ?>) lhs;
-            final Function<Object[], ?> g = (Function<Object[], ?>) rhs;
-            return (Function<Object[], Object>) (p) -> subtractOperation(f.apply(p), g.apply(p));
-        }
-        if (lhs instanceof Double && rhs instanceof Double) {
-            return ((Double) lhs) - ((Double) rhs);
-        }
-        throw new DispatchException("Subtract must be used on either two functions or two numbers");
-    }
-
-    private static Object addOperation(final Object lhs, final Object rhs) {
-        if (lhs instanceof Function<?, ?> && rhs instanceof Function<?, ?>) {
-            final Function<Object[], ?> f = (Function<Object[], ?>) lhs;
-            final Function<Object[], ?> g = (Function<Object[], ?>) rhs;
-            return (Function<Object[], Object>) (p) -> addOperation(f.apply(p), g.apply(p));
-        }
-        if (lhs instanceof Double && rhs instanceof Double) {
-            return ((Double) lhs) + ((Double) rhs);
-        }
-        throw new DispatchException("Add must be used on either two functions or two numbers");
-    }
-
     @Override
-    public Object visitAssignExpr(AssignExpr assign) {
-        final Object val = visit(assign.value);
+    public NtValue visitAssignExpr(AssignExpr assign) {
+        final NtValue val = visit(assign.value);
         vars.put(assign.to.text, val);
         return val;
     }
 
-    private static Function<Object[], Double> genLimitBody(final Function<Object[], ?> base,
-                                                           final BiFunction<Object, Object, Object> trans) {
-        return y -> {
-            final Object ret = base.apply(y);
-            if (ret instanceof Double) {
-                final double tmp = (Double) ret;
-                if (Double.isFinite(tmp)) {
-                    return tmp;
-                }
-
-                final Object ky = y[0];
-                double gap = 0.01;
-                double prev = 0;
-
-                double delta = Double.MAX_VALUE;
-                for (int i = 0; i < 5; ++i) {
-                    gap *= 0.1;
-                    y[0] = trans.apply(ky, gap);
-
-                    final double current = (Double) base.apply(y);
-                    final double newDelta = Math.abs(current - prev);
-
-                    if (newDelta <= delta) {
-                        delta = newDelta;
-                        prev = current;
-                    } else if (current < prev) {
-                        return Double.NEGATIVE_INFINITY;
-                    } else if (current > prev) {
-                        return Double.POSITIVE_INFINITY;
+    private static CoreLambda genLimitBody(final NtValue base,
+                                           final boolean leftSide) {
+        return new CoreLambda() {
+            @Override
+            public NtValue applyCall(NtValue[] y) {
+                final NtValue ret = base.applyCall(y);
+                if (ret instanceof CoreNumber) {
+                    final double tmp = ((CoreNumber) ret).toDouble();
+                    if (Double.isFinite(tmp)) {
+                        return ret;
                     }
+
+                    final NtValue ky = y[0];
+                    double gap = 0.01;
+                    double prev = 0;
+
+                    double delta = Double.MAX_VALUE;
+                    for (int i = 0; i < 5; ++i) {
+                        gap *= 0.1;
+                        if (leftSide) {
+                            y[0] = ky.applySub(CoreNumber.from(gap));
+                        } else {
+                            y[0] = ky.applyAdd(CoreNumber.from(gap));
+                        }
+
+                        final double current = ((CoreNumber) base.applyCall(y)).toDouble();
+                        final double newDelta = Math.abs(current - prev);
+
+                        if (newDelta <= delta) {
+                            delta = newDelta;
+                            prev = current;
+                        } else if (current < prev) {
+                            return CoreNumber.from(Double.NEGATIVE_INFINITY);
+                        } else if (current > prev) {
+                            return CoreNumber.from(Double.POSITIVE_INFINITY);
+                        }
+                    }
+                    return CoreNumber.from(limitRound(prev));
                 }
-                return limitRound(prev);
+                return CoreNumber.from(Double.NaN);
             }
-            return Double.NaN;
         };
     }
 }

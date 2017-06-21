@@ -71,5 +71,5 @@ public interface Frontend extends AutoCloseable {
      * @return The value of the definition. Returns {@code null} if none was
      * found.
      */
-    public Object findDefinition(String name);
+    public NtValue findDefinition(String name);
 }

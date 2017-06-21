@@ -77,7 +77,7 @@ public class ConsoleMode implements Frontend {
     }
 
     @Override
-    public Object findDefinition(String name) {
+    public NtValue findDefinition(String name) {
         return null;
     }
 }

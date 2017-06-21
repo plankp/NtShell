@@ -16,26 +16,23 @@
  */
 package com.ymcmp.ntshell;
 
+import com.ymcmp.ntshell.value.*;
+
 import de.erichseifert.gral.data.DataTable;
-import de.erichseifert.gral.plots.DataPoint;
 import de.erichseifert.gral.plots.XYPlot;
-import de.erichseifert.gral.plots.lines.DefaultLineRenderer2D;
 import de.erichseifert.gral.plots.lines.LineRenderer;
-import de.erichseifert.gral.plots.points.PointData;
 import de.erichseifert.gral.ui.InteractivePanel;
 
-import java.awt.BorderLayout;
+import java.awt.Font;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Font;
+import java.awt.BorderLayout;
 import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
-
 import java.awt.event.KeyEvent;
 
-import java.util.function.Function;
-
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
@@ -188,75 +185,80 @@ public class SwingMode implements Frontend {
     }
 
     @Override
-    public Object findDefinition(final String name) {
+    public NtValue findDefinition(final String name) {
         // Add interfaces to jzy3d
         switch (name) {
         case "illuminati":
-            return (Function<Object[], ?>) x -> {
-                if (x.length == 3
-                        && x[0].equals(3.0)
-                        && x[1].equals(3.0)
-                        && x[2].equals(3.0)) {
-                    appendComponent(new javax.swing.JLabel(" ILLUMINATI CONFIRMED "));
-                    return 3.0;
+            return new CoreLambda() {
+                @Override
+                public NtValue applyCall(NtValue... params) {
+                    if (params.length == 3
+                            && params[0].equals(CoreNumber.from(3))
+                            && params[1].equals(CoreNumber.from(3))
+                            && params[2].equals(CoreNumber.from(3))) {
+                        appendComponent(new JLabel(" ILLUMINATI CONFIRMED "));
+                        writeLine();
+                        return CoreNumber.from(3);
+                    }
+                    return CoreNumber.from(0);
                 }
-                return "";
             };
         case "plot":
         case "plot2d":
-            return (Function<Object[], ?>) pf -> {
-                final Function<Object[], Object> f;
-                if (pf.length == 1 && pf[0] instanceof Function<?, ?>) {
-                    f = (Function<Object[], Object>) pf[0];
-                } else {
-                    throw new DispatchException("plot2d", "Expected a function, got " + pf.length + " instead");
-                }
-
-                return (Function<Object[], ?>) r -> {
-                    if (r.length == 3
-                            && r[0] instanceof Double
-                            && r[1] instanceof Double
-                            && r[2] instanceof Double) {
-
-                        double x = (Double) r[0];
-
-                        final double end = (Double) r[1];
-                        final double delta = (Double) r[2];
-                        if (delta == 0) {
-                            throw new DispatchException("delta cannot be zero: " + delta);
-                        }
-
-                        final int range = (int) Math.abs(end - x);
-
-                        final DataTable data = new DataTable(Double.class, Double.class);
-                        for (; x <= end; x += delta) {
-                            final Object ret = f.apply(new Object[]{x});
-                            if (ret instanceof Double) {
-                                data.add(x, (Double) ret);
-                            } else {
-                                data.add(x, Double.NaN);
-                            }
-                        }
-
-                        final XYPlot plot = new XYPlot(data);
-                        final InteractivePanel panel = new InteractivePanel(plot);
-                        final LineRenderer lines = new BrokenLineRenderer();
-                        plot.setLineRenderers(data, lines);
-
-                        final Color color = new Color(0.0f, 0.3f, 1.0f);
-                        plot.getPointRenderers(data).get(0).setColor(color);
-                        plot.getLineRenderers(data).get(0).setColor(color);
-
-                        final JFrame gframe = new JFrame();
-                        gframe.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
-                        gframe.setSize(400, 300);
-                        gframe.getContentPane().add(panel);
-                        gframe.setVisible(true);
-                    } else {
-                        throw new DispatchException("Expected three numbers, found " + r.length + " instead");
+            return new CoreLambda() {
+                @Override
+                public NtValue applyCall(NtValue... f) {
+                    if (f.length != 1) {
+                        throw new DispatchException("plot2d", "Expected one parameter, got " + f.length + " instead");
                     }
-                    return "";
-                };
+
+                    return new CoreLambda() {
+                        @Override
+                        public NtValue applyCall(NtValue... r) {
+                            if (r.length == 3
+                                    && r[0] instanceof CoreNumber
+                                    && r[1] instanceof CoreNumber
+                                    && r[2] instanceof CoreNumber) {
+
+                                double x = ((CoreNumber) r[0]).toDouble();
+
+                                final double end = ((CoreNumber) r[1]).toDouble();
+                                final double delta = ((CoreNumber) r[2]).toDouble();
+                                if (delta == 0) {
+                                    throw new DispatchException("delta cannot be zero: " + delta);
+                                }
+
+                                final DataTable data = new DataTable(Double.class, Double.class);
+                                for (; x <= end; x += delta) {
+                                    final NtValue ret = f[0].applyCall(CoreNumber.from(x));
+                                    if (ret instanceof CoreNumber) {
+                                        data.add(x, ((CoreNumber) ret).toDouble());
+                                    } else {
+                                        data.add(x, Double.NaN);
+                                    }
+                                }
+
+                                final XYPlot plot = new XYPlot(data);
+                                final InteractivePanel panel = new InteractivePanel(plot);
+                                final LineRenderer lines = new BrokenLineRenderer();
+                                plot.setLineRenderers(data, lines);
+
+                                final Color color = new Color(0.0f, 0.3f, 1.0f);
+                                plot.getPointRenderers(data).get(0).setColor(color);
+                                plot.getLineRenderers(data).get(0).setColor(color);
+
+                                final JFrame gframe = new JFrame();
+                                gframe.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+                                gframe.setSize(400, 300);
+                                gframe.getContentPane().add(panel);
+                                gframe.setVisible(true);
+                            } else {
+                                throw new DispatchException("Expected three numbers, found " + r.length + " instead");
+                            }
+                            return CoreNumber.from(0);
+                        }
+                    };
+                }
             };
         default:
         }

@@ -185,11 +185,12 @@ public class App {
 
                     if (evaluate) {
                         final Object ret = session.visit(ast);
-                        if (ret instanceof Function<?, ?>) {
-                            env.writeLine("<function@" + Integer.toHexString(ret.hashCode()) + ">");
-                        } else {
-                            env.writeLine(ret);
-                        }
+//                        if (ret instanceof Function<?, ?>) {
+//                            env.writeLine("<function@" + Integer.toHexString(ret.hashCode()) + ">");
+//                        } else {
+//                            env.writeLine(ret);
+//                        }
+                        env.writeLine(ret);
                     }
                     while (!toks.isEmpty() && toks.get(0).type == Token.Type.SEMI) {
                         toks.remove(0);
