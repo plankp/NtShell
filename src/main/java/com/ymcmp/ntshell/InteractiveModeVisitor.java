@@ -27,8 +27,6 @@ import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import java.util.function.Function;
-
 /**
  *
  * @author YTENG
@@ -43,9 +41,60 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
         // Constants
         PREDEF.put("pi", CoreNumber.getPi());
         PREDEF.put("e", CoreNumber.getE());
+        PREDEF.put("true", CoreNumber.from(true));
+        PREDEF.put("false", CoreNumber.from(false));
 
         // Not-as-interesting Functions
         PREDEF.put("id", CoreLambda.getIdentityFunction());
+        PREDEF.put("twice", new CoreLambda() {
+               @Override
+               public NtValue applyCall(NtValue[] input) {
+                   // twice (f) => x -> f(f(x))
+                   if (input.length == 1) {
+                       return input[0].applyCompose(input[0]);
+                   }
+                   throw new DispatchException("twice", "Expected one parameter, got " + input.length + " instead");
+               }
+           });
+
+        // Short-hand Functions
+        PREDEF.put("summation", new CoreLambda() {
+               @Override
+               public NtValue applyCall(final NtValue[] f) {
+                   // summation (f)(m, n) => while ++m <= n { ret += f(m); }
+                   if (f.length == 1) {
+                       return new CoreLambda() {
+                           @Override
+                           public NtValue applyCall(final NtValue[] params) {
+                               final double n;
+                               double m;
+                               if (params.length == 2
+                                       && params[0] instanceof CoreNumber
+                                       && params[1] instanceof CoreNumber) {
+                                   m = ((CoreNumber) params[0]).toDouble();
+                                   n = ((CoreNumber) params[1]).toDouble();
+
+                                   NtValue ret = null;
+                                   // Do summation here
+                                   do {
+                                       NtValue t = f[0].applyCall(CoreNumber.from(m));
+                                       if (ret == null) {
+                                           ret = t;
+                                       } else {
+                                           ret = ret.applyAdd(t);
+                                       }
+                                       m += 1.0;
+                                   } while (m <= n);
+                                   // ret should never be null at this point
+                                   return ret;
+                               }
+                               throw new DispatchException("Expected two numbers, got " + params.length + " instead");
+                           }
+                       };
+                   }
+                   throw new DispatchException("summation", "Expected one parameter, got " + f.length + " instead");
+               }
+           });
 
         // Math Functions
         PREDEF.put("rad", new CoreLambda() {
@@ -169,6 +218,24 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                        return CoreNumber.from(Math.cbrt(((CoreNumber) input[0]).toDouble()));
                    }
                    throw new DispatchException("cbrt", "Expected a number but got " + input.length);
+               }
+           });
+        PREDEF.put("square", new CoreLambda() {
+               @Override
+               public NtValue applyCall(NtValue[] input) {
+                   if (input.length == 1 && input[0] instanceof CoreNumber) {
+                       return CoreNumber.from(Math.pow(((CoreNumber) input[0]).toDouble(), 2));
+                   }
+                   throw new DispatchException("square", "Expected a number but got " + input.length);
+               }
+           });
+        PREDEF.put("cube", new CoreLambda() {
+               @Override
+               public NtValue applyCall(NtValue[] input) {
+                   if (input.length == 1 && input[0] instanceof CoreNumber) {
+                       return CoreNumber.from(Math.pow(((CoreNumber) input[0]).toDouble(), 3));
+                   }
+                   throw new DispatchException("cube", "Expected a number but got " + input.length);
                }
            });
         PREDEF.put("abs", new CoreLambda() {
