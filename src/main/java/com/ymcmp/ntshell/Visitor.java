@@ -36,6 +36,8 @@ public abstract class Visitor<T> {
 
     public abstract T visitVariableVal(VariableVal variable);
 
+    public abstract T visitMatrixVal(MatrixVal matrix);
+
     public abstract T visitAnonFuncVal(AnonFuncVal anonFunc);
 
     public abstract T visitPiecewiseFuncVal(PiecewiseFuncVal piecewiseFunc);

@@ -65,6 +65,14 @@ public class PiecewiseFuncVal implements AST {
             }
             return new CaseBlock(pred, nexpr);
         }
+
+        public CaseBlock unfoldConstant() {
+            final AST nexpr = expr.toCanonicalOrder().unfoldConstant();
+            if (nexpr == expr) {
+                return this;
+            }
+            return new CaseBlock(pred, nexpr);
+        }
     }
 
     public final CaseBlock[] cases;
@@ -106,6 +114,15 @@ public class PiecewiseFuncVal implements AST {
         final CaseBlock[] ncases = new CaseBlock[cases.length];
         for (int i = 0; i < cases.length; ++i) {
             ncases[i] = cases[i].simplifyRationals();
+        }
+        return new PiecewiseFuncVal(ncases);
+    }
+
+    @Override
+    public AST unfoldConstant() {
+        final CaseBlock[] ncases = new CaseBlock[cases.length];
+        for (int i = 0; i < cases.length; ++i) {
+            ncases[i] = cases[i].unfoldConstant();
         }
         return new PiecewiseFuncVal(ncases);
     }

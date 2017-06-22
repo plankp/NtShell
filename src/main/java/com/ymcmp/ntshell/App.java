@@ -25,8 +25,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import java.util.function.Function;
-
 /**
  *
  * @author YTENG
@@ -378,6 +376,25 @@ public class App {
             }
             return new PiecewiseFuncVal(cases.toArray(new PiecewiseFuncVal.CaseBlock[cases.size()]));
         }
+        case LBLK: {
+            // = LBLK RBLK         (0)
+            // | LBLK <row>+ RBLK  (1)
+            tokens.remove(0);
+            final List<MatrixVal.Column> elems = new ArrayList<>();
+            while (peekNextToken(tokens, env).type != Token.Type.RBLK) {
+                try {
+                    elems.add(consumeRow(tokens, env));
+                } catch (MatrixRowUnclosedException ex) {
+                    if (peekNextToken(tokens, env).type == Token.Type.RBLK) {
+                        elems.add(ex.currentColumn);
+                        break;
+                    }
+                    throw new RuntimeException(ex.getMessage());
+                }
+            }
+            tokens.remove(0);
+            return new MatrixVal(elems.toArray(new MatrixVal.Column[elems.size()]));
+        }
         case LBRACE: {
             // = LBRACE <expr> RBRACE                                        (0)
             // | LBRACE RBRACE YIELD <expr>                                  (1)
@@ -440,6 +457,28 @@ public class App {
         } else {
             throw new RuntimeException("Missing )");
         }
+    }
+
+    private static MatrixVal.Column consumeRow(final List<Token> tokens,
+                                               final Frontend env) throws MatrixRowUnclosedException {
+        // = <expr> SEMI
+        // | <expr> (COMMA <expr>)* COMMA? SEMI
+        final List<AST> elems = new ArrayList<>();
+        cons_loop:
+        while (peekNextToken(tokens, env).type != Token.Type.SEMI) {
+            elems.add(consumeExpr(tokens, env));
+            switch (peekNextToken(tokens, env).type) {
+            case COMMA:
+                tokens.remove(0);
+                break;
+            case SEMI:
+                break cons_loop;
+            default:
+                throw new MatrixRowUnclosedException(new MatrixVal.Column(elems.toArray(new AST[elems.size()])));
+            }
+        }
+        tokens.remove(0);
+        return new MatrixVal.Column(elems.toArray(new AST[elems.size()]));
     }
 
     private static AST consumeYield(final List<Token> tokens, final Frontend env) {
@@ -731,5 +770,15 @@ public class App {
         return (c >= '0' && c <= '9')
                 || (c >= 'A' && c <= 'F')
                 || (c >= 'a' && c <= 'f');
+    }
+}
+
+class MatrixRowUnclosedException extends Exception {
+
+    public final MatrixVal.Column currentColumn;
+
+    public MatrixRowUnclosedException(final MatrixVal.Column currentColumn) {
+        super("Matrix row unclosed");
+        this.currentColumn = currentColumn;
     }
 }

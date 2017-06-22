@@ -392,6 +392,26 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
     }
 
     @Override
+    public CoreMatrix visitMatrixVal(final MatrixVal matrix) {
+        if (matrix.columns.length == 0) {
+            return CoreMatrix.getEmptyMatrix();
+        }
+
+        try {
+            final NtValue[][] rows = new NtValue[matrix.columns[0].row.length][matrix.columns.length];
+            for (int x = 0; x < rows.length; ++x) {
+                final int columnCount = rows[x].length;
+                for (int y = 0; y < columnCount; ++y) {
+                    rows[x][y] = visit(matrix.getCell(x, y));
+                }
+            }
+            return CoreMatrix.from(rows).transpose();
+        } catch (ArrayIndexOutOfBoundsException ex) {
+            throw new RuntimeException("Illegal bounds caused by matrix not having rectangular shape");
+        }
+    }
+
+    @Override
     public CoreLambda visitAnonFuncVal(final AnonFuncVal anonFunc) {
         return new CoreLambda(new CoreLambda.Info("<lambda>", "takes " + anonFunc.inputs.length + " parameter(s)", "<code>" + anonFunc.toString() + "</code>")) {
             @Override
