@@ -60,7 +60,7 @@ public class SwingMode implements Frontend {
         StyleConstants.setBold(STYLE_OUT, true);
     }
 
-    private JFrame frame = new JFrame();
+    private JFrame frame = new JFrame("NtShell");
     private DefaultStyledDocument document = new DefaultStyledDocument();
     private JTextPane area = new JTextPane(document);
     private JScrollPane scroller = new JScrollPane(area, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
@@ -163,6 +163,28 @@ public class SwingMode implements Frontend {
     }
 
     @Override
+    public void write(Object o) {
+        if (o instanceof CoreLambda) {
+            final CoreLambda.Info fInfo = ((CoreLambda) o).info;
+            if (fInfo != null) {
+                final JLabel label = new JLabel(String.format("<%s>", fInfo.name));
+                label.setToolTipText(toToolTipText(fInfo.toString()));
+                appendComponent(label);
+                return;
+            }
+        }
+        Frontend.super.write(o); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    private String toToolTipText(final String str) {
+        return new StringBuilder()
+                .append("<html><p width=\"250\">")
+                .append(str.replace("\n", "<br>").replace(" ", "&nbsp;"))
+                .append("</p></html>")
+                .toString();
+    }
+
+    @Override
     public void errWrite(char c) {
         try {
             document.insertString(document.getLength(),
@@ -189,7 +211,7 @@ public class SwingMode implements Frontend {
         // Add interfaces to jzy3d
         switch (name) {
         case "illuminati":
-            return new CoreLambda() {
+            return new CoreLambda(new CoreLambda.Info("Illuminati", "... -> number", "Illuminati confirmed!")) {
                 @Override
                 public NtValue applyCall(NtValue... params) {
                     if (params.length == 3
@@ -205,14 +227,14 @@ public class SwingMode implements Frontend {
             };
         case "plot":
         case "plot2d":
-            return new CoreLambda() {
+            return new CoreLambda(new CoreLambda.Info("plot2d", "(func(number) -> number) -> func", "Wraps a function in another function")) {
                 @Override
                 public NtValue applyCall(NtValue... f) {
                     if (f.length != 1) {
                         throw new DispatchException("plot2d", "Expected one parameter, got " + f.length + " instead");
                     }
 
-                    return new CoreLambda() {
+                    return new CoreLambda(new CoreLambda.Info("$$plot2d", "func(start:number, end:number, incr:number) -> number", "Draws the graph from start to end increased by incr. The return value is meaningless.")) {
                         @Override
                         public NtValue applyCall(NtValue... r) {
                             if (r.length == 3
@@ -225,7 +247,7 @@ public class SwingMode implements Frontend {
                                 final double end = ((CoreNumber) r[1]).toDouble();
                                 final double delta = ((CoreNumber) r[2]).toDouble();
                                 if (delta == 0) {
-                                    throw new DispatchException("delta cannot be zero: " + delta);
+                                    throw new DispatchException("$$plot2d", "delta cannot be zero: " + delta);
                                 }
 
                                 final DataTable data = new DataTable(Double.class, Double.class);
@@ -253,7 +275,7 @@ public class SwingMode implements Frontend {
                                 gframe.getContentPane().add(panel);
                                 gframe.setVisible(true);
                             } else {
-                                throw new DispatchException("Expected three numbers, found " + r.length + " instead");
+                                throw new DispatchException("$$plot2d", "Expected three numbers, found " + r.length + " instead");
                             }
                             return CoreNumber.from(0);
                         }

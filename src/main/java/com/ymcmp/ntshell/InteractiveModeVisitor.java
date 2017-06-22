@@ -46,7 +46,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
 
         // Not-as-interesting Functions
         PREDEF.put("id", CoreLambda.getIdentityFunction());
-        PREDEF.put("twice", new CoreLambda() {
+        PREDEF.put("twice", new CoreLambda(new CoreLambda.Info("twice", "<supports applyCall> -> func", "Returns a function that behaves like the following: <code>twice(f) => x -> f(f(x))</code>")) {
                @Override
                public NtValue applyCall(NtValue[] input) {
                    // twice (f) => x -> f(f(x))
@@ -58,12 +58,12 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
            });
 
         // Short-hand Functions
-        PREDEF.put("summation", new CoreLambda() {
+        PREDEF.put("summation", new CoreLambda(new CoreLambda.Info("summation", "f:<supports applyCall> -> func", "Wraps (f) insidea summation sequence")) {
                @Override
                public NtValue applyCall(final NtValue[] f) {
                    // summation (f)(m, n) => while ++m <= n { ret += f(m); }
                    if (f.length == 1) {
-                       return new CoreLambda() {
+                       return new CoreLambda(new CoreLambda.Info("$$summation", "func(start:number, end:number) -> <supports applyAdd>", "Performs summation from (start) to (end) with the increment of 1")) {
                            @Override
                            public NtValue applyCall(final NtValue[] params) {
                                final double n;
@@ -97,7 +97,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
            });
 
         // Math Functions
-        PREDEF.put("rad", new CoreLambda() {
+        PREDEF.put("rad", new CoreLambda(new CoreLambda.Info("rad", "number -> number", "Converts a number into its representation in radians")) {
                @Override
                public NtValue applyCall(NtValue[] input) {
                    if (input.length == 1 && input[0] instanceof CoreNumber) {
@@ -106,16 +106,16 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                    throw new DispatchException("rad", "Expected a number but got " + input.length);
                }
            });
-        PREDEF.put("deg", new CoreLambda() {
+        PREDEF.put("deg", new CoreLambda(new CoreLambda.Info("deg", "number -> number", "Converts a number into its representation in degrees")) {
                @Override
                public NtValue applyCall(NtValue[] input) {
                    if (input.length == 1 && input[0] instanceof CoreNumber) {
                        return CoreNumber.from(Math.toDegrees(((CoreNumber) input[0]).toDouble()));
                    }
-                   throw new DispatchException("rad", "Expected a number but got " + input.length);
+                   throw new DispatchException("deg", "Expected a number but got " + input.length);
                }
            });
-        PREDEF.put("sin", new CoreLambda() {
+        PREDEF.put("sin", new CoreLambda(new CoreLambda.Info("sin", "number -> number", "Calculates the sine of value in radians")) {
                @Override
                public NtValue applyCall(NtValue[] input) {
                    if (input.length == 1 && input[0] instanceof CoreNumber) {
@@ -124,7 +124,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                    throw new DispatchException("sin", "Expected a number but got " + input.length);
                }
            });
-        PREDEF.put("sinh", new CoreLambda() {
+        PREDEF.put("sinh", new CoreLambda(new CoreLambda.Info("sinh", "number -> number", "Calculates the hyperbolic sine of value in radians")) {
                @Override
                public NtValue applyCall(NtValue[] input) {
                    if (input.length == 1 && input[0] instanceof CoreNumber) {
@@ -133,7 +133,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                    throw new DispatchException("sinh", "Expected a number but got " + input.length);
                }
            });
-        PREDEF.put("cos", new CoreLambda() {
+        PREDEF.put("cos", new CoreLambda(new CoreLambda.Info("cos", "number -> number", "Calculates the cosine of value in radians")) {
                @Override
                public NtValue applyCall(NtValue[] input) {
                    if (input.length == 1 && input[0] instanceof CoreNumber) {
@@ -142,7 +142,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                    throw new DispatchException("cos", "Expected a number but got " + input.length);
                }
            });
-        PREDEF.put("cosh", new CoreLambda() {
+        PREDEF.put("cosh", new CoreLambda(new CoreLambda.Info("sin", "number -> number", "Calculates the hyperbolic cosine of value in radians")) {
                @Override
                public NtValue applyCall(NtValue[] input) {
                    if (input.length == 1 && input[0] instanceof CoreNumber) {
@@ -151,7 +151,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                    throw new DispatchException("cosh", "Expected a number but got " + input.length);
                }
            });
-        PREDEF.put("tan", new CoreLambda() {
+        PREDEF.put("tan", new CoreLambda(new CoreLambda.Info("tan", "number -> number", "Calculates the tangent of value in radians")) {
                @Override
                public NtValue applyCall(NtValue[] input) {
                    if (input.length == 1 && input[0] instanceof CoreNumber) {
@@ -160,7 +160,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                    throw new DispatchException("tan", "Expected a number but got " + input.length);
                }
            });
-        PREDEF.put("tanh", new CoreLambda() {
+        PREDEF.put("tanh", new CoreLambda(new CoreLambda.Info("sin", "number -> number", "Calculates the hyperbolic tangent of value in radians")) {
                @Override
                public NtValue applyCall(NtValue[] input) {
                    if (input.length == 1 && input[0] instanceof CoreNumber) {
@@ -169,7 +169,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                    throw new DispatchException("tanh", "Expected a number but got " + input.length);
                }
            });
-        PREDEF.put("asin", new CoreLambda() {
+        PREDEF.put("asin", new CoreLambda(new CoreLambda.Info("asin", "number -> number", "Calculates the inverse sine of value in radians")) {
                @Override
                public NtValue applyCall(NtValue[] input) {
                    if (input.length == 1 && input[0] instanceof CoreNumber) {
@@ -178,7 +178,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                    throw new DispatchException("asin", "Expected a number but got " + input.length);
                }
            });
-        PREDEF.put("acos", new CoreLambda() {
+        PREDEF.put("acos", new CoreLambda(new CoreLambda.Info("acos", "number -> number", "Calculates the inverse cosine of value in radians")) {
                @Override
                public NtValue applyCall(NtValue[] input) {
                    if (input.length == 1 && input[0] instanceof CoreNumber) {
@@ -187,7 +187,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                    throw new DispatchException("acos", "Expected a number but got " + input.length);
                }
            });
-        PREDEF.put("atan", new CoreLambda() {
+        PREDEF.put("atan", new CoreLambda(new CoreLambda.Info("atan", "number -> number  OR  (number, number) -> number", "Calculates the inverse tangent of value in radians. Mapped to the Java functions <code>Math.atan</code> and <code>Math.atan2</code>")) {
                @Override
                public NtValue applyCall(NtValue[] input) {
                    if (input.length == 1 && input[0] instanceof CoreNumber) {
@@ -202,7 +202,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                    throw new DispatchException("atan", "Expected one or two numbers but got " + input.length);
                }
            });
-        PREDEF.put("sqrt", new CoreLambda() {
+        PREDEF.put("sqrt", new CoreLambda(new CoreLambda.Info("sqrt", "number -> number", "Calculates the square root of a value")) {
                @Override
                public NtValue applyCall(NtValue[] input) {
                    if (input.length == 1 && input[0] instanceof CoreNumber) {
@@ -211,7 +211,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                    throw new DispatchException("sqrt", "Expected a number but got " + input.length);
                }
            });
-        PREDEF.put("cbrt", new CoreLambda() {
+        PREDEF.put("cbrt", new CoreLambda(new CoreLambda.Info("sqrt", "number -> number", "Calculates the cube root of a value")) {
                @Override
                public NtValue applyCall(NtValue[] input) {
                    if (input.length == 1 && input[0] instanceof CoreNumber) {
@@ -220,7 +220,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                    throw new DispatchException("cbrt", "Expected a number but got " + input.length);
                }
            });
-        PREDEF.put("square", new CoreLambda() {
+        PREDEF.put("square", new CoreLambda(new CoreLambda.Info("square", "number -> number", "Calculates the square of a value")) {
                @Override
                public NtValue applyCall(NtValue[] input) {
                    if (input.length == 1 && input[0] instanceof CoreNumber) {
@@ -229,7 +229,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                    throw new DispatchException("square", "Expected a number but got " + input.length);
                }
            });
-        PREDEF.put("cube", new CoreLambda() {
+        PREDEF.put("cube", new CoreLambda(new CoreLambda.Info("cube", "number -> number", "Calculates the cube of a value")) {
                @Override
                public NtValue applyCall(NtValue[] input) {
                    if (input.length == 1 && input[0] instanceof CoreNumber) {
@@ -238,7 +238,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                    throw new DispatchException("cube", "Expected a number but got " + input.length);
                }
            });
-        PREDEF.put("abs", new CoreLambda() {
+        PREDEF.put("abs", new CoreLambda(new CoreLambda.Info("abs", "number -> number", "Calculates the absolute value of a value")) {
                @Override
                public NtValue applyCall(NtValue[] input) {
                    if (input.length == 1 && input[0] instanceof CoreNumber) {
@@ -247,7 +247,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                    throw new DispatchException("abs", "Expected a number but got " + input.length);
                }
            });
-        PREDEF.put("ceil", new CoreLambda() {
+        PREDEF.put("ceil", new CoreLambda(new CoreLambda.Info("ceil", "number -> number", "Calculates the ceiling of a value")) {
                @Override
                public NtValue applyCall(NtValue[] input) {
                    if (input.length == 1 && input[0] instanceof CoreNumber) {
@@ -256,7 +256,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                    throw new DispatchException("ceil", "Expected a number but got " + input.length);
                }
            });
-        PREDEF.put("floor", new CoreLambda() {
+        PREDEF.put("floor", new CoreLambda(new CoreLambda.Info("floor", "number -> number", "Calculates the floor of a value")) {
                @Override
                public NtValue applyCall(NtValue[] input) {
                    if (input.length == 1 && input[0] instanceof CoreNumber) {
@@ -265,7 +265,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                    throw new DispatchException("floor", "Expected a number but got " + input.length);
                }
            });
-        PREDEF.put("round", new CoreLambda() {
+        PREDEF.put("round", new CoreLambda(new CoreLambda.Info("round", "number -> number", "Rounds value to the nearest integer")) {
                @Override
                public NtValue applyCall(NtValue[] input) {
                    if (input.length == 1 && input[0] instanceof CoreNumber) {
@@ -274,7 +274,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                    throw new DispatchException("round", "Expected a number but got " + input.length);
                }
            });
-        PREDEF.put("ln", new CoreLambda() {
+        PREDEF.put("ln", new CoreLambda(new CoreLambda.Info("ln", "number -> number", "Calculates the natural logarithm of a value")) {
                @Override
                public NtValue applyCall(NtValue[] input) {
                    if (input.length == 1 && input[0] instanceof CoreNumber) {
@@ -283,7 +283,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                    throw new DispatchException("ln", "Expected a number but got " + input.length);
                }
            });
-        PREDEF.put("log", new CoreLambda() {
+        PREDEF.put("log", new CoreLambda(new CoreLambda.Info("log", "number -> number", "Calculates the base 10 logarithm of a value")) {
                @Override
                public NtValue applyCall(NtValue[] input) {
                    if (input.length == 1 && input[0] instanceof CoreNumber) {
@@ -292,13 +292,13 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                    throw new DispatchException("log", "Expected a number but got " + input.length);
                }
            });
-        PREDEF.put("log_base", new CoreLambda() {
+        PREDEF.put("log_base", new CoreLambda(new CoreLambda.Info("log_base", "func(number) -> func", "Creates a logarithm with the specified base")) {
                @Override
                public NtValue applyCall(NtValue... params) {
                    if (params.length == 1 && params[0] instanceof CoreNumber) {
                        // log_base (10)(100) => 2
                        final double base = ((CoreNumber) params[0]).toDouble();
-                       return new CoreLambda() {
+                       return new CoreLambda(new CoreLambda.Info("$$log_base", "func(number) -> number", "Calculates the logarithm of a value with a predefined base")) {
                            @Override
                            public NtValue applyCall(NtValue... params) {
                                if (params.length == 1 && params[0] instanceof CoreNumber) {
@@ -311,7 +311,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                    throw new DispatchException("log_base", "Expected one number but got " + params.length);
                }
            });
-        PREDEF.put("lim_left", new CoreLambda() {
+        PREDEF.put("lim_left", new CoreLambda(new CoreLambda.Info("lim_left", "func(func) -> number", "Calculates the left-handed limit of a function")) {
                @Override
                public NtValue applyCall(NtValue... f) {
                    if (f.length == 1) {
@@ -321,7 +321,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                    throw new DispatchException("lim_left", "Expected one parameter but got " + f.length);
                }
            });
-        PREDEF.put("lim_right", new CoreLambda() {
+        PREDEF.put("lim_right", new CoreLambda(new CoreLambda.Info("lim_right", "func(func) -> number", "Calculates the right-handed limit of a function")) {
                @Override
                public NtValue applyCall(NtValue... f) {
                    if (f.length == 1) {
@@ -331,7 +331,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                    throw new DispatchException("lim_right", "Expected one parameter but got " + f.length);
                }
            });
-        PREDEF.put("lim", new CoreLambda() {
+        PREDEF.put("lim", new CoreLambda(new CoreLambda.Info("lim", "func(func) -> number", "Calculates the two-sided limit of a function")) {
                @Override
                public NtValue applyCall(NtValue[] f) {
                    if (f.length == 1) {
@@ -393,7 +393,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
 
     @Override
     public CoreLambda visitAnonFuncVal(final AnonFuncVal anonFunc) {
-        return new CoreLambda() {
+        return new CoreLambda(new CoreLambda.Info("<lambda>", "takes " + anonFunc.inputs.length + " parameter(s)", "<code>" + anonFunc.toString() + "</code>")) {
             @Override
             public NtValue applyCall(NtValue... params) {
                 if (params.length != anonFunc.inputs.length) {

@@ -27,17 +27,47 @@ import java.util.function.Function;
  */
 public abstract class CoreLambda extends NtValue {
 
+    public static class Info {
+
+        public final String name;
+        public final String type;
+        public final String desc;
+
+        public Info(String name, String type, String desc) {
+            this.name = name;
+            this.type = type;
+            this.desc = desc;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("%s :: %s\n  %s", name, type, desc);
+        }
+    }
+
     private static class LambdaHelper {
 
-        static final CoreLambda ID = new CoreLambda() {
+        static final CoreLambda ID = new CoreLambda(new Info("Identity function",
+                                                             "any -> any",
+                                                             "Takes a parameter of any type and returns it without modifying it.")) {
             @Override
             public NtValue applyCall(NtValue[] params) {
                 if (params.length == 1) {
                     return params[0];
                 }
-                throw new DispatchException("()", "Identity only takes one parameter: " + params.length + " recieved");
+                throw new DispatchException("identity", "Identity only takes one parameter: " + params.length + " recieved");
             }
         };
+    }
+
+    public final Info info;
+
+    public CoreLambda() {
+        this(null);
+    }
+
+    public CoreLambda(Info info) {
+        this.info = info;
     }
 
     @Override
