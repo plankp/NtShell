@@ -156,23 +156,18 @@ public class BinaryExpr implements AST {
         return new BinaryExpr(nlhs, nrhs, op);
     }
 
-    @Override
-    public AST toCanonicalOrder() {
-        final AST nlhs = lhs.toCanonicalOrder();
-        final AST nrhs = rhs.toCanonicalOrder();
-
+    private AST promote() {
         switch (op.type) {
         case ADD:
         case MUL:
-            return new CommutativeExpr(new AST[]{nlhs, nrhs}, op).toCanonicalOrder();
+            return new CommutativeExpr(new AST[]{lhs, rhs}, op);
         }
-
-        return new BinaryExpr(nlhs, nrhs, op);
+        return this;
     }
 
     @Override
     public AST unfoldConstant() {
-        final AST nthis = this.toCanonicalOrder();
+        final AST nthis = this.promote();
         if (nthis instanceof CommutativeExpr) {
             return nthis.unfoldConstant();
         }
@@ -203,6 +198,20 @@ public class BinaryExpr implements AST {
             }
             if (nrhs.equals(NumberVal.fromLong(1))) {
                 return nlhs;
+            }
+            break;
+        case SUB:
+            // (- a a) => 0
+            // (- a 0) => a
+            // (- 0 a) => -a
+            if (nlhs.equals(nrhs)) {
+                return NumberVal.fromLong(0);
+            }
+            if (nrhs.equals(NumberVal.fromLong(0))) {
+                return nlhs;
+            }
+            if (nlhs.equals(NumberVal.fromLong(0))) {
+                return new UnaryExpr(nrhs, op, true);
             }
             break;
         case DIV:

@@ -67,7 +67,7 @@ public class PiecewiseFuncVal implements AST {
         }
 
         public CaseBlock unfoldConstant() {
-            final AST nexpr = expr.toCanonicalOrder().unfoldConstant();
+            final AST nexpr = expr.unfoldConstant();
             if (nexpr == expr) {
                 return this;
             }

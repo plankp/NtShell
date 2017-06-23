@@ -136,16 +136,7 @@ public class AnonFuncVal implements AST {
 
     @Override
     public AST unfoldConstant() {
-        final AST out = this.output.toCanonicalOrder().unfoldConstant();
-        if (out == this.output) {
-            return this;
-        }
-        return new AnonFuncVal(inputs, out);
-    }
-
-    @Override
-    public AST toCanonicalOrder() {
-        final AST out = this.output.toCanonicalOrder();
+        final AST out = this.output.unfoldConstant();
         if (out == this.output) {
             return this;
         }

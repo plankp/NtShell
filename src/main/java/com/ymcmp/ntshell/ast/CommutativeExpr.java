@@ -109,16 +109,6 @@ public class CommutativeExpr implements AST {
         return ret;
     }
 
-    @Override
-    public CommutativeExpr toCanonicalOrder() {
-        final AST[] nnodes = new AST[nodes.length];
-        for (int i = 0; i < nodes.length; ++i) {
-            nnodes[i] = nodes[i].toCanonicalOrder();
-        }
-        Arrays.sort(nnodes);
-        return new CommutativeExpr(nnodes, op);
-    }
-
     private AST unfoldUnarySub() {
         if (nodes.length == 2
                 && op.type == Token.Type.MUL
@@ -131,13 +121,14 @@ public class CommutativeExpr implements AST {
 
     @Override
     public AST unfoldConstant() {
-        final CommutativeExpr nthis = this.toCanonicalOrder();
-        for (int i = 0; i < nthis.nodes.length; ++i) {
-            nthis.nodes[i] = nthis.nodes[i].unfoldConstant();
+        final AST[] nnodes = new AST[nodes.length];
+        for (int i = 0; i < nnodes.length; ++i) {
+            nnodes[i] = nodes[i].unfoldConstant();
         }
 
-        if (nthis.op.type == Token.Type.MUL) {
-            if (Arrays.stream(nthis.nodes).anyMatch(e -> {
+        switch (op.type) {
+        case MUL: {
+            if (Arrays.stream(nnodes).anyMatch(e -> {
                 if (e instanceof NumberVal) {
                     return ((NumberVal) e).toDouble() == 0;
                 }
@@ -148,31 +139,33 @@ public class CommutativeExpr implements AST {
             }
 
             // (* a b 1 c) => (* a b c)
-            final AST[] nnodes = Arrays.stream(nthis.nodes).filter(e -> {
+            final AST[] t = Arrays.stream(nnodes).filter(e -> {
                 if (e instanceof NumberVal) {
                     return ((NumberVal) e).toDouble() != 1;
                 }
                 return true;
             }).toArray(AST[]::new);
-            if (nnodes.length == 1) {
-                return nnodes[0];
+            if (t.length == 1) {
+                return t[0];
             }
-            return new CommutativeExpr(nnodes, nthis.op).unfoldUnarySub();
+            return new CommutativeExpr(t, op).unfoldUnarySub();
         }
-        if (nthis.op.type == Token.Type.ADD) {
+        case ADD: {
             // (+ a b 0 c) => (+ a b c)
-            final AST[] nnodes = Arrays.stream(nthis.nodes).filter(e -> {
+            final AST[] t = Arrays.stream(nnodes).filter(e -> {
                 if (e instanceof NumberVal) {
                     return ((NumberVal) e).toDouble() != 0;
                 }
                 return true;
             }).toArray(AST[]::new);
-            if (nnodes.length == 1) {
-                return nnodes[0];
+            if (t.length == 1) {
+                return t[0];
             }
-            return new CommutativeExpr(nnodes, nthis.op);
+            return new CommutativeExpr(nnodes, op);
         }
-        return nthis;
+        default:
+        }
+        return new CommutativeExpr(nnodes, op);
     }
 
     @Override

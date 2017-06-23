@@ -175,7 +175,7 @@ public class App {
                         }
                     }
                     if (unfoldConst) {
-                        ast = ast.toCanonicalOrder().unfoldConstant();
+                        ast = ast.unfoldConstant();
                         if (showAST) {
                             env.writeLine("unfoldc:  " + ast);
                         }

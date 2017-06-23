@@ -27,16 +27,24 @@ import java.awt.Font;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
 import java.awt.event.KeyEvent;
+import javax.swing.JButton;
 
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
+import javax.swing.JTable;
 import javax.swing.JTextPane;
 import javax.swing.ScrollPaneConstants;
+
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.DefaultTableModel;
 
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultStyledDocument;
@@ -173,13 +181,13 @@ public class SwingMode implements Frontend {
                 return;
             }
         }
-        Frontend.super.write(o); //To change body of generated methods, choose Tools | Templates.
+        Frontend.super.write(o);
     }
 
     private String toToolTipText(final String str) {
         return new StringBuilder()
                 .append("<html><p width=\"250\">")
-                .append(str.replace("\n", "<br>").replace(" ", "&nbsp;"))
+                .append(str.replace(" ", "&nbsp;").replace("\n", "<br>"))
                 .append("</p></html>")
                 .toString();
     }

@@ -73,19 +73,9 @@ public class ApplyExpr implements AST {
     }
 
     @Override
-    public AST toCanonicalOrder() {
-        final AST ninst = instance.toCanonicalOrder();
-        final AST[] nparams = Arrays.stream(params)
-                .map(AST::toCanonicalOrder)
-                .toArray(AST[]::new);
-        return new ApplyExpr(ninst, nparams);
-    }
-
-    @Override
     public AST unfoldConstant() {
-        final AST ninst = instance.toCanonicalOrder().unfoldConstant();
+        final AST ninst = instance.unfoldConstant();
         final AST[] nparams = Arrays.stream(params)
-                .map(AST::toCanonicalOrder)
                 .map(AST::unfoldConstant)
                 .toArray(AST[]::new);
         if (nparams.length == 0 && ninst instanceof AnonFuncVal) {

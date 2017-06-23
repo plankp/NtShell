@@ -151,6 +151,10 @@ public class CoreNumber extends NtValue implements Comparable<CoreNumber> {
         if (rhs instanceof CoreNumber) {
             return CoreNumber.from(val + ((CoreNumber) rhs).val);
         }
+        if (rhs instanceof CoreMatrix) {
+            // Addition is commutative
+            return rhs.applyAdd(this);
+        }
         return super.applyAdd(rhs);
     }
 
@@ -158,6 +162,9 @@ public class CoreNumber extends NtValue implements Comparable<CoreNumber> {
     public NtValue applySub(NtValue rhs) {
         if (rhs instanceof CoreNumber) {
             return CoreNumber.from(val - ((CoreNumber) rhs).val);
+        }
+        if (rhs instanceof CoreMatrix) {
+            return ((CoreMatrix) rhs).applyRSub(this);
         }
         return super.applySub(rhs);
     }
@@ -167,6 +174,10 @@ public class CoreNumber extends NtValue implements Comparable<CoreNumber> {
         if (rhs instanceof CoreNumber) {
             return CoreNumber.from(val * ((CoreNumber) rhs).val);
         }
+        if (rhs instanceof CoreMatrix) {
+            // Multiplication is commutative
+            return rhs.applyMul(this);
+        }
         return super.applyMul(rhs);
     }
 
@@ -174,6 +185,9 @@ public class CoreNumber extends NtValue implements Comparable<CoreNumber> {
     public NtValue applyDiv(NtValue rhs) {
         if (rhs instanceof CoreNumber) {
             return CoreNumber.from(val / ((CoreNumber) rhs).val);
+        }
+        if (rhs instanceof CoreMatrix) {
+            return ((CoreMatrix) rhs).applyRDiv(this);
         }
         return super.applyDiv(rhs);
     }
@@ -183,6 +197,9 @@ public class CoreNumber extends NtValue implements Comparable<CoreNumber> {
         if (rhs instanceof CoreNumber) {
             return CoreNumber.from(val % ((CoreNumber) rhs).val);
         }
+        if (rhs instanceof CoreMatrix) {
+            return ((CoreMatrix) rhs).applyRMod(this);
+        }
         return super.applyMod(rhs);
     }
 
@@ -190,6 +207,9 @@ public class CoreNumber extends NtValue implements Comparable<CoreNumber> {
     public NtValue applyPow(NtValue rhs) {
         if (rhs instanceof CoreNumber) {
             return CoreNumber.from(Math.pow(val, ((CoreNumber) rhs).val));
+        }
+        if (rhs instanceof CoreMatrix) {
+            return ((CoreMatrix) rhs).applyRPow(this);
         }
         return super.applyPow(rhs);
     }

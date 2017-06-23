@@ -73,7 +73,7 @@ public class AssignExpr implements AST {
 
     @Override
     public AST unfoldConstant() {
-        final AST nval = value.toCanonicalOrder().unfoldConstant();
+        final AST nval = value.unfoldConstant();
         if (nval == value) {
             return this;
         }

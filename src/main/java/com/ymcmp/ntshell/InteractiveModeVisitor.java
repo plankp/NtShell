@@ -26,6 +26,7 @@ import java.util.HashMap;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.IntStream;
 
 /**
  *
@@ -46,7 +47,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
 
         // Not-as-interesting Functions
         PREDEF.put("id", CoreLambda.getIdentityFunction());
-        PREDEF.put("twice", new CoreLambda(new CoreLambda.Info("twice", "<supports applyCall> -> func", "Returns a function that behaves like the following: <code>twice(f) => x -> f(f(x))</code>")) {
+        PREDEF.put("twice", new CoreLambda(new CoreLambda.Info("twice", "[applyCall] -> func", "Returns a function that behaves like the following: <code>twice(f) => x -> f(f(x))</code>")) {
                @Override
                public NtValue applyCall(NtValue[] input) {
                    // twice (f) => x -> f(f(x))
@@ -57,13 +58,53 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                }
            });
 
+        // Matrix-related Functions
+        PREDEF.put("iota", new CoreLambda(new CoreLambda.Info("iota", "bound:number -> mat", "Creates a one-row matrix with the elements 1 to (bound). Returns an empty matrix if bound is not bigger than 1.")) {
+               @Override
+               public NtValue applyCall(final NtValue[] params) {
+                   if (params.length == 1 && params[0] instanceof CoreNumber) {
+                       return CoreMatrix.from(new CoreNumber[][]{
+                           IntStream.rangeClosed(1, (int) ((CoreNumber) params[0]).toDouble())
+                           .mapToObj(CoreNumber::from)
+                           .toArray(CoreNumber[]::new)});
+                   }
+                   throw new DispatchException("iota", "Expected a number, got " + params.length + " instead");
+               }
+           });
+        PREDEF.put("transpose", new CoreLambda(new CoreLambda.Info("transpose", "mat -> mat", "Transposes a matrix. The original matrix is left untouched.")) {
+               @Override
+               public NtValue applyCall(NtValue... params) {
+                   if (params.length == 1 && params[0] instanceof CoreMatrix) {
+                       return ((CoreMatrix) params[0]).transpose();
+                   }
+                   throw new DispatchException("transpose", "Expected a matrix, got " + params.length + " instead");
+               }
+           });
+        PREDEF.put("map", new CoreLambda(new CoreLambda.Info("map", "mat -> func", "Wraps matrix in a map context. A map is defined as an equivalent application on all elements. The original matrix is left untouched after the transformation.")) {
+               @Override
+               public NtValue applyCall(final NtValue[] mat) {
+                   if (mat.length == 1 && mat[0] instanceof CoreMatrix) {
+                       return new CoreLambda(new CoreLambda.Info("$$map", "func([supports applyCall]) -> mat", "Performs the specified transformation on the matrix elements. The original matrix is left untouched.")) {
+                           @Override
+                           public NtValue applyCall(final NtValue[] f) {
+                               if (f.length == 1) {
+                                   return ((CoreMatrix) mat[0]).map(f[0]);
+                               }
+                               throw new DispatchException("Expected an instance supporting applyCall, got " + f.length + " instead");
+                           }
+                       };
+                   }
+                   throw new DispatchException("map", "Expected a matrix, got " + mat.length + " instead");
+               }
+           });
+
         // Short-hand Functions
-        PREDEF.put("summation", new CoreLambda(new CoreLambda.Info("summation", "f:<supports applyCall> -> func", "Wraps (f) insidea summation sequence")) {
+        PREDEF.put("summation", new CoreLambda(new CoreLambda.Info("summation", "f:[applyCall] -> func", "Wraps (f) inside a summation sequence")) {
                @Override
                public NtValue applyCall(final NtValue[] f) {
                    // summation (f)(m, n) => while ++m <= n { ret += f(m); }
                    if (f.length == 1) {
-                       return new CoreLambda(new CoreLambda.Info("$$summation", "func(start:number, end:number) -> <supports applyAdd>", "Performs summation from (start) to (end) with the increment of 1")) {
+                       return new CoreLambda(new CoreLambda.Info("$$summation", "func(start:number, end:number) -> [applyAdd]", "Performs summation from (start) to (end) with the increment of 1")) {
                            @Override
                            public NtValue applyCall(final NtValue[] params) {
                                final double n;

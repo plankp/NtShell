@@ -118,7 +118,7 @@ public class NtValue {
     }
 
     public NtValue applyCall(NtValue... params) {
-        throw new DispatchException("()", "Type " + this.getClass() + " cannot be apply with " + params.length + " parameters");
+        throw new DispatchException("()", this.getClass().getSimpleName() + " cannot be apply with " + params.length + " parameters");
     }
 
     public boolean isTruthy() {

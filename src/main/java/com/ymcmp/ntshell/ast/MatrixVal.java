@@ -40,6 +40,28 @@ public class MatrixVal implements AST {
             return String.format("column{ row:%s }", Arrays.toString(row));
         }
 
+        @Override
+        public int hashCode() {
+            int hash = 7;
+            hash = 17 * hash + Arrays.deepHashCode(this.row);
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            final Column other = (Column) obj;
+            return Arrays.deepEquals(this.row, other.row);
+        }
+
         public Column transformNegatives() {
             final AST[] nrow = new AST[row.length];
             for (int i = 0; i < nrow.length; ++i) {
@@ -78,7 +100,7 @@ public class MatrixVal implements AST {
     public MatrixVal(Column[] columns) {
         this.columns = columns;
     }
-    
+
     public AST getCell(int row, int column) {
         return columns[column].row[row];
     }
@@ -125,9 +147,39 @@ public class MatrixVal implements AST {
     }
 
     @Override
+    public String toString() {
+        return String.format("matrix{ columns:%s }", Arrays.toString(columns));
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 19 * hash + Arrays.deepHashCode(this.columns);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final MatrixVal other = (MatrixVal) obj;
+        return Arrays.deepEquals(this.columns, other.columns);
+    }
+
+    @Override
     public int compareTo(AST o) {
         if (o instanceof NumberVal || o instanceof VariableVal || o instanceof AnonFuncVal) {
             return 1;
+        }
+        if (o instanceof MatrixVal) {
+            return 0;
         }
         return -1;
     }

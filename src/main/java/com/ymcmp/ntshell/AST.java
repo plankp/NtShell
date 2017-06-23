@@ -31,7 +31,6 @@ public interface AST extends Serializable, Comparable<AST> {
                 .transformNegatives()
                 .levelOperators()
                 .simplifyRationals()
-                .toCanonicalOrder()
                 .unfoldConstant();
     }
 
@@ -44,10 +43,6 @@ public interface AST extends Serializable, Comparable<AST> {
     }
 
     public default AST simplifyRationals() {
-        return this;
-    }
-
-    public default AST toCanonicalOrder() {
         return this;
     }
 
