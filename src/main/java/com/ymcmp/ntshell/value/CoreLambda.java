@@ -27,6 +27,8 @@ import java.util.function.Function;
  */
 public abstract class CoreLambda extends NtValue {
 
+    public final Info info;
+
     public static class Info {
 
         public final String name;
@@ -59,8 +61,6 @@ public abstract class CoreLambda extends NtValue {
             }
         };
     }
-
-    public final Info info;
 
     public CoreLambda() {
         this(null);

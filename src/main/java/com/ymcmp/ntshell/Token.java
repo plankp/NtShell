@@ -27,6 +27,9 @@ public class Token implements Serializable {
 
     private static final long serialVersionUID = 81734928356028769L;
 
+    public final Type type;
+    public final String text;
+
     private static class TokenHelper {
 
         public static final Token NIL_TOKEN = new Token(Type.S_EOF, null);
@@ -42,9 +45,6 @@ public class Token implements Serializable {
         K_IF, K_AND, K_OR,
         IDENT, NUMBER, ATOM,
     }
-
-    public final Type type;
-    public final String text;
 
     public Token(Type type, String text) {
         this.type = type;

@@ -27,14 +27,14 @@ import java.util.Objects;
  */
 public class NumberVal implements AST {
 
+    public final Token val;
+
     private static final class NumberValHelper {
 
         public static final NumberVal ZERO = new NumberVal(new Token(Token.Type.NUMBER, "0"));
         public static final NumberVal ONE = new NumberVal(new Token(Token.Type.NUMBER, "1"));
         public static final NumberVal NEG_ONE = new NumberVal(new Token(Token.Type.NUMBER, "-1"));
     }
-
-    public final Token val;
 
     public NumberVal(Token val) {
         if (val.type != Token.Type.NUMBER) {
