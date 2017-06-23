@@ -78,6 +78,11 @@ public abstract class CoreLambda extends NtValue {
         return String.format("<lambda@%s>", Integer.toHexString(this.hashCode()));
     }
 
+    @Override
+    public final boolean isTruthy() {
+        return true;
+    }
+
     public Function<NtValue[], NtValue> toFunction() {
         return x -> this.applyCall(x);
     }
