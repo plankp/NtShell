@@ -21,22 +21,16 @@ import de.erichseifert.gral.graphics.Drawable;
 import de.erichseifert.gral.graphics.DrawingContext;
 
 import de.erichseifert.gral.plots.DataPoint;
-
 import de.erichseifert.gral.plots.lines.AbstractLineRenderer2D;
+
 import de.erichseifert.gral.util.GraphicsUtils;
 
 import java.awt.Paint;
-import java.awt.Rectangle;
 import java.awt.Shape;
 
-import java.awt.geom.AffineTransform;
 import java.awt.geom.Path2D;
-import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
 
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**

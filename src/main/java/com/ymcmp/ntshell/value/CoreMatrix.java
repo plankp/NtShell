@@ -19,25 +19,18 @@ package com.ymcmp.ntshell.value;
 import com.ymcmp.ntshell.NtValue;
 import com.ymcmp.ntshell.DispatchException;
 
-import java.io.Serializable;
-
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 import java.util.function.Function;
 import java.util.function.BiFunction;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  *
  * @author YTENG
  */
 public class CoreMatrix extends NtValue {
+
+    public final NtValue[][] mat;
 
     private static class Helper {
 
@@ -54,8 +47,6 @@ public class CoreMatrix extends NtValue {
             return new DispatchException(dispatcher, getMessage());
         }
     }
-
-    public final NtValue[][] mat;
 
     protected CoreMatrix(final NtValue[][] mat) {
         this.mat = mat;

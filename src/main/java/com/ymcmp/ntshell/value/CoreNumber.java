@@ -24,6 +24,8 @@ import com.ymcmp.ntshell.NtValue;
  */
 public class CoreNumber extends NtValue implements Comparable<CoreNumber> {
 
+    public final double val;
+
     private static class Helper {
 
         static final CoreNumber NEG_INF = new CoreNumber(Double.NEGATIVE_INFINITY);
@@ -37,8 +39,6 @@ public class CoreNumber extends NtValue implements Comparable<CoreNumber> {
         static final CoreNumber PI = new CoreNumber(Math.PI);
         static final CoreNumber E = new CoreNumber(Math.E);
     }
-
-    public final double val;
 
     protected CoreNumber(double d) {
         this.val = d;
@@ -219,10 +219,7 @@ public class CoreNumber extends NtValue implements Comparable<CoreNumber> {
         if (Double.isNaN(val)) {
             return false;
         }
-        if (val == 0.0) {
-            return false;
-        }
-        return true;
+        return val != 0.0;
     }
 
     public boolean isFinite() {

@@ -312,7 +312,7 @@ public class App {
                         tokens.remove(0);
                     }
                 } catch (RuntimeException ex) {
-                    throw new RuntimeException("Paramters need to be split with commas", ex);
+                    throw new ParserException("Paramters need to be split with commas", ex);
                 }
             }
             tokens.remove(0);
@@ -349,48 +349,10 @@ public class App {
                 return new VariableVal(name);
             }
         }
-        case LCURL: {
-            // = LCURL <$case> (COMMA <$case>)+ COMMA? RCURL
-            tokens.remove(0);
-            final List<PiecewiseFuncVal.CaseBlock> cases = new ArrayList<>();
-            cons_loop:
-            while (peekNextToken(tokens, env).type != Token.Type.RCURL) {
-                cases.add(consumeCase(tokens, env));
-                switch (peekNextToken(tokens, env).type) {
-                case COMMA:
-                    tokens.remove(0);
-                    break;
-                case RCURL:
-                    break cons_loop;
-                default:
-                    throw new RuntimeException("Case statements are split with commas, found " + peekNextToken(tokens, env));
-                }
-            }
-            tokens.remove(0);
-            if (cases.isEmpty()) {
-                return new NumberVal(new Token(Token.Type.NUMBER, "0"));
-            }
-            return new PiecewiseFuncVal(cases.toArray(new PiecewiseFuncVal.CaseBlock[cases.size()]));
-        }
-        case LBLK: {
-            // = LBLK RBLK         (0)
-            // | LBLK <row>+ RBLK  (1)
-            tokens.remove(0);
-            final List<MatrixVal.Column> elems = new ArrayList<>();
-            while (peekNextToken(tokens, env).type != Token.Type.RBLK) {
-                try {
-                    elems.add(consumeRow(tokens, env));
-                } catch (MatrixRowUnclosedException ex) {
-                    if (peekNextToken(tokens, env).type == Token.Type.RBLK) {
-                        elems.add(ex.currentColumn);
-                        break;
-                    }
-                    throw new RuntimeException(ex.getMessage());
-                }
-            }
-            tokens.remove(0);
-            return new MatrixVal(elems.toArray(new MatrixVal.Column[elems.size()]));
-        }
+        case LCURL:
+            return consumePiecewiseFunc(tokens, env);
+        case LBLK:
+            return consumeMatrix(tokens, env);
         case LBRACE: {
             // = LBRACE <expr> RBRACE                                        (0)
             // | LBRACE RBRACE YIELD <expr>                                  (1)
@@ -426,7 +388,7 @@ public class App {
                         return new AnonFuncVal(inputs.toArray(new Token[inputs.size()]),
                                                consumeYield(tokens, env));
                     } else {
-                        throw new RuntimeException("Anonymous function parameter list unclosed");
+                        throw new ParserException("Anonymous function parameter list unclosed");
                     }
                 }
                 default:
@@ -444,6 +406,50 @@ public class App {
         }
     }
 
+    private static AST consumeMatrix(final List<Token> tokens, final Frontend env) throws ParserException {
+        // = LBLK RBLK         (0)
+        // | LBLK <row>+ RBLK  (1)
+        tokens.remove(0);
+        final List<MatrixVal.Column> elems = new ArrayList<>();
+        while (peekNextToken(tokens, env).type != Token.Type.RBLK) {
+            try {
+                elems.add(consumeRow(tokens, env));
+            } catch (MatrixRowUnclosedException ex) {
+                if (peekNextToken(tokens, env).type == Token.Type.RBLK) {
+                    elems.add(ex.currentColumn);
+                    break;
+                }
+                throw new ParserException(ex.getMessage());
+            }
+        }
+        tokens.remove(0);
+        return new MatrixVal(elems.toArray(new MatrixVal.Column[elems.size()]));
+    }
+
+    private static AST consumePiecewiseFunc(final List<Token> tokens, final Frontend env) throws ParserException {
+        // = LCURL <$case> (COMMA <$case>)+ COMMA? RCURL
+        tokens.remove(0);
+        final List<PiecewiseFuncVal.CaseBlock> cases = new ArrayList<>();
+        cons_loop:
+        while (peekNextToken(tokens, env).type != Token.Type.RCURL) {
+            cases.add(consumeCase(tokens, env));
+            switch (peekNextToken(tokens, env).type) {
+            case COMMA:
+                tokens.remove(0);
+                break;
+            case RCURL:
+                break cons_loop;
+            default:
+                throw new ParserException("Case statements are split with commas, found " + peekNextToken(tokens, env));
+            }
+        }
+        tokens.remove(0);
+        if (cases.isEmpty()) {
+            return new NumberVal(new Token(Token.Type.NUMBER, "0"));
+        }
+        return new PiecewiseFuncVal(cases.toArray(new PiecewiseFuncVal.CaseBlock[cases.size()]));
+    }
+
     private static AST consumeTrailBrace(final List<Token> tokens, final Frontend env) {
         // try (0)
         final AST expr = consumeExpr(tokens, env);
@@ -451,7 +457,7 @@ public class App {
             tokens.remove(0);
             return expr;
         } else {
-            throw new RuntimeException("Missing )");
+            throw new ParserException("Missing )");
         }
     }
 
@@ -492,7 +498,7 @@ public class App {
             tokens.remove(0);
             return new PiecewiseFuncVal.CaseBlock(consumePred(tokens, env), action);
         }
-        throw new RuntimeException("Each piecewise case requires a condition");
+        throw new ParserException("Each piecewise case requires a condition");
     }
 
     private static AST consumePred(final List<Token> tokens, final Frontend env) {
@@ -665,88 +671,22 @@ public class App {
                         tokens.add(new Token(Token.Type.GT, ">"));
                     }
                     break;
-                case '@': {
-                    final StringBuilder buf = new StringBuilder().append('@');
-                    if (isIdent(arr[++i])) {
-                        while (i < arr.length && isIdent(arr[i])) {
-                            buf.append(arr[i++]);
-                        }
-                        --i;
-                        final String ident = buf.toString();
-                        tokens.add(new Token(Token.Type.ATOM, ident));
-                        break;
-                    }
+                case '@':
+                    i = lexAtom(arr, i, tokens);
                     break;
-                }
-                case '0': {
-                    final StringBuilder buf = new StringBuilder();
-                    buf.append('0');
-                    if (++i < arr.length) {
-                        switch (arr[i]) {
-                        case 'b': // binary
-                            buf.append(arr[i++]);
-                            while (i < arr.length && isBinary(arr[i])) {
-                                buf.append(arr[i++]);
-                            }
-                            break;
-                        case 'c': // octal
-                            buf.append(arr[i++]);
-                            while (i < arr.length && isOctal(arr[i])) {
-                                buf.append(arr[i++]);
-                            }
-                            break;
-                        case 'd': // decimal
-                            buf.append(arr[i++]);
-                            while (i < arr.length && isDecimal(arr[i])) {
-                                buf.append(arr[i++]);
-                            }
-                            break;
-                        case 'x': // hexadecimal
-                            buf.append(arr[i++]);
-                            while (i < arr.length && isHexadecimal(arr[i])) {
-                                buf.append(arr[i++]);
-                            }
-                            break;
-                        case '.': // float-point
-                            buf.append(arr[i++]);
-                            while (i < arr.length && isDecimal(arr[i])) {
-                                buf.append(arr[i++]);
-                            }
-                            break;
-                        default:
-                        }
-                    }
-                    --i;
-                    tokens.add(new Token(Token.Type.NUMBER, buf.toString()));
+                case '0':
+                    i = lexZeroPrefixedNumber(i, arr, tokens);
                     break;
-                }
-                default: {
-                    final StringBuilder buf = new StringBuilder();
+                default:
                     if (isDecimal(arr[i])) {
-                        while (i < arr.length && isDecimal(arr[i])) {
-                            buf.append(arr[i++]);
-                        }
-                        if (i < arr.length && arr[i] == '.') {
-                            buf.append(arr[i++]);
-                            while (i < arr.length && isDecimal(arr[i])) {
-                                buf.append(arr[i++]);
-                            }
-                        }
-                        --i;
-                        tokens.add(new Token(Token.Type.NUMBER, buf.toString()));
+                        i = lexNumber(i, arr, tokens);
                         break;
                     }
                     if (isIdent(arr[i])) {
-                        while (i < arr.length && isIdent(arr[i])) {
-                            buf.append(arr[i++]);
-                        }
-                        --i;
-                        final String ident = buf.toString();
-                        tokens.add(new Token(KWORDS.getOrDefault(ident, Token.Type.IDENT), ident));
+                        i = lexIdentifier(i, arr, tokens);
                         break;
                     }
                     throw new LexerException("Unrecognized character of `" + arr[i] + "'");
-                }
                 }
             } catch (ArrayIndexOutOfBoundsException ex) {
                 arr = env.readLine().toCharArray();
@@ -754,6 +694,90 @@ public class App {
             }
         }
         return tokens;
+    }
+
+    private static int lexIdentifier(int i, char[] arr, final List<Token> tokens) {
+        final StringBuilder buf = new StringBuilder();
+        while (i < arr.length && isIdent(arr[i])) {
+            buf.append(arr[i++]);
+        }
+        --i;
+        final String ident = buf.toString();
+        tokens.add(new Token(KWORDS.getOrDefault(ident, Token.Type.IDENT), ident));
+        return i;
+    }
+
+    private static int lexNumber(int i, char[] arr, final List<Token> tokens) {
+        final StringBuilder buf = new StringBuilder();
+        while (i < arr.length && isDecimal(arr[i])) {
+            buf.append(arr[i++]);
+        }
+        if (i < arr.length && arr[i] == '.') {
+            buf.append(arr[i++]);
+            while (i < arr.length && isDecimal(arr[i])) {
+                buf.append(arr[i++]);
+            }
+        }
+        --i;
+        tokens.add(new Token(Token.Type.NUMBER, buf.toString()));
+        return i;
+    }
+
+    private static int lexZeroPrefixedNumber(int i, char[] arr, final List<Token> tokens) {
+        final StringBuilder buf = new StringBuilder();
+        buf.append('0');
+        if (++i < arr.length) {
+            switch (arr[i]) {
+            case 'b': // binary
+                buf.append(arr[i++]);
+                while (i < arr.length && isBinary(arr[i])) {
+                    buf.append(arr[i++]);
+                }
+                break;
+            case 'c': // octal
+                buf.append(arr[i++]);
+                while (i < arr.length && isOctal(arr[i])) {
+                    buf.append(arr[i++]);
+                }
+                break;
+            case 'd': // decimal
+                buf.append(arr[i++]);
+                while (i < arr.length && isDecimal(arr[i])) {
+                    buf.append(arr[i++]);
+                }
+                break;
+            case 'x': // hexadecimal
+                buf.append(arr[i++]);
+                while (i < arr.length && isHexadecimal(arr[i])) {
+                    buf.append(arr[i++]);
+                }
+                break;
+            case '.': // float-point
+                buf.append(arr[i++]);
+                while (i < arr.length && isDecimal(arr[i])) {
+                    buf.append(arr[i++]);
+                }
+                break;
+            default:
+            }
+        }
+        --i;
+        tokens.add(new Token(Token.Type.NUMBER, buf.toString()));
+        return i;
+    }
+
+    private static int lexAtom(char[] arr, int i, final List<Token> tokens) {
+        final StringBuilder buf = new StringBuilder().append('@');
+        if (isIdent(arr[++i])) {
+            while (i < arr.length && isIdent(arr[i])) {
+                buf.append(arr[i++]);
+            }
+            --i;
+            final String ident = buf.toString();
+            tokens.add(new Token(Token.Type.ATOM, ident));
+            return i;
+        }
+        return i;
     }
 
     private static boolean isIdent(final char c) {
