@@ -343,6 +343,44 @@ public class CoreMatrix extends NtValue {
         return new CoreMatrix(rows);
     }
 
+    public CoreMatrix flipOnY() {
+        // 1 2 => 2 1
+        // 3 4    4 3
+        if (mat.length == 0) {
+            return Helper.EMPTY_MAT;
+        }
+        final NtValue[][] ret = Arrays.copyOf(mat, mat.length);
+        for (int i = 0; i < ret.length; ++i) {
+            ret[i] = reverse(ret[i]);
+        }
+        return new CoreMatrix(ret);
+    }
+
+    public CoreMatrix flipOnX() {
+        // 1 2 => 3 4
+        // 3 4    1 2
+        if (mat.length == 0) {
+            return Helper.EMPTY_MAT;
+        }
+        final NtValue[][] ret = reverse(Arrays.copyOf(mat, mat.length));
+        return new CoreMatrix(ret);
+    }
+
+    private static <T> T[] reverse(final T[] arr) {
+        if (arr.length < 2) {
+            return arr;
+        }
+
+        final int upTo = arr.length / 2;
+        for (int i = 0; i < upTo; ++i) {
+            final int outerBound = arr.length - 1;
+            final T tmp = arr[i];
+            arr[i] = arr[outerBound];
+            arr[outerBound] = tmp;
+        }
+        return arr;
+    }
+
     @Override
     public boolean isTruthy() {
         return mat.length > 0;

@@ -59,6 +59,12 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
            });
 
         // Matrix-related Functions
+        PREDEF.put("group", new CoreLambda(new CoreLambda.Info("group", "(...) -> mat", "Converts the parameters into a one dimensional matrix")) {
+               @Override
+               public NtValue applyCall(final NtValue[] params) {
+                   return CoreMatrix.from(new NtValue[][]{params});
+               }
+           });
         PREDEF.put("iota", new CoreLambda(new CoreLambda.Info("iota", "bound:number -> mat", "Creates a one-row matrix with the elements 1 to (bound). Returns an empty matrix if bound is not bigger than 1.")) {
                @Override
                public NtValue applyCall(final NtValue[] params) {
@@ -103,6 +109,24 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                        return ((CoreMatrix) params[0]).transpose();
                    }
                    throw new DispatchException("transpose", "Expected a matrix, got " + params.length + " instead");
+               }
+           });
+        PREDEF.put("flip_x", new CoreLambda(new CoreLambda.Info("flip_x", "mat -> mat", "Flips a matrix by the x axis. The original matrix is left untouched.")) {
+               @Override
+               public NtValue applyCall(NtValue... params) {
+                   if (params.length == 1 && params[0] instanceof CoreMatrix) {
+                       return ((CoreMatrix) params[0]).flipOnX();
+                   }
+                   throw new DispatchException("flip_x", "Expected a matrix, got " + params.length + " instead");
+               }
+           });
+        PREDEF.put("flip_y", new CoreLambda(new CoreLambda.Info("flip_y", "mat -> mat", "Flips a matrix by the y axis. The original matrix is left untouched.")) {
+               @Override
+               public NtValue applyCall(NtValue... params) {
+                   if (params.length == 1 && params[0] instanceof CoreMatrix) {
+                       return ((CoreMatrix) params[0]).flipOnY();
+                   }
+                   throw new DispatchException("flip_y", "Expected a matrix, got " + params.length + " instead");
                }
            });
         PREDEF.put("map", new CoreLambda(new CoreLambda.Info("map", "mat -> func", "Wraps matrix in a map context. A map is defined as an equivalent application on all elements. The original matrix is left untouched after the transformation.")) {
