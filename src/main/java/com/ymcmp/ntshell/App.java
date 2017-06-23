@@ -312,7 +312,7 @@ public class App {
                         tokens.remove(0);
                     }
                 } catch (RuntimeException ex) {
-                    throw new RuntimeException("Paramters need to be split with commas", ex);
+                    throw new ParserException("Paramters need to be split with commas", ex);
                 }
             }
             tokens.remove(0);
@@ -385,7 +385,7 @@ public class App {
                         elems.add(ex.currentColumn);
                         break;
                     }
-                    throw new RuntimeException(ex.getMessage());
+                    throw new ParserException(ex.getMessage());
                 }
             }
             tokens.remove(0);
@@ -426,7 +426,7 @@ public class App {
                         return new AnonFuncVal(inputs.toArray(new Token[inputs.size()]),
                                                consumeYield(tokens, env));
                     } else {
-                        throw new RuntimeException("Anonymous function parameter list unclosed");
+                        throw new ParserException("Anonymous function parameter list unclosed");
                     }
                 }
                 default:
@@ -451,7 +451,7 @@ public class App {
             tokens.remove(0);
             return expr;
         } else {
-            throw new RuntimeException("Missing )");
+            throw new ParserException("Missing )");
         }
     }
 
@@ -492,7 +492,7 @@ public class App {
             tokens.remove(0);
             return new PiecewiseFuncVal.CaseBlock(consumePred(tokens, env), action);
         }
-        throw new RuntimeException("Each piecewise case requires a condition");
+        throw new ParserException("Each piecewise case requires a condition");
     }
 
     private static AST consumePred(final List<Token> tokens, final Frontend env) {
