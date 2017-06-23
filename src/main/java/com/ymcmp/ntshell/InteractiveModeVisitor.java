@@ -58,11 +58,31 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                }
            });
 
+        // Atom-related Functions
+        PREDEF.put("matrix", new CoreLambda(new CoreLambda.Info("matrix", "atom -> matrix", "Converts the atom into its equivalent matrix")) {
+               @Override
+               public NtValue applyCall(final NtValue[] params) {
+                   if (params.length == 1 && params[0] instanceof CoreAtom) {
+                       return ((CoreAtom) params[0]).toMatrix();
+                   }
+                   throw new DispatchException("matrix", "Expected a atom, got " + params.length + " instead");
+               }
+           });
+
         // Matrix-related Functions
         PREDEF.put("group", new CoreLambda(new CoreLambda.Info("group", "(...) -> mat", "Converts the parameters into a one dimensional matrix")) {
                @Override
                public NtValue applyCall(final NtValue[] params) {
                    return CoreMatrix.from(new NtValue[][]{params});
+               }
+           });
+        PREDEF.put("atom", new CoreLambda(new CoreLambda.Info("atom", "mat -> atom", "Converts the matrix into its equivalent atom. Not all matricies have an equivalent atom.")) {
+               @Override
+               public NtValue applyCall(final NtValue[] params) {
+                   if (params.length == 1 && params[0] instanceof CoreMatrix) {
+                       return ((CoreMatrix) params[0]).toAtom();
+                   }
+                   throw new DispatchException("atom", "Expected a matrix, got " + params.length + " instead");
                }
            });
         PREDEF.put("iota", new CoreLambda(new CoreLambda.Info("iota", "bound:number -> mat", "Creates a one-row matrix with the elements 1 to (bound). Returns an empty matrix if bound is not bigger than 1.")) {

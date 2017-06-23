@@ -18,43 +18,24 @@ package com.ymcmp.ntshell.value;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  *
  * @author YTENG
  */
-public class CoreAtom extends CoreNumber {
+public class CoreAtom extends CoreMatrix {
 
     private static final Map<String, CoreAtom> INTERN_MAP = new HashMap<>();
 
     public final String str;
 
     private CoreAtom(final String val) {
-        super(val.hashCode());
+        super(1, val.length());
         this.str = val;
-    }
-
-    @Override
-    public int hashCode() {
-        int hash = 5;
-        hash = 89 * hash + Objects.hashCode(this.str);
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
+        final char[] arr = val.toCharArray();
+        for (int i = 0; i < arr.length; ++i) {
+            mat[0][i] = CoreNumber.from(arr[i]);
         }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final CoreAtom other = (CoreAtom) obj;
-        return Objects.equals(this.str, other.str);
     }
 
     @Override
@@ -68,5 +49,14 @@ public class CoreAtom extends CoreNumber {
             INTERN_MAP.put(s, get = new CoreAtom(s));
         }
         return get;
+    }
+
+    public CoreMatrix toMatrix() {
+        return new CoreMatrix(this.mat);
+    }
+
+    @Override
+    protected LogicalLine toLogicalLine() {
+        return new LogicalLine(this.str);
     }
 }

@@ -57,7 +57,7 @@ public class CoreMatrix extends NtValue {
 
     public final NtValue[][] mat;
 
-    private CoreMatrix(final NtValue[][] mat) {
+    protected CoreMatrix(final NtValue[][] mat) {
         this.mat = mat;
     }
 
@@ -71,6 +71,46 @@ public class CoreMatrix extends NtValue {
 
     public void setCell(int row, int column, final NtValue val) {
         mat[row - 1][column - 1] = val;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 89 * hash + Arrays.deepHashCode(this.mat);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (obj instanceof CoreMatrix) {
+            final CoreMatrix other = (CoreMatrix) obj;
+            return Arrays.deepEquals(this.mat, other.mat);
+        }
+        return false;
+    }
+
+    public CoreAtom toAtom() {
+        if (mat.length == 0) {
+            return CoreAtom.from("");
+        }
+        final StringBuilder buf = new StringBuilder();
+        for (int i = 0; i < mat[0].length; ++i) {
+            final NtValue el = mat[0][i];
+            if (el instanceof CoreMatrix) {
+                buf.append(((CoreMatrix) el).toAtom().str);
+            } else if (el instanceof CoreNumber) {
+                buf.append((char) ((CoreNumber) el).toDouble());
+            } else {
+                throw new RuntimeException("Cannot convert " + el.getClass().getSimpleName() + " to character");
+            }
+        }
+        return CoreAtom.from(buf.toString());
     }
 
     public static CoreMatrix getEmptyMatrix() {
@@ -420,9 +460,9 @@ public class CoreMatrix extends NtValue {
         throw new MatrixBoundMismatchException("New shape is bigger than old shape: (linear length) " + newLinearLength + " > " + oldLinearLength);
     }
 
-    private LogicalLine toLogicalLine() {
+    protected LogicalLine toLogicalLine() {
         if (mat.length == 0) {
-            return new LogicalLine();
+            return new LogicalLine().wrapInBox();
         }
 
         LogicalLine outer = null;
@@ -433,7 +473,7 @@ public class CoreMatrix extends NtValue {
                 final NtValue val = mat[x][y];
                 final LogicalLine ln;
                 if (val instanceof CoreMatrix) {
-                    ln = ((CoreMatrix) val).toLogicalLine().wrapInBox();
+                    ln = ((CoreMatrix) val).toLogicalLine();
                 } else {
                     ln = new LogicalLine(val.toString());
                 }
@@ -450,131 +490,11 @@ public class CoreMatrix extends NtValue {
                 outer = outer.appendLine(inner);
             }
         }
-        return outer;
+        return outer.wrapInBox();
     }
 
     @Override
     public String toString() {
-        return toLogicalLine().wrapInBox().toString();
-    }
-}
-
-class LogicalLine implements Serializable {
-
-    private static final long serialVersionUID = 209187243189L;
-
-    private static final Pattern SEPARATOR_PAD = Pattern.compile("(?:^ *-+ *$)");
-
-    public final String[] lines;
-
-    public LogicalLine() {
-        lines = new String[0];
-    }
-
-    public LogicalLine(String line) {
-        lines = line.split("\n");
-    }
-
-    private LogicalLine(final String[] lines) {
-        this.lines = lines;
-    }
-
-    public LogicalLine appendLine(final LogicalLine other) {
-        /*
-        1 2 append 3 4 yields  1 2
-                              -----
-                               3 4
-         */
-        final List<String> ret = new ArrayList<>(lines.length + other.lines.length + 1);
-        final int sepLength = Stream.concat(Arrays.stream(lines), Arrays.stream(other.lines))
-                .mapToInt(String::length)
-                .max()
-                .orElse(0);
-        for (final String s : lines) {
-            ret.add(String.format(" %-" + sepLength + "s ", s));
-        }
-        {
-            final char[] rsep = new char[sepLength + 2];
-            Arrays.fill(rsep, '-');
-            ret.add(String.valueOf(rsep));
-        }
-        for (final String s : other.lines) {
-            ret.add(String.format(" %-" + sepLength + "s ", s));
-        }
-        return new LogicalLine(ret.toArray(new String[ret.size()]));
-    }
-
-    public LogicalLine mergeWith(final LogicalLine other) {
-        /*
-        (0):
-        1 2 merge 3 4 yields 1 2 | 3 4
-        
-        (1):
-        1 2 merge 3   yields 1 2 | 3
-                  4              | 4
-        
-        (2):
-        1 merge 3 4   yields 1 | 3 4
-        2                    2 |
-         */
-        if (lines.length == other.lines.length) {
-            // (0) No padding in between strings, easiest case
-            final String[] ret = new String[lines.length];
-            for (int i = 0; i < ret.length; ++i) {
-                ret[i] = String.format("%s | %s", lines[i], other.lines[i]);
-            }
-            return new LogicalLine(ret);
-        }
-        if (lines.length < other.lines.length) {
-            // (1) Padding on left side
-            final String[] ret = new String[other.lines.length];
-            final int padLength = Arrays.stream(lines).mapToInt(String::length).max().orElse(0);
-            for (int i = 0; i < ret.length; ++i) {
-                ret[i] = String.format("%-" + padLength + "s | %s", i < lines.length ? lines[i] : "", other.lines[i]);
-            }
-            return new LogicalLine(ret);
-        }
-        // (2) Padding on right side
-        final String[] ret = new String[lines.length];
-        final int padLength = Arrays.stream(other.lines).mapToInt(String::length).max().orElse(0);
-        for (int i = 0; i < ret.length; ++i) {
-            ret[i] = String.format("%s | %-" + padLength + "s", lines[i], i < other.lines.length ? other.lines[i] : "");
-        }
-        return new LogicalLine(ret);
-    }
-
-    @Override
-    public String toString() {
-        return Arrays.stream(lines).collect(Collectors.joining("\n"));
-    }
-
-    public LogicalLine wrapInBox() {
-        switch (this.lines.length) {
-        case 0:
-            return new LogicalLine("[]");
-        case 1:
-            return new LogicalLine("[" + this.lines[0] + "]");
-        default:
-            final String[] arr = new String[this.lines.length + 2];
-            System.arraycopy(lines, 0, arr, 1, lines.length);
-            if (arr[1].length() == 0) {
-                // => []
-                return new LogicalLine("[]");
-            } else {
-                final char[] box = new char[arr[1].length() + 2];
-                Arrays.fill(box, '-');
-                box[box.length - 1] = box[0] = '+';
-                arr[arr.length - 1] = arr[0] = String.valueOf(box);
-                for (int i = 1; i < arr.length - 1; ++i) {
-                    final Matcher match = SEPARATOR_PAD.matcher(arr[i]);
-                    if (match.matches()) {
-                        arr[i] = "|" + match.group().replace(' ', '-') + "|";
-                    } else {
-                        arr[i] = "|" + arr[i] + "|";
-                    }
-                }
-                return new LogicalLine(arr);
-            }
-        }
+        return toLogicalLine().toString();
     }
 }
