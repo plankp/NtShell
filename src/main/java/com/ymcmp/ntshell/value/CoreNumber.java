@@ -219,10 +219,7 @@ public class CoreNumber extends NtValue implements Comparable<CoreNumber> {
         if (Double.isNaN(val)) {
             return false;
         }
-        if (val == 0.0) {
-            return false;
-        }
-        return true;
+        return val != 0.0;
     }
 
     public boolean isFinite() {

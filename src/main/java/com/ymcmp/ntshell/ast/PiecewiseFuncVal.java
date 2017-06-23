@@ -26,6 +26,8 @@ import java.util.Arrays;
  */
 public class PiecewiseFuncVal implements AST {
 
+    public final CaseBlock[] cases;
+
     public static class CaseBlock {
 
         public final AST pred;
@@ -74,8 +76,6 @@ public class PiecewiseFuncVal implements AST {
             return new CaseBlock(pred, nexpr);
         }
     }
-
-    public final CaseBlock[] cases;
 
     public PiecewiseFuncVal(CaseBlock[] cases) {
         this.cases = cases;

@@ -30,6 +30,8 @@ import java.util.function.BiFunction;
  */
 public class CoreMatrix extends NtValue {
 
+    public final NtValue[][] mat;
+
     private static class Helper {
 
         static final CoreMatrix EMPTY_MAT = new CoreMatrix(0, 0);
@@ -45,8 +47,6 @@ public class CoreMatrix extends NtValue {
             return new DispatchException(dispatcher, getMessage());
         }
     }
-
-    public final NtValue[][] mat;
 
     protected CoreMatrix(final NtValue[][] mat) {
         this.mat = mat;

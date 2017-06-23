@@ -27,6 +27,8 @@ import java.util.Arrays;
  */
 public class MatrixVal implements AST {
 
+    public final Column[] columns;
+
     public static class Column {
 
         public final AST[] row;
@@ -94,8 +96,6 @@ public class MatrixVal implements AST {
             return new Column(nrow);
         }
     }
-
-    public final Column[] columns;
 
     public MatrixVal(Column[] columns) {
         this.columns = columns;
