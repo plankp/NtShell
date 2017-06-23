@@ -126,12 +126,4 @@ public class NumberVal implements AST {
         final NumberVal other = (NumberVal) obj;
         return this.toDouble() == other.toDouble();
     }
-
-    @Override
-    public int compareTo(AST o) {
-        if (o instanceof NumberVal) {
-            return Double.compare(this.toDouble(), ((NumberVal) o).toDouble());
-        }
-        return -1;
-    }
 }

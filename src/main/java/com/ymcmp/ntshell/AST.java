@@ -22,7 +22,7 @@ import java.io.Serializable;
  *
  * @author YTENG
  */
-public interface AST extends Serializable, Comparable<AST> {
+public interface AST extends Serializable {
 
     public <T> T accept(Visitor<T> vis);
 

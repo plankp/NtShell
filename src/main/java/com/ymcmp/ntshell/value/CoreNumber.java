@@ -40,7 +40,7 @@ public class CoreNumber extends NtValue implements Comparable<CoreNumber> {
 
     public final double val;
 
-    private CoreNumber(double d) {
+    protected CoreNumber(double d) {
         this.val = d;
     }
 

@@ -126,12 +126,4 @@ public class PiecewiseFuncVal implements AST {
         }
         return new PiecewiseFuncVal(ncases);
     }
-
-    @Override
-    public int compareTo(AST o) {
-        if (o instanceof PiecewiseFuncVal) {
-            return 0;
-        }
-        return 1;
-    }
 }

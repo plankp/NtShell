@@ -40,7 +40,7 @@ public class Token implements Serializable {
         PERCENT,
         SCOPE, SEMI, COMMA, YIELD, COMPOSE,
         K_IF, K_AND, K_OR,
-        IDENT, NUMBER,
+        IDENT, NUMBER, ATOM,
     }
 
     public final Type type;

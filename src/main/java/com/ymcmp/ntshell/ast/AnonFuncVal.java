@@ -142,9 +142,4 @@ public class AnonFuncVal implements AST {
         }
         return new AnonFuncVal(inputs, out);
     }
-
-    @Override
-    public int compareTo(AST o) {
-        return 0;
-    }
 }

@@ -79,15 +79,4 @@ public class AssignExpr implements AST {
         }
         return new AssignExpr(to, nval);
     }
-
-    @Override
-    public int compareTo(AST o) {
-        if (o instanceof AssignExpr) {
-            return 0;
-        }
-        if (o instanceof NumberVal || o instanceof VariableVal) {
-            return 1;
-        }
-        return -1;
-    }
 }

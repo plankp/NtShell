@@ -14,42 +14,31 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.ymcmp.ntshell.ast;
+package com.ymcmp.ntshell.value;
 
-import com.ymcmp.ntshell.AST;
-import com.ymcmp.ntshell.Token;
-import com.ymcmp.ntshell.Visitor;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 /**
  *
  * @author YTENG
  */
-public class VariableVal implements AST {
+public class CoreAtom extends CoreNumber {
 
-    public final Token val;
+    private static final Map<String, CoreAtom> INTERN_MAP = new HashMap<>();
 
-    public VariableVal(Token val) {
-        if (val.type != Token.Type.IDENT) {
-            throw new IllegalArgumentException("VariableVal expects an identifier, found " + val);
-        }
-        this.val = val;
-    }
+    public final String str;
 
-    @Override
-    public <T> T accept(Visitor<T> vis) {
-        return vis.visitVariableVal(this);
-    }
-
-    @Override
-    public String toString() {
-        return val.toString();
+    private CoreAtom(final String val) {
+        super(val.hashCode());
+        this.str = val;
     }
 
     @Override
     public int hashCode() {
-        int hash = 7;
-        hash = 67 * hash + Objects.hashCode(this.val);
+        int hash = 5;
+        hash = 89 * hash + Objects.hashCode(this.str);
         return hash;
     }
 
@@ -64,7 +53,20 @@ public class VariableVal implements AST {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final VariableVal other = (VariableVal) obj;
-        return Objects.equals(this.val, other.val);
+        final CoreAtom other = (CoreAtom) obj;
+        return Objects.equals(this.str, other.str);
+    }
+
+    @Override
+    public String toString() {
+        return str;
+    }
+
+    public static CoreAtom from(final String s) {
+        CoreAtom get = INTERN_MAP.get(s);
+        if (get == null) {
+            INTERN_MAP.put(s, get = new CoreAtom(s));
+        }
+        return get;
     }
 }

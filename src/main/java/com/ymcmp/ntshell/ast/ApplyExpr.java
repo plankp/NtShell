@@ -86,13 +86,4 @@ public class ApplyExpr implements AST {
         }
         return new ApplyExpr(ninst, nparams);
     }
-
-    @Override
-    public int compareTo(AST o) {
-        if (o instanceof BinaryExpr || o instanceof CommutativeExpr
-                || o instanceof PiecewiseFuncVal || o instanceof AnonFuncVal) {
-            return -1;
-        }
-        return 1;
-    }
 }

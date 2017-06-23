@@ -182,13 +182,7 @@ public class App {
                     }
 
                     if (evaluate) {
-                        final Object ret = session.visit(ast);
-//                        if (ret instanceof Function<?, ?>) {
-//                            env.writeLine("<function@" + Integer.toHexString(ret.hashCode()) + ">");
-//                        } else {
-//                            env.writeLine(ret);
-//                        }
-                        env.writeLine(ret);
+                        env.writeLine(session.visit(ast));
                     }
                     while (!toks.isEmpty() && toks.get(0).type == Token.Type.SEMI) {
                         toks.remove(0);
@@ -335,6 +329,8 @@ public class App {
         switch (peekNextToken(tokens, env).type) {
         case NUMBER:
             return new NumberVal(tokens.remove(0));
+        case ATOM:
+            return new AtomVal(tokens.remove(0));
         case IDENT: {
             final Token name = tokens.remove(0);
             // = IDENT YIELD <expr>  (0)
@@ -669,6 +665,19 @@ public class App {
                         tokens.add(new Token(Token.Type.GT, ">"));
                     }
                     break;
+                case '@': {
+                    final StringBuilder buf = new StringBuilder().append('@');
+                    if (isIdent(arr[++i])) {
+                        while (i < arr.length && isIdent(arr[i])) {
+                            buf.append(arr[i++]);
+                        }
+                        --i;
+                        final String ident = buf.toString();
+                        tokens.add(new Token(Token.Type.ATOM, ident));
+                        break;
+                    }
+                    break;
+                }
                 case '0': {
                     final StringBuilder buf = new StringBuilder();
                     buf.append('0');
@@ -734,7 +743,9 @@ public class App {
                         --i;
                         final String ident = buf.toString();
                         tokens.add(new Token(KWORDS.getOrDefault(ident, Token.Type.IDENT), ident));
+                        break;
                     }
+                    throw new LexerException("Unrecognized character of `" + arr[i] + "'");
                 }
                 }
             } catch (ArrayIndexOutOfBoundsException ex) {

@@ -461,7 +461,12 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
     }
 
     @Override
-    public NtValue visitNumberVal(final NumberVal number) {
+    public CoreAtom visitAtomVal(AtomVal atom) {
+        return CoreAtom.from(atom.val.text);
+    }
+
+    @Override
+    public CoreNumber visitNumberVal(final NumberVal number) {
         return CoreNumber.from(number.toDouble());
     }
 

@@ -32,6 +32,8 @@ public abstract class Visitor<T> {
         return node.accept(this);
     }
 
+    public abstract T visitAtomVal(AtomVal atom);
+
     public abstract T visitNumberVal(NumberVal number);
 
     public abstract T visitVariableVal(VariableVal variable);

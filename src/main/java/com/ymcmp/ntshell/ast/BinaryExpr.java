@@ -239,12 +239,4 @@ public class BinaryExpr implements AST {
 
         return new BinaryExpr(nlhs, nrhs, op);
     }
-
-    @Override
-    public int compareTo(AST o) {
-        if (o instanceof BinaryExpr || o instanceof CommutativeExpr || o instanceof UnaryExpr) {
-            return 0;
-        }
-        return 1;
-    }
 }

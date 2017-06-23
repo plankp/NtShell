@@ -87,12 +87,4 @@ public class UnaryExpr implements AST {
         }
         return new UnaryExpr(nbase, op, prefix);
     }
-
-    @Override
-    public int compareTo(AST o) {
-        if (o instanceof BinaryExpr || o instanceof CommutativeExpr || o instanceof UnaryExpr) {
-            return 0;
-        }
-        return 1;
-    }
 }

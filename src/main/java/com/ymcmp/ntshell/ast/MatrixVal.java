@@ -172,15 +172,4 @@ public class MatrixVal implements AST {
         final MatrixVal other = (MatrixVal) obj;
         return Arrays.deepEquals(this.columns, other.columns);
     }
-
-    @Override
-    public int compareTo(AST o) {
-        if (o instanceof NumberVal || o instanceof VariableVal || o instanceof AnonFuncVal) {
-            return 1;
-        }
-        if (o instanceof MatrixVal) {
-            return 0;
-        }
-        return -1;
-    }
 }

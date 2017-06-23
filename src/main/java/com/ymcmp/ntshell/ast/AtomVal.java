@@ -25,20 +25,20 @@ import java.util.Objects;
  *
  * @author YTENG
  */
-public class VariableVal implements AST {
+public class AtomVal implements AST {
 
     public final Token val;
 
-    public VariableVal(Token val) {
-        if (val.type != Token.Type.IDENT) {
-            throw new IllegalArgumentException("VariableVal expects an identifier, found " + val);
+    public AtomVal(Token val) {
+        if (val.type != Token.Type.ATOM) {
+            throw new IllegalArgumentException("AtomVal expects an atom, found " + val);
         }
         this.val = val;
     }
 
     @Override
     public <T> T accept(Visitor<T> vis) {
-        return vis.visitVariableVal(this);
+        return vis.visitAtomVal(this);
     }
 
     @Override
@@ -46,10 +46,14 @@ public class VariableVal implements AST {
         return val.toString();
     }
 
+    public static AtomVal fromString(final String str) {
+        return new AtomVal(new Token(Token.Type.ATOM, str));
+    }
+
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 67 * hash + Objects.hashCode(this.val);
+        hash = 79 * hash + Objects.hashCode(this.val);
         return hash;
     }
 
@@ -64,7 +68,7 @@ public class VariableVal implements AST {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final VariableVal other = (VariableVal) obj;
+        final AtomVal other = (AtomVal) obj;
         return Objects.equals(this.val, other.val);
     }
 }
