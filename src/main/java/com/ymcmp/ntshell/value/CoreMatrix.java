@@ -27,6 +27,8 @@ import java.util.List;
 
 import java.util.function.Function;
 import java.util.function.BiFunction;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -40,6 +42,17 @@ public class CoreMatrix extends NtValue {
     private static class Helper {
 
         static final CoreMatrix EMPTY_MAT = new CoreMatrix(0, 0);
+    }
+
+    public static class MatrixBoundMismatchException extends Exception {
+
+        public MatrixBoundMismatchException(String msg) {
+            super(msg);
+        }
+
+        public DispatchException toDispatchException(final String dispatcher) {
+            return new DispatchException(dispatcher, getMessage());
+        }
     }
 
     public final NtValue[][] mat;
@@ -265,7 +278,7 @@ public class CoreMatrix extends NtValue {
                             final BiFunction<NtValue, NtValue, NtValue> transformer)
             throws MatrixBoundMismatchException {
         if (!sameShape(rhs)) {
-            throw new MatrixBoundMismatchException();
+            throw new MatrixBoundMismatchException("Two matricies have different shapes");
         }
 
         if (mat.length == 0) {
@@ -335,9 +348,43 @@ public class CoreMatrix extends NtValue {
         return mat.length > 0;
     }
 
+    public CoreMatrix reshape(int rows, int columns) throws MatrixBoundMismatchException {
+        if (mat.length == 0) {
+            return Helper.EMPTY_MAT;
+        }
+        /*
+        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].reshape(2, 5) =>
+        [1, 2, 3, 4, 5;
+         6, 7, 8, 9, 10]
+            
+        [1, 2, 3, 4, 5, 6].reshape(1, 5) =>
+        [1, 2, 3, 4, 5]
+         */
+        final int oldLinearLength = mat.length * mat[0].length;
+        final int newLinearLength = rows * columns;
+        if (newLinearLength <= oldLinearLength) {
+            final NtValue[][] ret = new NtValue[rows][columns];
+            int xOld = 0;
+            int yOld = 0;
+
+            for (int xNew = 0; xNew < ret.length; ++xNew) {
+                final int columnCount = ret[xNew].length;
+                for (int yNew = 0; yNew < columnCount; ++yNew) {
+                    ret[xNew][yNew] = mat[xOld][yOld++];
+                    if (yOld >= mat[xOld].length) {
+                        yOld = 0;
+                        ++xOld;
+                    }
+                }
+            }
+            return new CoreMatrix(ret);
+        }
+        throw new MatrixBoundMismatchException("New shape is bigger than old shape: (linear length) " + newLinearLength + " > " + oldLinearLength);
+    }
+
     private LogicalLine toLogicalLine() {
         if (mat.length == 0) {
-            return new LogicalLine(";");
+            return new LogicalLine();
         }
 
         LogicalLine outer = null;
@@ -348,7 +395,7 @@ public class CoreMatrix extends NtValue {
                 final NtValue val = mat[x][y];
                 final LogicalLine ln;
                 if (val instanceof CoreMatrix) {
-                    ln = ((CoreMatrix) val).toLogicalLine();
+                    ln = ((CoreMatrix) val).toLogicalLine().wrapInBox();
                 } else {
                     ln = new LogicalLine(val.toString());
                 }
@@ -370,7 +417,7 @@ public class CoreMatrix extends NtValue {
 
     @Override
     public String toString() {
-        return toLogicalLine().toString();
+        return toLogicalLine().wrapInBox().toString();
     }
 }
 
@@ -378,7 +425,13 @@ class LogicalLine implements Serializable {
 
     private static final long serialVersionUID = 209187243189L;
 
+    private static final Pattern SEPARATOR_PAD = Pattern.compile("(?:^ *-+ *$)");
+
     public final String[] lines;
+
+    public LogicalLine() {
+        lines = new String[0];
+    }
 
     public LogicalLine(String line) {
         lines = line.split("\n");
@@ -456,17 +509,34 @@ class LogicalLine implements Serializable {
     public String toString() {
         return Arrays.stream(lines).collect(Collectors.joining("\n"));
     }
-}
 
-class MatrixBoundMismatchException extends Exception {
-
-    private static final String MSG = "Two matricies have different shapes";
-
-    public MatrixBoundMismatchException() {
-        super(MSG);
-    }
-
-    public DispatchException toDispatchException(final String dispatcher) {
-        return new DispatchException(dispatcher, MSG);
+    public LogicalLine wrapInBox() {
+        switch (this.lines.length) {
+        case 0:
+            return new LogicalLine("[]");
+        case 1:
+            return new LogicalLine("[" + this.lines[0] + "]");
+        default:
+            final String[] arr = new String[this.lines.length + 2];
+            System.arraycopy(lines, 0, arr, 1, lines.length);
+            if (arr[1].length() == 0) {
+                // => []
+                return new LogicalLine("[]");
+            } else {
+                final char[] box = new char[arr[1].length() + 2];
+                Arrays.fill(box, '-');
+                box[box.length - 1] = box[0] = '+';
+                arr[arr.length - 1] = arr[0] = String.valueOf(box);
+                for (int i = 1; i < arr.length - 1; ++i) {
+                    final Matcher match = SEPARATOR_PAD.matcher(arr[i]);
+                    if (match.matches()) {
+                        arr[i] = "|" + match.group().replace(' ', '-') + "|";
+                    } else {
+                        arr[i] = "|" + arr[i] + "|";
+                    }
+                }
+                return new LogicalLine(arr);
+            }
+        }
     }
 }

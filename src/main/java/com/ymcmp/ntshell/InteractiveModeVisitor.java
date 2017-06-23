@@ -71,6 +71,31 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                    throw new DispatchException("iota", "Expected a number, got " + params.length + " instead");
                }
            });
+        PREDEF.put("reshape", new CoreLambda(new CoreLambda.Info("reshape", "mat -> func", "Reshapes a matrix based. The original matrix is left untouched after the transformation.")) {
+               @Override
+               public NtValue applyCall(final NtValue[] matrix) {
+                   if (matrix.length == 1 && matrix[0] instanceof CoreMatrix) {
+                       return new CoreLambda(new CoreLambda.Info("$$reshape", "func(row:num, col:num) -> mat", "Reshapes the matrix into (row) * (col). If the new matrix is bigger, an empty matrix is returned. If the new matrix is smaller, the excess values will be truncated. The original matrix is left untouched.")) {
+                           @Override
+                           public NtValue applyCall(final NtValue[] params) {
+                               if (params.length == 2
+                                       && params[0] instanceof CoreNumber
+                                       && params[1] instanceof CoreNumber) {
+                                   final int rows = (int) ((CoreNumber) params[0]).toDouble();
+                                   final int cols = (int) ((CoreNumber) params[1]).toDouble();
+                                   try {
+                                       return ((CoreMatrix) matrix[0]).reshape(rows, cols);
+                                   } catch (CoreMatrix.MatrixBoundMismatchException ex) {
+                                       return CoreMatrix.getEmptyMatrix();
+                                   }
+                               }
+                               throw new DispatchException("Expected two numbers, got " + params.length + " instead");
+                           }
+                       };
+                   }
+                   throw new DispatchException("reshape", "Expected a matrix, got " + matrix.length + " instead");
+               }
+           });
         PREDEF.put("transpose", new CoreLambda(new CoreLambda.Info("transpose", "mat -> mat", "Transposes a matrix. The original matrix is left untouched.")) {
                @Override
                public NtValue applyCall(NtValue... params) {
