@@ -52,42 +52,42 @@ public class CoreUnitTest {
     }
 
     @Test
-    public void DivisionReturnsItself() {
+    public void divisionReturnsItself() {
         assertSame(CoreUnit.getInstance(), CoreUnit.getInstance().applyDiv(null));
     }
 
     @Test
-    public void ModuloReturnsItself() {
+    public void moduloReturnsItself() {
         assertSame(CoreUnit.getInstance(), CoreUnit.getInstance().applyMod(null));
     }
 
     @Test
-    public void PowReturnsItself() {
+    public void powReturnsItself() {
         assertSame(CoreUnit.getInstance(), CoreUnit.getInstance().applyPow(null));
     }
 
     @Test
-    public void CallReturnsItself() {
+    public void callReturnsItself() {
         assertSame(CoreUnit.getInstance(), CoreUnit.getInstance().applyCall());
     }
 
     @Test
-    public void ComposeReturnsItself() {
+    public void composeReturnsItself() {
         assertSame(CoreUnit.getInstance(), CoreUnit.getInstance().applyCompose(null));
     }
 
     @Test
-    public void PositiveReturnsItself() {
+    public void positiveReturnsItself() {
         assertSame(CoreUnit.getInstance(), CoreUnit.getInstance().applyPositive());
     }
 
     @Test
-    public void NegativeReturnsItself() {
+    public void negativeReturnsItself() {
         assertSame(CoreUnit.getInstance(), CoreUnit.getInstance().applyNegative());
     }
 
     @Test
-    public void PercentageReturnsItself() {
+    public void percentageReturnsItself() {
         assertSame(CoreUnit.getInstance(), CoreUnit.getInstance().applyPercentage());
     }
 }
