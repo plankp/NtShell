@@ -482,7 +482,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
 
     @Override
     public CoreAtom visitAtomVal(AtomVal atom) {
-        return CoreAtom.from(atom.val.text);
+        return CoreAtom.from(atom.val.text.substring(1));
     }
 
     @Override

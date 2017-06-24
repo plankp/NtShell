@@ -25,6 +25,7 @@ import java.util.function.Function;
 import java.util.function.BiFunction;
 
 /**
+ * A two dimensional matrix
  *
  * @author YTENG
  */
@@ -37,6 +38,9 @@ public class CoreMatrix extends NtValue {
         static final CoreMatrix EMPTY_MAT = new CoreMatrix(0, 0);
     }
 
+    /**
+     * Thrown when matrix bounds does not match the requirement of the operation
+     */
     public static class MatrixBoundMismatchException extends Exception {
 
         public MatrixBoundMismatchException(String msg) {
@@ -57,11 +61,11 @@ public class CoreMatrix extends NtValue {
     }
 
     public NtValue getCell(int row, int column) {
-        return mat[row - 1][column - 1];
+        return mat[row][column];
     }
 
     public void setCell(int row, int column, final NtValue val) {
-        mat[row - 1][column - 1] = val;
+        mat[row][column] = val;
     }
 
     @Override
@@ -86,6 +90,14 @@ public class CoreMatrix extends NtValue {
         return false;
     }
 
+    /**
+     * Tries to convert the current matrix into an atom. For a matrix to have an
+     * atom, it must one dimensional. If the matrix contains other matrices, the
+     * matrices are converted into atoms and joined in place onto the current
+     * atom.
+     *
+     * @return The atom representation of the matrix
+     */
     public CoreAtom toAtom() {
         if (mat.length == 0) {
             return CoreAtom.from("");
@@ -108,6 +120,13 @@ public class CoreMatrix extends NtValue {
         return Helper.EMPTY_MAT;
     }
 
+    /**
+     * Converts a two dimensional array into a matrix. This will fail if the
+     * columns have different lengths.
+     *
+     * @param mat The two dimensional array
+     * @return The matrix equivalent
+     */
     public static CoreMatrix from(final NtValue[][] mat) {
         if (mat.length == 0) {
             return getEmptyMatrix();
@@ -123,21 +142,43 @@ public class CoreMatrix extends NtValue {
         return new CoreMatrix(mat);
     }
 
+    /**
+     * Applies {@code applyPositive} operation on every element
+     *
+     * @return
+     */
     @Override
     public CoreMatrix applyPositive() {
         return this.map(NtValue::applyPositive);
     }
 
+    /**
+     * Applies {@code applyNegative} operation on every element
+     *
+     * @return
+     */
     @Override
     public CoreMatrix applyNegative() {
         return this.map(NtValue::applyNegative);
     }
 
+    /**
+     * Applies {@code applyPercentage} operation on every element
+     *
+     * @return
+     */
     @Override
     public CoreMatrix applyPercentage() {
         return this.map(NtValue::applyPercentage);
     }
 
+    /**
+     * Retrieves a particular cell of the matrix.
+     *
+     * @param params Two numbers: (row, column)
+     * @return The element, or {@link com.ymcmp.ntshell.value.CoreAtom} if
+     * boundaries are illegal.
+     */
     @Override
     public NtValue applyCall(final NtValue[] params) {
         // mat(1, 2) => getCell(1, 2)
@@ -147,7 +188,7 @@ public class CoreMatrix extends NtValue {
             final int row = (int) ((CoreNumber) params[0]).toDouble();
             final int column = (int) ((CoreNumber) params[1]).toDouble();
             try {
-                return getCell(row, column);
+                return getCell(row - 1, column - 1);
             } catch (ArrayIndexOutOfBoundsException ex) {
                 return CoreUnit.getInstance();
             }
