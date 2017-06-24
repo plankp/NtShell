@@ -19,6 +19,9 @@ package com.ymcmp.ntshell.value;
 import com.ymcmp.ntshell.NtValue;
 
 /**
+ * The equivalent of {@code null} for NtShell. All operations on this data type
+ * should result in Unit itself, and the state of the other operand should not
+ * be mutated.
  *
  * @author YTENG
  */

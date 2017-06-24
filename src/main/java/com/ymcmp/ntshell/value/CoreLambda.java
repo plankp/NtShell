@@ -22,17 +22,37 @@ import com.ymcmp.ntshell.NtValue;
 import java.util.function.Function;
 
 /**
+ * The equivalent of an anonymous function object
  *
  * @author YTENG
  */
 public abstract class CoreLambda extends NtValue {
 
+    /**
+     * Optional information of the function. If the function has none, it is set
+     * to null or custom information supplied by the NtShell runtime.
+     */
     public final Info info;
 
+    /**
+     * Additional information of an anonymous function. Typically used to
+     * document library routines.
+     */
     public static class Info {
 
+        /**
+         * The preferred name of the function
+         */
         public final String name;
+
+        /**
+         * The type signature of the function
+         */
         public final String type;
+
+        /**
+         * The detailed description of what the function does
+         */
         public final String desc;
 
         public Info(String name, String type, String desc) {
@@ -78,19 +98,42 @@ public abstract class CoreLambda extends NtValue {
         return String.format("<lambda@%s>", Integer.toHexString(this.hashCode()));
     }
 
+    /**
+     * {@inheritDoc} For this class, it always returns true.
+     *
+     * @return Always true
+     */
     @Override
     public final boolean isTruthy() {
         return true;
     }
 
+    /**
+     * Wraps the underlying function into a {@link java.util.function.Function}
+     *
+     * @return A wrapper function
+     */
     public Function<NtValue[], NtValue> toFunction() {
-        return x -> this.applyCall(x);
+        return this::applyCall;
     }
 
+    /**
+     * Returns the singleton identity function. An identity function is one that
+     * takes one parameter of any type and returns it as the result without any
+     * modification.
+     *
+     * @return The identity function
+     */
     public static CoreLambda getIdentityFunction() {
         return LambdaHelper.ID;
     }
 
+    /**
+     * Wraps a {@link java.util.function.Function} inside a CoreLambda
+     *
+     * @param f the function being delegated to
+     * @return the delegate / wrapper
+     */
     public static CoreLambda from(Function<NtValue[], NtValue> f) {
         return new CoreLambda() {
             @Override

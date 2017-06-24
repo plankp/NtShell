@@ -25,6 +25,12 @@ import com.ymcmp.ntshell.value.CoreLambda;
  */
 public class NtValue {
 
+    /**
+     * Overrides the behavior of the unary percentage operator {@code %} in
+     * NtShell. By default, {@code f%} will be invoked as {@code x -> f(x)%}.
+     *
+     * @return
+     */
     public NtValue applyPercentage() {
         return new CoreLambda() {
             @Override
@@ -34,6 +40,12 @@ public class NtValue {
         };
     }
 
+    /**
+     * Overrides the behavior of the unary negative operator {@code -} in
+     * NtShell. By default, {@code -f} will be invoked as {@code x -> -f(x)}.
+     *
+     * @return
+     */
     public NtValue applyNegative() {
         return new CoreLambda() {
             @Override
@@ -43,6 +55,12 @@ public class NtValue {
         };
     }
 
+    /**
+     * Overrides the behavior of the unary positive operator {@code +} in
+     * NtShell. By default, {@code +f} will be invoked as {@code x -> +f(x)}.
+     *
+     * @return
+     */
     public NtValue applyPositive() {
         return new CoreLambda() {
             @Override
@@ -52,6 +70,13 @@ public class NtValue {
         };
     }
 
+    /**
+     * Overrides the behavior of the addition operator {@code +} in NtShell. By
+     * default, {@code (f + g)} will be invoked as {@code x -> f(x) + g(x)}.
+     *
+     * @param rhs
+     * @return
+     */
     public NtValue applyAdd(NtValue rhs) {
         // (f + 2)(4) => f(4) + (2)(4)
         return new CoreLambda() {
@@ -62,6 +87,13 @@ public class NtValue {
         };
     }
 
+    /**
+     * Overrides the behavior of the subtraction operator {@code -} in NtShell.
+     * By default, {@code (f - g)} will be invoked as {@code x -> f(x) - g(x)}.
+     *
+     * @param rhs
+     * @return
+     */
     public NtValue applySub(NtValue rhs) {
         return new CoreLambda() {
             @Override
@@ -71,6 +103,14 @@ public class NtValue {
         };
     }
 
+    /**
+     * Overrides the behavior of the multiplication operator {@code *} in
+     * NtShell. By default, {@code (f * g)} will be invoked as
+     * {@code x -> f(x) * g(x)}.
+     *
+     * @param rhs
+     * @return
+     */
     public NtValue applyMul(NtValue rhs) {
         return new CoreLambda() {
             @Override
@@ -80,6 +120,13 @@ public class NtValue {
         };
     }
 
+    /**
+     * Overrides the behavior of the division operator {@code /} in NtShell. By
+     * default, {@code (f / g)} will be invoked as {@code x -> f(x) / g(x)}.
+     *
+     * @param rhs
+     * @return
+     */
     public NtValue applyDiv(NtValue rhs) {
         return new CoreLambda() {
             @Override
@@ -89,6 +136,13 @@ public class NtValue {
         };
     }
 
+    /**
+     * Overrides the behavior of the modulo operator {@code mod} in NtShell. By
+     * default, {@code (f mod g)} will be invoked as {@code x -> f(x) mod g(x)}.
+     *
+     * @param rhs
+     * @return
+     */
     public NtValue applyMod(NtValue rhs) {
         return new CoreLambda() {
             @Override
@@ -98,6 +152,13 @@ public class NtValue {
         };
     }
 
+    /**
+     * Overrides the behavior of the power operator {@code ^} in NtShell. By
+     * default, {@code (f ^ g)} will be invoked as {@code x -> f(x) ^ g(x)}.
+     *
+     * @param rhs
+     * @return
+     */
     public NtValue applyPow(NtValue rhs) {
         return new CoreLambda() {
             @Override
@@ -107,6 +168,15 @@ public class NtValue {
         };
     }
 
+    /**
+     * Overrides the behavior of the compose operator {@code .} in NtShell. In
+     * most cases, this returns a function (default implementation). For
+     * example: {@code (f . g)} is invoked as
+     * {@code x -> f.applyCall(g.applyCall(x))}.
+     *
+     * @param rhs
+     * @return
+     */
     public NtValue applyCompose(NtValue rhs) {
         return new CoreLambda() {
             @Override
@@ -117,10 +187,23 @@ public class NtValue {
         };
     }
 
+    /**
+     * Similar to the effect of overriding the {@code operator()} inside a class
+     * in C++
+     *
+     * @param params The parameters applied
+     * @return The result of the call
+     */
     public NtValue applyCall(NtValue... params) {
         throw new DispatchException("()", this.getClass().getSimpleName() + " cannot be apply with " + params.length + " parameters");
     }
 
+    /**
+     * Indicates whether the value is truthy. Typically, a value resembling zero
+     * or empty returns false on such query.
+     *
+     * @return if the value is truthy
+     */
     public boolean isTruthy() {
         return true;
     }
