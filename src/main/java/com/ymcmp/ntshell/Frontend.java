@@ -58,6 +58,10 @@ public interface Frontend extends AutoCloseable {
         errWriteLine();
     }
 
+    /**
+     * Cleans up resources after the session has either aborted due to failure
+     * or has terminated normally.
+     */
     @Override
     public default void close() {
     }

@@ -59,6 +59,7 @@ public class BinaryExpr implements AST {
         case SUB:
             // (- a b) => (+ a (* -1 b))
             return new BinaryExpr(nlhs, new BinaryExpr(NumberVal.fromLong(-1), nrhs, new Token(Token.Type.MUL, null)), new Token(Token.Type.ADD, null));
+        default:
         }
         return new BinaryExpr(nlhs, nrhs, op);
     }
@@ -235,6 +236,7 @@ public class BinaryExpr implements AST {
                 return NumberVal.fromDouble(Double.POSITIVE_INFINITY);
             }
             break;
+        default:
         }
 
         return new BinaryExpr(nlhs, nrhs, op);
