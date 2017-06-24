@@ -57,10 +57,11 @@ public class App {
                 break;
             default:
                 System.out.println("Unrecognized option " + args[0]);
-            // FALLTHROUGH
+                printCmdHelp();
+                return;
             case "-h":
             case "--help":
-                System.out.println("Options are --term -t --gui -g --help -h");
+                printCmdHelp();
                 return;
             }
         }
@@ -77,6 +78,10 @@ public class App {
         try (final Frontend inst = new ConsoleMode()) {
             interactiveMode(inst);
         }
+    }
+
+    private static void printCmdHelp() {
+        System.out.println("Options are --term -t --gui -g --help -h");
     }
 
     public static void interactiveMode(final Frontend env) {
@@ -488,7 +493,7 @@ public class App {
             tokens.remove(0);
             return consumeExpr(tokens, env);
         } else {
-            throw new RuntimeException("Missing -> for input-less function");
+            throw new ParserException("Missing -> for input-less function");
         }
     }
 
@@ -546,8 +551,9 @@ public class App {
         case NEQ:
             final Token op = tokens.remove(0);
             return new BinaryExpr(lhs, consumeExpr(tokens, env), op);
+        default:
+            return lhs;
         }
-        return lhs;
     }
 
     public static Token peekNextToken(final List<Token> toks, final Frontend env) {
@@ -696,7 +702,8 @@ public class App {
         return tokens;
     }
 
-    private static int lexIdentifier(int i, char[] arr, final List<Token> tokens) {
+    private static int lexIdentifier(final int pos, final char[] arr, final List<Token> tokens) {
+        int i = pos;
         final StringBuilder buf = new StringBuilder();
         while (i < arr.length && isIdent(arr[i])) {
             buf.append(arr[i++]);
@@ -707,7 +714,8 @@ public class App {
         return i;
     }
 
-    private static int lexNumber(int i, char[] arr, final List<Token> tokens) {
+    private static int lexNumber(final int pos, final char[] arr, final List<Token> tokens) {
+        int i = pos;
         final StringBuilder buf = new StringBuilder();
         while (i < arr.length && isDecimal(arr[i])) {
             buf.append(arr[i++]);
@@ -723,7 +731,8 @@ public class App {
         return i;
     }
 
-    private static int lexZeroPrefixedNumber(int i, char[] arr, final List<Token> tokens) {
+    private static int lexZeroPrefixedNumber(final int pos, final char[] arr, final List<Token> tokens) {
+        int i = pos;
         final StringBuilder buf = new StringBuilder();
         buf.append('0');
         if (++i < arr.length) {

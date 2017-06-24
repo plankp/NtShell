@@ -59,12 +59,14 @@ public class UnaryExpr implements AST {
             case SUB:
                 // (- 10) => (* -1 10)
                 return new BinaryExpr(NumberVal.fromLong(-1), nbase, new Token(Token.Type.MUL, null));
+            default:
             }
         } else {
             switch (op.type) {
             case PERCENT:
                 // (10 %) => (* 10 0.01)
                 return new BinaryExpr(NumberVal.fromDouble(0.01), nbase, new Token(Token.Type.MUL, null));
+            default:
             }
         }
         return AST.super.transformNegatives();

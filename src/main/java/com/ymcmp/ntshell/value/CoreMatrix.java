@@ -98,7 +98,7 @@ public class CoreMatrix extends NtValue {
             } else if (el instanceof CoreNumber) {
                 buf.append((char) ((CoreNumber) el).toDouble());
             } else {
-                throw new RuntimeException("Cannot convert " + el.getClass().getSimpleName() + " to character");
+                throw new ClassCastException("Cannot convert " + el.getClass().getSimpleName() + " to character");
             }
         }
         return CoreAtom.from(buf.toString());

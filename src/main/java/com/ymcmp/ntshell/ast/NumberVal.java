@@ -74,6 +74,7 @@ public class NumberVal implements AST {
                 return Long.parseLong(val.text.substring(2), 10);
             case 'x':
                 return Long.parseLong(val.text.substring(2), 16);
+            default:
             }
         }
         return Long.parseLong(val.text);
