@@ -64,6 +64,14 @@ public class CoreAtom extends CoreMatrix {
     }
 
     /**
+     *
+     * @return The length of the atom
+     */
+    public int length() {
+        return str.length();
+    }
+
+    /**
      * Returns an atom instance with the same requirements. If an atom with the
      * same text representation already exists, no new atoms are allocated in
      * memory.
@@ -104,7 +112,7 @@ public class CoreAtom extends CoreMatrix {
             if (params[0] instanceof CoreNumber && params[1] instanceof CoreNumber) {
                 final int start = (int) ((CoreNumber) params[0]).toDouble();
                 final int end = (int) ((CoreNumber) params[1]).toDouble();
-                return slice(start - 1, end - 1);
+                return slice(start - 1, end);
             }
             break;
         default:
@@ -188,5 +196,15 @@ public class CoreAtom extends CoreMatrix {
     @Override
     protected LogicalLine toLogicalLine() {
         return new LogicalLine(this.str);
+    }
+
+    @Override
+    public CoreAtom flipOnX() {
+        return this;
+    }
+
+    @Override
+    public CoreAtom flipOnY() {
+        return super.flipOnY().toAtom();
     }
 }

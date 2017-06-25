@@ -19,6 +19,7 @@ package com.ymcmp.ntshell.value;
 import com.ymcmp.ntshell.NtValue;
 
 /**
+ * Numbers in NtShell
  *
  * @author YTENG
  */

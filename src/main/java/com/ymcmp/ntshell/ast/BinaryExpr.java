@@ -115,6 +115,7 @@ public class BinaryExpr implements AST {
             }
 
             return new CommutativeExpr(nodes.toArray(new AST[nodes.size()]), op);
+        default:
         }
         return new BinaryExpr(nlhs, nrhs, op);
     }
@@ -152,6 +153,7 @@ public class BinaryExpr implements AST {
                 }
             }
             break;
+        default:
         }
 
         return new BinaryExpr(nlhs, nrhs, op);
@@ -162,8 +164,9 @@ public class BinaryExpr implements AST {
         case ADD:
         case MUL:
             return new CommutativeExpr(new AST[]{lhs, rhs}, op);
+        default:
+            return this;
         }
-        return this;
     }
 
     @Override

@@ -445,7 +445,7 @@ public class CoreMatrix extends NtValue {
 
         final int upTo = arr.length / 2;
         for (int i = 0; i < upTo; ++i) {
-            final int outerBound = arr.length - 1;
+            final int outerBound = arr.length - 1 - i;
             final T tmp = arr[i];
             arr[i] = arr[outerBound];
             arr[outerBound] = tmp;
