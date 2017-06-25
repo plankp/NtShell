@@ -678,7 +678,7 @@ public class App {
                     }
                     break;
                 case '@':
-                    i = lexAtom(arr, i, tokens);
+                    i = lexAtom(i, arr, tokens);
                     break;
                 case '0':
                     i = lexZeroPrefixedNumber(i, arr, tokens);
@@ -775,7 +775,8 @@ public class App {
         return i;
     }
 
-    private static int lexAtom(char[] arr, int i, final List<Token> tokens) {
+    private static int lexAtom(final int pos, final char[] arr, final List<Token> tokens) {
+        int i = pos;
         final StringBuilder buf = new StringBuilder().append('@');
         if (isIdent(arr[++i])) {
             while (i < arr.length && isIdent(arr[i])) {

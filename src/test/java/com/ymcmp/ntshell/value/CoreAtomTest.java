@@ -16,6 +16,7 @@
  */
 package com.ymcmp.ntshell.value;
 
+import com.ymcmp.ntshell.NtValue;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -74,5 +75,20 @@ public class CoreAtomTest {
     @Test
     public void lengthReturnsCorrectly() {
         assertEquals(5, CoreAtom.from("Hello").length());
+    }
+
+    @Test
+    public void toStringReturnsAtom() {
+        assertEquals("Hello", CoreAtom.from("Hello").toString());
+    }
+
+    @Test
+    public void testToMatrix() {
+        final CoreMatrix expected = CoreMatrix.from(
+                new NtValue[][]{
+                    {CoreNumber.from('h'), CoreNumber.from('e'), CoreNumber.from('l'), CoreNumber.from('l'), CoreNumber.from('o')}
+                }
+        );
+        assertEquals(expected, CoreAtom.from("hello").toMatrix());
     }
 }

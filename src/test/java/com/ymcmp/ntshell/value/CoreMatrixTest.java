@@ -16,9 +16,9 @@
  */
 package com.ymcmp.ntshell.value;
 
+import com.ymcmp.ntshell.DispatchException;
 import com.ymcmp.ntshell.NtValue;
 
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
@@ -39,31 +39,51 @@ public class CoreMatrixTest {
         });
     }
 
+    public void matrixFromEmptyArrayYieldsSameInstance() {
+        assertSame(CoreMatrix.getEmptyMatrix(), CoreMatrix.from(new NtValue[0][0]));
+    }
+
     @Test
-    public void testGetCell() {
-        assertNull(CoreMatrix.from(new NtValue[1][1]).getCell(0, 0));
+    public void testGetSetCell() {
+        final CoreMatrix mat = CoreMatrix.from(new NtValue[1][1]);
+        assertNull(mat.getCell(0, 0));
+        mat.setCell(0, 0, CoreNumber.from(true));
+        assertEquals(CoreNumber.from(true), mat.getCell(0, 0));
     }
 
     @Test
     public void testToAtom() {
         assertSame(CoreAtom.from(""), CoreMatrix.getEmptyMatrix().toAtom());
         assertSame(CoreAtom.from("A"), CoreMatrix.from(new NtValue[][]{{CoreNumber.from('A')}}).toAtom());
+
+        final CoreMatrix mat = CoreMatrix.from(
+                new NtValue[][]{
+                    {CoreNumber.from('A'), CoreAtom.from("bc")}
+                }
+        );
+        assertSame(CoreAtom.from("Abc"), mat.toAtom());
     }
 
     @Test
     public void testFlipOnX() {
+        assertSame(CoreMatrix.getEmptyMatrix(), CoreMatrix.getEmptyMatrix().flipOnX());
+
         assertEquals(CoreMatrix.from(new NtValue[][]{{CoreNumber.from(true)}, {CoreNumber.from(false)}}),
                      CoreMatrix.from(new NtValue[][]{{CoreNumber.from(false)}, {CoreNumber.from(true)}}).flipOnX());
     }
 
     @Test
     public void testFlipOnY() {
+        assertSame(CoreMatrix.getEmptyMatrix(), CoreMatrix.getEmptyMatrix().flipOnY());
+
         assertEquals(CoreMatrix.from(new NtValue[][]{{CoreNumber.from(true), CoreNumber.from(false)}}),
                      CoreMatrix.from(new NtValue[][]{{CoreNumber.from(false), CoreNumber.from(true)}}).flipOnY());
     }
 
     @Test
     public void testTranspose() {
+        assertSame(CoreMatrix.getEmptyMatrix(), CoreMatrix.getEmptyMatrix().transpose());
+
         final CoreMatrix a = CoreMatrix.from(
                 new NtValue[][]{
                     {CoreNumber.from(0), CoreNumber.from(1), CoreNumber.from(0)},
@@ -84,8 +104,11 @@ public class CoreMatrixTest {
     public void testSameShape() {
         final CoreMatrix mat1 = CoreMatrix.from(new NtValue[][]{{CoreNumber.from(true), CoreNumber.from(false)}});
         final CoreMatrix mat2 = CoreMatrix.from(new NtValue[][]{{CoreNumber.from(false), CoreNumber.from(true)}});
+
         assertFalse(CoreMatrix.getEmptyMatrix().sameShape(mat1));
         assertTrue(mat2.sameShape(mat1));
+
+        assertTrue(CoreMatrix.getEmptyMatrix().sameShape(CoreMatrix.getEmptyMatrix()));
     }
 
     @Test
@@ -100,6 +123,12 @@ public class CoreMatrixTest {
 
     @Test
     public void testCrossProduct() {
+        try {
+            CoreMatrix.getEmptyMatrix().bimap(CoreMatrix.from(new NtValue[1][1]), (a, b) -> a);
+            fail("MatrixBoundMismatchException should have been thrown");
+        } catch (CoreMatrix.MatrixBoundMismatchException ex) {
+        }
+
         final CoreMatrix a = CoreMatrix.from(
                 new NtValue[][]{
                     {CoreNumber.from(1), CoreNumber.from(2), CoreNumber.from(3)},
@@ -129,6 +158,8 @@ public class CoreMatrixTest {
 
     @Test
     public void testMap() {
+        assertSame(CoreMatrix.getEmptyMatrix(), CoreMatrix.getEmptyMatrix().map(Function.identity()));
+
         final CoreMatrix a = CoreMatrix.from(
                 new NtValue[][]{
                     {CoreNumber.from(true), CoreNumber.from(false)},
@@ -200,5 +231,103 @@ public class CoreMatrixTest {
         } catch (CoreMatrix.MatrixBoundMismatchException ex) {
             fail("No exception should be thrown");
         }
+    }
+
+    @Test
+    public void testApplyPositive() {
+        final CoreMatrix a = CoreMatrix.from(
+                new NtValue[][]{
+                    {CoreNumber.from(1), CoreNumber.from(-1)},
+                    {CoreNumber.from(-1), CoreNumber.from(1)}});
+        final CoreMatrix expected = CoreMatrix.from(
+                new NtValue[][]{
+                    {CoreNumber.from(1), CoreNumber.from(-1)},
+                    {CoreNumber.from(-1), CoreNumber.from(1)}});
+        assertEquals(expected, a.applyPositive());
+    }
+
+    @Test
+    public void testApplyNegative() {
+        final CoreMatrix a = CoreMatrix.from(
+                new NtValue[][]{
+                    {CoreNumber.from(1), CoreNumber.from(-1)},
+                    {CoreNumber.from(-1), CoreNumber.from(1)}});
+        final CoreMatrix expected = CoreMatrix.from(
+                new NtValue[][]{
+                    {CoreNumber.from(-1), CoreNumber.from(1)},
+                    {CoreNumber.from(1), CoreNumber.from(-1)}});
+        assertEquals(expected, a.applyNegative());
+    }
+
+    @Test
+    public void testApplyPercentage() {
+        final CoreMatrix a = CoreMatrix.from(
+                new NtValue[][]{
+                    {CoreNumber.from(1), CoreNumber.from(-1)},
+                    {CoreNumber.from(-1), CoreNumber.from(1)}});
+        final CoreMatrix expected = CoreMatrix.from(
+                new NtValue[][]{
+                    {CoreNumber.from(0.01), CoreNumber.from(-0.01)},
+                    {CoreNumber.from(-0.01), CoreNumber.from(0.01)}});
+        assertEquals(expected, a.applyPercentage());
+    }
+
+    @Test
+    public void testApplyCall() {
+        final CoreMatrix a = CoreMatrix.from(new NtValue[][]{{CoreNumber.from(true)}});
+        assertEquals(CoreNumber.from(true), a.applyCall(new NtValue[]{CoreNumber.from(1), CoreNumber.from(1)}));
+    }
+
+    @Test
+    public void testApplyAdd() {
+        final CoreMatrix a = CoreMatrix.from(
+                new NtValue[][]{
+                    {CoreNumber.from(1), CoreNumber.from(-1)},
+                    {CoreNumber.from(-1), CoreNumber.from(1)}});
+        final CoreMatrix b = CoreMatrix.from(
+                new NtValue[][]{
+                    {CoreNumber.from(-1), CoreNumber.from(1)},
+                    {CoreNumber.from(1), CoreNumber.from(-1)}});
+
+        final CoreMatrix expectedMat = CoreMatrix.from(
+                new NtValue[][]{
+                    {CoreNumber.from(0), CoreNumber.from(0)},
+                    {CoreNumber.from(0), CoreNumber.from(0)}});
+        assertEquals(expectedMat, a.applyAdd(b));
+
+        final CoreMatrix expectedNum = CoreMatrix.from(
+                new NtValue[][]{
+                    {CoreNumber.from(2), CoreNumber.from(0)},
+                    {CoreNumber.from(0), CoreNumber.from(2)}});
+        assertEquals(expectedNum, a.applyAdd(CoreNumber.from(1)));
+    }
+
+    @Test
+    public void testApplySub() {
+        final CoreMatrix a = CoreMatrix.from(
+                new NtValue[][]{
+                    {CoreNumber.from(1), CoreNumber.from(-1)},
+                    {CoreNumber.from(-1), CoreNumber.from(1)}});
+        final CoreMatrix b = CoreMatrix.from(
+                new NtValue[][]{
+                    {CoreNumber.from(-1), CoreNumber.from(1)},
+                    {CoreNumber.from(1), CoreNumber.from(-1)}});
+
+        final CoreMatrix expectedMat = CoreMatrix.from(
+                new NtValue[][]{
+                    {CoreNumber.from(2), CoreNumber.from(-2)},
+                    {CoreNumber.from(-2), CoreNumber.from(2)}});
+        assertEquals(expectedMat, a.applySub(b));
+
+        final CoreMatrix expectedNum = CoreMatrix.from(
+                new NtValue[][]{
+                    {CoreNumber.from(0), CoreNumber.from(-2)},
+                    {CoreNumber.from(-2), CoreNumber.from(0)}});
+        assertEquals(expectedNum, a.applySub(CoreNumber.from(1)));
+    }
+
+    @Test(expected = DispatchException.class)
+    public void applyDivOnMatrixIsNotSupported() {
+        CoreMatrix.getEmptyMatrix().applyDiv(CoreMatrix.getEmptyMatrix());
     }
 }
