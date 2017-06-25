@@ -131,9 +131,9 @@ public class CoreMatrix extends NtValue {
         if (mat.length == 0) {
             return getEmptyMatrix();
         }
-        if (mat.length == 1) {
+        if (mat.length > 1) {
             final int testAgainst = mat[0].length;
-            for (int i = 1; 1 < mat.length; ++i) {
+            for (int i = 1; i < mat.length; ++i) {
                 if (testAgainst != mat[i].length) {
                     throw new IllegalArgumentException("Array is not does not form a rectangle");
                 }
@@ -286,37 +286,52 @@ public class CoreMatrix extends NtValue {
     @Override
     public NtValue applyMul(NtValue rhs) {
         if (rhs instanceof CoreMatrix) {
-            final CoreMatrix rhsMat = (CoreMatrix) rhs;
-            if (mat.length == 0) {
-                if (rhsMat.mat.length == 0) {
-                    return Helper.EMPTY_MAT;
-                }
-                throw new DispatchException("*", "Matricies do not have capatible shape");
+            try {
+                return crossProduct((CoreMatrix) rhs);
+            } catch (MatrixBoundMismatchException ex) {
+                throw ex.toDispatchException("*");
             }
-            if (mat[0].length != rhsMat.mat.length) {
-                throw new DispatchException("*", "Matricies do not have capatible shape");
-            }
-            // Here, shape is capatible: (m, n) * (n, p) => (m, p)
-            final NtValue[][] rows = new NtValue[mat.length][rhsMat.mat[0].length];
-            for (int x = 0; x < rows.length; ++x) {
-                final int columnCount = rows[x].length;
-                for (int y = 0; y < columnCount; ++y) {
-                    NtValue acc = null;
-                    for (int k = 0; k < rhsMat.mat.length; ++k) {
-                        final NtValue r = mat[x][k].applyMul(rhsMat.mat[k][y]);
-                        if (acc == null) {
-                            acc = r;
-                            continue;
-                        }
-                        acc = acc.applyAdd(r);
-                    }
-                    rows[x][y] = acc;
-                }
-            }
-            return new CoreMatrix(rows);
         }
 
         return this.map(el -> el.applyMul(rhs));
+    }
+
+    /**
+     * Calculates the cross product (matrix multiplication) of the two matrices
+     *
+     * @param rhs The other matrix
+     * @return The new matrix
+     * @throws com.ymcmp.ntshell.value.CoreMatrix.MatrixBoundMismatchException
+     * If the two matrices do not have a shape of {@code m*n} and {@code n*p}
+     */
+    public CoreMatrix crossProduct(final CoreMatrix rhs) throws MatrixBoundMismatchException {
+        if (mat.length == 0) {
+            if (rhs.mat.length == 0) {
+                return Helper.EMPTY_MAT;
+            }
+            throw new MatrixBoundMismatchException("Matrices do not have capatible shape");
+        }
+        if (mat[0].length != rhs.mat.length) {
+            throw new MatrixBoundMismatchException("Matrices do not have capatible shape");
+        }
+        // Here, shape is capatible: (m, n) * (n, p) => (m, p)
+        final NtValue[][] rows = new NtValue[mat.length][rhs.mat[0].length];
+        for (int x = 0; x < rows.length; ++x) {
+            final int columnCount = rows[x].length;
+            for (int y = 0; y < columnCount; ++y) {
+                NtValue acc = null;
+                for (int k = 0; k < rhs.mat.length; ++k) {
+                    final NtValue r = mat[x][k].applyMul(rhs.mat[k][y]);
+                    if (acc == null) {
+                        acc = r;
+                        continue;
+                    }
+                    acc = acc.applyAdd(r);
+                }
+                rows[x][y] = acc;
+            }
+        }
+        return new CoreMatrix(rows);
     }
 
     public NtValue applyRDiv(NtValue lhs) {
@@ -336,6 +351,13 @@ public class CoreMatrix extends NtValue {
         return this.map(el -> el.applyDiv(rhs));
     }
 
+    /**
+     * Test to see if two matrices have the same shape (same amount of rows and
+     * columns)
+     *
+     * @param other The other matrix
+     * @return {@code true} if same shape, {@code false} otherwise
+     */
     public boolean sameShape(final CoreMatrix other) {
         if (mat.length == other.mat.length) {
             if (mat.length == 0) {
@@ -346,11 +368,21 @@ public class CoreMatrix extends NtValue {
         return false;
     }
 
+    /**
+     * Applies a transformation on every element of the matrix in relation to
+     * the other matrix. Two matrices must have the same size.
+     *
+     * @param rhs The other matrix
+     * @param transformer The transformation
+     * @return The new matrix
+     * @throws com.ymcmp.ntshell.value.CoreMatrix.MatrixBoundMismatchException
+     * If two matrices have different sizes
+     */
     public CoreMatrix bimap(final CoreMatrix rhs,
                             final BiFunction<NtValue, NtValue, NtValue> transformer)
             throws MatrixBoundMismatchException {
         if (!sameShape(rhs)) {
-            throw new MatrixBoundMismatchException("Two matricies have different shapes");
+            throw new MatrixBoundMismatchException("Two matrices have different shapes");
         }
 
         if (mat.length == 0) {
@@ -368,6 +400,12 @@ public class CoreMatrix extends NtValue {
         return new CoreMatrix(rows);
     }
 
+    /**
+     * Applies a transformation on every element of the matrix
+     *
+     * @param transformer The transformation
+     * @return The new matrix
+     */
     public CoreMatrix map(final Function<NtValue, NtValue> transformer) {
         if (mat.length == 0) {
             return Helper.EMPTY_MAT;
@@ -384,6 +422,13 @@ public class CoreMatrix extends NtValue {
         return new CoreMatrix(rows);
     }
 
+    /**
+     * Applies a transformation on every element of the matrix
+     *
+     * @param transformer Must support
+     * {@link NtValue#applyCall(com.ymcmp.ntshell.NtValue...)}
+     * @return The new matrix
+     */
     public CoreMatrix map(final NtValue transformer) {
         if (mat.length == 0) {
             return Helper.EMPTY_MAT;
@@ -400,6 +445,11 @@ public class CoreMatrix extends NtValue {
         return new CoreMatrix(rows);
     }
 
+    /**
+     * Transposes a matrix
+     *
+     * @return The new matrix
+     */
     public CoreMatrix transpose() {
         if (mat.length == 0) {
             return Helper.EMPTY_MAT;
@@ -415,6 +465,11 @@ public class CoreMatrix extends NtValue {
         return new CoreMatrix(rows);
     }
 
+    /**
+     * Flips the matrix on the Y axis
+     *
+     * @return The new matrix
+     */
     public CoreMatrix flipOnY() {
         // 1 2 => 2 1
         // 3 4    4 3
@@ -428,6 +483,11 @@ public class CoreMatrix extends NtValue {
         return new CoreMatrix(ret);
     }
 
+    /**
+     * Flips the matrix on the X axis
+     *
+     * @return The new matrix
+     */
     public CoreMatrix flipOnX() {
         // 1 2 => 3 4
         // 3 4    1 2
@@ -458,10 +518,21 @@ public class CoreMatrix extends NtValue {
         return mat.length > 0;
     }
 
+    /**
+     * Creates a new matrix with the specified rows and columns. The new matrix
+     * must not have an area bigger than the original matrix. If the new matrix
+     * is smaller than the original matrix, the excess elements are ignored. For
+     * example: {@code iota(10) reshape (2, 5)} results in
+     * {@code [1, 2, 3, 4, 5; 6, 7, 8, 9, 10]} while
+     * {@code iota(6) reshape(1, 5)} results in {@code [1, 2, 3, 4, 5]}.
+     *
+     * @param rows The amount of rows
+     * @param columns The amount of columns
+     * @return The new matrix with the specified shape
+     * @throws com.ymcmp.ntshell.value.CoreMatrix.MatrixBoundMismatchException
+     * If the new matrix has a bigger area than the original matrix
+     */
     public CoreMatrix reshape(int rows, int columns) throws MatrixBoundMismatchException {
-        if (mat.length == 0) {
-            return Helper.EMPTY_MAT;
-        }
         /*
         [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].reshape(2, 5) =>
         [1, 2, 3, 4, 5;
@@ -470,8 +541,18 @@ public class CoreMatrix extends NtValue {
         [1, 2, 3, 4, 5, 6].reshape(1, 5) =>
         [1, 2, 3, 4, 5]
          */
-        final int oldLinearLength = mat.length * mat[0].length;
         final int newLinearLength = rows * columns;
+        if (newLinearLength == 0) {
+            return Helper.EMPTY_MAT;
+        }
+
+        if (mat.length == 0) {
+            if (newLinearLength > 0) {
+                throw new MatrixBoundMismatchException("New shape is bigger than old shape: (linear length) " + newLinearLength + " > 0");
+            }
+        }
+
+        final int oldLinearLength = mat.length * mat[0].length;
         if (newLinearLength <= oldLinearLength) {
             final NtValue[][] ret = new NtValue[rows][columns];
             int xOld = 0;
