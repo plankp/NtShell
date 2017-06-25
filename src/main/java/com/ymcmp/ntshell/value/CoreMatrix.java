@@ -407,19 +407,7 @@ public class CoreMatrix extends NtValue {
      * @return The new matrix
      */
     public CoreMatrix map(final Function<NtValue, NtValue> transformer) {
-        if (mat.length == 0) {
-            return Helper.EMPTY_MAT;
-        }
-
-        final NtValue[][] rows = new NtValue[mat.length][];
-        for (int x = 0; x < rows.length; ++x) {
-            final NtValue[] columns = Arrays.copyOf(mat[x], mat[x].length);
-            rows[x] = columns;
-            for (int y = 0; y < columns.length; ++y) {
-                columns[y] = transformer.apply(columns[y]);
-            }
-        }
-        return new CoreMatrix(rows);
+        return map(CoreLambda.from(x -> transformer.apply(x[0])));
     }
 
     /**
@@ -434,15 +422,11 @@ public class CoreMatrix extends NtValue {
             return Helper.EMPTY_MAT;
         }
 
-        final NtValue[][] rows = new NtValue[mat.length][];
-        for (int x = 0; x < rows.length; ++x) {
-            final NtValue[] columns = Arrays.copyOf(mat[x], mat[x].length);
-            rows[x] = columns;
-            for (int y = 0; y < columns.length; ++y) {
-                columns[y] = transformer.applyCall(columns[y]);
-            }
-        }
-        return new CoreMatrix(rows);
+        return new CoreMatrix(Arrays.stream(mat)
+                .map(Arrays::stream)
+                .map(s -> s.map(transformer::applyCall))
+                .map(s -> s.toArray(NtValue[]::new))
+                .toArray(NtValue[][]::new));
     }
 
     /**

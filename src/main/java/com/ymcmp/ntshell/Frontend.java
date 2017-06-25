@@ -64,6 +64,7 @@ public interface Frontend extends AutoCloseable {
      */
     @Override
     public default void close() {
+        // By default, there is nothing to clean up
     }
 
     /**
