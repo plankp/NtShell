@@ -194,11 +194,6 @@ public class CoreAtom extends CoreMatrix {
     }
 
     @Override
-    protected LogicalLine toLogicalLine() {
-        return new LogicalLine(this.str);
-    }
-
-    @Override
     public CoreAtom flipOnX() {
         return this;
     }

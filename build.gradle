@@ -6,10 +6,14 @@ mainClassName = 'com.ymcmp.ntshell.App'
 
 repositories {
     jcenter()
+    maven {
+        url 'https://oss.sonatype.org/content/repositories/snapshots/'
+    }
 }
 
 dependencies {
     compile group: 'de.erichseifert.gral', name: 'gral-core', version: '0.11'
+    compile group: 'com.github.inamik.text.tables', name: 'inamik-text-tables', version: '1.0-SNAPSHOT'
     testCompile 'junit:junit:4.12'
 }
 

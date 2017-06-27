@@ -16,13 +16,23 @@
  */
 package com.ymcmp.ntshell.value;
 
+import com.inamik.text.tables.Cell;
+import com.inamik.text.tables.GridTable;
+import com.inamik.text.tables.grid.Border;
+import com.inamik.text.tables.grid.Util;
+
 import com.ymcmp.ntshell.NtValue;
 import com.ymcmp.ntshell.DispatchException;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
 
 import java.util.Arrays;
 
 import java.util.function.Function;
 import java.util.function.BiFunction;
+import java.util.regex.Pattern;
 
 /**
  * A two dimensional matrix
@@ -30,6 +40,9 @@ import java.util.function.BiFunction;
  * @author YTENG
  */
 public class CoreMatrix extends NtValue {
+
+    private static final Border BORDER_FMT = Border.of(Border.Chars.of('+', '-', '|'));
+    private static final Pattern LINE_BREAK_PAT = Pattern.compile("\r?\n");
 
     public final NtValue[][] mat;
 
@@ -557,41 +570,30 @@ public class CoreMatrix extends NtValue {
         throw new MatrixBoundMismatchException("New shape is bigger than old shape: (linear length) " + newLinearLength + " > " + oldLinearLength);
     }
 
-    protected LogicalLine toLogicalLine() {
-        if (mat.length == 0) {
-            return new LogicalLine().wrapInBox();
-        }
-
-        LogicalLine outer = null;
-        for (int x = 0; x < mat.length; ++x) {
-            LogicalLine inner = null;
-            final int columnCount = mat[x].length;
-            for (int y = 0; y < columnCount; ++y) {
-                final NtValue val = mat[x][y];
-                final LogicalLine ln;
-                if (val instanceof CoreMatrix) {
-                    ln = ((CoreMatrix) val).toLogicalLine();
-                } else {
-                    ln = new LogicalLine(val.toString());
-                }
-
-                if (inner == null) {
-                    inner = ln;
-                } else {
-                    inner = inner.mergeWith(ln);
-                }
-            }
-            if (outer == null) {
-                outer = inner;
-            } else {
-                outer = outer.appendLine(inner);
-            }
-        }
-        return outer.wrapInBox();
-    }
-
     @Override
     public String toString() {
-        return toLogicalLine().toString();
+        if (mat.length == 0) {
+            return "[]";
+        }
+
+        final GridTable table = GridTable.of(mat.length, mat[0].length);
+        for (int x = 0; x < mat.length; ++x) {
+            final int colCount = mat[x].length;
+            for (int y = 0; y < colCount; ++y) {
+                final String[] lines = LINE_BREAK_PAT.split(mat[x][y].toString());
+                table.put(x, y, Cell.of(lines));
+                table.apply(x, y, Cell.Functions.VERTICAL_CENTER);
+                table.apply(x, y, Cell.Functions.HORIZONTAL_CENTER);
+            }
+        }
+
+        try (final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+             final PrintStream pw = new PrintStream(baos)) {
+            Util.print(BORDER_FMT.apply(table), pw);
+            return baos.toString().trim();
+        } catch (IOException ex) {
+            // This should not happen
+        }
+        return "";
     }
 }
