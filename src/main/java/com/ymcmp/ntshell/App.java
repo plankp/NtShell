@@ -289,23 +289,54 @@ public class App {
     }
 
     public static AST consumeCompose(final List<Token> tokens, final Frontend env) {
-        // = <apply> COMPOSE <apply>
-        // | <apply>
-        AST base = consumeApplyExpr(tokens, env);
+        // = <partial>
+        // | <partial> COMPOSE <partial>
+        AST base = consumePartialExpr(tokens, env);
         while (true) {
             if (peekNextToken(tokens, env).type == Token.Type.COMPOSE) {
                 final Token op = tokens.remove(0);
-                base = new BinaryExpr(base, consumeApplyExpr(tokens, env), op);
+                base = new BinaryExpr(base, consumePartialExpr(tokens, env), op);
             } else {
                 return base;
             }
         }
     }
 
+    public static AST consumePartialExpr(final List<Token> tokens, final Frontend env) {
+        // = <apply>
+        // | (<apply> SCOPE)+ <apply>
+        final AST base = consumeApplyExpr(tokens, env);
+        if (peekNextToken(tokens, env).type == Token.Type.SCOPE) {
+            final List<AST> params = new ArrayList<>();
+            params.add(base);
+            while (peekNextToken(tokens, env).type == Token.Type.SCOPE) {
+                tokens.remove(0);
+                params.add(consumeApplyExpr(tokens, env));
+            }
+            final AST applicant = params.remove(params.size() - 1);
+            final AST[] placeholders = params.toArray(new AST[params.size()]);
+            if (applicant instanceof ApplyExpr) {
+//                partialApply {
+//                  placeholders: [iota(5)],
+//                  applicant: reshape()(2, 2)
+//                } # wrong!
+//
+//                partialApply {
+//                  placeholders: [iota(5)],
+//                  applicant: reshape
+//                }()(2,2) # correct!
+                final ApplyExpr expr = (ApplyExpr) applicant;
+                return expr.wrapLeftMostApplicant(e -> new PartialApplyExpr(placeholders, e));
+            }
+            return new PartialApplyExpr(placeholders, applicant);
+        }
+        return base;
+    }
+
     public static AST consumeApplyExpr(final List<Token> tokens, final Frontend env) {
         // = <val>
-        // | <val> LBRACE RBRACE
-        // | <val> LBRACE <expr> (COMMA <expr>)* COMMA? RBRACE
+        // | <val> LBRACE RBRACE <apply>
+        // | <val> LBRACE <expr> (COMMA <expr>)* COMMA? RBRACE <apply>
         AST base = consumeVal(tokens, env);
         while (peekNextToken(tokens, env).type == Token.Type.LBRACE) {
             tokens.remove(0);

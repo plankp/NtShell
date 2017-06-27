@@ -620,6 +620,24 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
     }
 
     @Override
+    public NtValue visitPartialApplyExpr(final PartialApplyExpr apply) {
+        // placeholders are all eagerly evaluated
+        final NtValue applicant = visit(apply.applicant);
+        final NtValue[] placeholders = Arrays.stream(apply.placeholders)
+                .map(this::visit)
+                .toArray(NtValue[]::new);
+        return new CoreLambda() {
+            @Override
+            public NtValue applyCall(final NtValue[] remainder) {
+                final NtValue[] params = new NtValue[placeholders.length + remainder.length];
+                System.arraycopy(placeholders, 0, params, 0, placeholders.length);
+                System.arraycopy(remainder, 0, params, placeholders.length, remainder.length);
+                return applicant.applyCall(params);
+            }
+        };
+    }
+
+    @Override
     public NtValue visitUnaryExpr(final UnaryExpr unary) {
         final NtValue base = visit(unary.base);
         if (unary.prefix) {

@@ -18,8 +18,11 @@ package com.ymcmp.ntshell.ast;
 
 import com.ymcmp.ntshell.AST;
 import com.ymcmp.ntshell.Visitor;
+import java.util.ArrayDeque;
 
 import java.util.Arrays;
+import java.util.Deque;
+import java.util.function.Function;
 
 /**
  *
@@ -43,6 +46,22 @@ public class ApplyExpr implements AST {
     @Override
     public String toString() {
         return String.format("apply{ instance: %s, params: %s }", instance, Arrays.toString(params));
+    }
+
+    public AST wrapLeftMostApplicant(Function<? super AST, ? extends AST> transformer) {
+        final Deque<AST[]> rewriteDeque = new ArrayDeque<>();
+        AST apply = this;
+        do {
+            final ApplyExpr e = (ApplyExpr) apply;
+            apply = e.instance;
+            rewriteDeque.addFirst(e.params);
+        } while (apply instanceof ApplyExpr);
+
+        // XXX: DO NOT CHANGE stream() TO parallelStream(). PARALLEL STREAMS
+        // REQUIRE A PROPER COMBINATOR AND WE DO NOT HAVE ONE!
+        return rewriteDeque.stream().reduce(transformer.apply(apply),
+                                            ApplyExpr::new,
+                                            (a, b) -> a);
     }
 
     @Override

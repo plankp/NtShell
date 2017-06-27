@@ -47,7 +47,7 @@ public class AppTest {
             // >)]}
             new Token(Token.Type.GT, ">"), new Token(Token.Type.RBRACE, ")"), new Token(Token.Type.RBLK, "]"), new Token(Token.Type.RCURL, "}"),
             // :+-*/%=
-            new Token(Token.Type.SCOPE, ":"), // this operator is currently not used
+            new Token(Token.Type.SCOPE, ":"),
             new Token(Token.Type.ADD, "+"), new Token(Token.Type.SUB, "-"), new Token(Token.Type.MUL, "*"), new Token(Token.Type.DIV, "/"),
             new Token(Token.Type.PERCENT, "%"), new Token(Token.Type.SET, "="),
             // -><=>=

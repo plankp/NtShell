@@ -46,6 +46,8 @@ public abstract class Visitor<T> {
 
     public abstract T visitApplyExpr(ApplyExpr apply);
 
+    public abstract T visitPartialApplyExpr(PartialApplyExpr apply);
+
     public abstract T visitUnaryExpr(UnaryExpr unary);
 
     public abstract T visitBinaryExpr(BinaryExpr binary);
