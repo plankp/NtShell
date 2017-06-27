@@ -141,7 +141,7 @@ public class CoreMatrix extends NtValue {
      * @return The matrix equivalent
      */
     public static CoreMatrix from(final NtValue[][] mat) {
-        if (mat.length == 0) {
+        if (mat == null || mat.length == 0) {
             return getEmptyMatrix();
         }
         if (mat.length > 1) {

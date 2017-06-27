@@ -17,6 +17,7 @@
 package com.ymcmp.ntshell;
 
 import java.io.Serializable;
+
 import java.util.Objects;
 
 /**

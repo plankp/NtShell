@@ -105,19 +105,31 @@ public class CoreAtom extends CoreMatrix {
         switch (params.length) {
         case 1:
             if (params[0] instanceof CoreNumber) {
-                return getCharAt(((int) ((CoreNumber) params[0]).toDouble()) - 1);
+                final int loc = (int) ((CoreNumber) params[0]).toDouble();
+                return getCharAt(translateIndex(loc));
             }
             break;
         case 2:
             if (params[0] instanceof CoreNumber && params[1] instanceof CoreNumber) {
                 final int start = (int) ((CoreNumber) params[0]).toDouble();
-                final int end = (int) ((CoreNumber) params[1]).toDouble();
-                return slice(start - 1, end);
+                int end = (int) ((CoreNumber) params[1]).toDouble();
+
+                if (end < 0) {
+                    if (++end == 0) {
+                        end = str.length() + 1;
+                    }
+                }
+
+                return slice(translateIndex(start), translateIndex(end));
             }
             break;
         default:
         }
         return CoreUnit.getInstance();
+    }
+
+    private static int translateIndex(final int loc) {
+        return loc < 0 ? loc : loc - 1;
     }
 
     /**

@@ -91,4 +91,20 @@ public class CoreAtomTest {
         );
         assertEquals(expected, CoreAtom.from("hello").toMatrix());
     }
+
+    @Test
+    public void testDelegatesForApplyCall() {
+        final CoreAtom atom = CoreAtom.from("Abc");
+
+        // Char at when number
+        assertEquals(CoreNumber.from('A'), atom.applyCall(new NtValue[]{CoreNumber.from(1)}));
+        assertEquals(CoreNumber.from('c'), atom.applyCall(new NtValue[]{CoreNumber.from(-1)}));
+
+        // Slice when two numbers
+        assertEquals(CoreAtom.from("Ab"), atom.applyCall(new NtValue[]{CoreNumber.from(1), CoreNumber.from(3)}));
+        assertEquals(CoreAtom.from("bc"), atom.applyCall(new NtValue[]{CoreNumber.from(-2), CoreNumber.from(-1)}));
+
+        // Unit on everything else
+        assertSame(CoreUnit.getInstance(), atom.applyCall(new NtValue[0]));
+    }
 }

@@ -23,7 +23,7 @@ import com.ymcmp.ntshell.value.CoreLambda;
  *
  * @author YTENG
  */
-public class NtValue {
+public abstract class NtValue {
 
     /**
      * Overrides the behavior of the unary percentage operator {@code %} in

@@ -40,6 +40,7 @@ public class CoreMatrixTest {
     }
 
     public void matrixFromEmptyArrayYieldsSameInstance() {
+        assertSame(CoreMatrix.getEmptyMatrix(), CoreMatrix.from(null));
         assertSame(CoreMatrix.getEmptyMatrix(), CoreMatrix.from(new NtValue[0][0]));
     }
 
@@ -122,7 +123,18 @@ public class CoreMatrixTest {
     }
 
     @Test
+    public void testToString() {
+        assertEquals("[]", CoreMatrix.getEmptyMatrix().toString());
+    }
+
+    @Test
     public void testCrossProduct() {
+        try {
+            assertSame(CoreMatrix.getEmptyMatrix(), CoreMatrix.getEmptyMatrix().crossProduct(CoreMatrix.getEmptyMatrix()));
+        } catch (CoreMatrix.MatrixBoundMismatchException ex) {
+            fail("No exception should be thrown");
+        }
+
         try {
             CoreMatrix.getEmptyMatrix().bimap(CoreMatrix.from(new NtValue[1][1]), (a, b) -> a);
             fail("MatrixBoundMismatchException should have been thrown");
@@ -276,6 +288,7 @@ public class CoreMatrixTest {
     public void testApplyCall() {
         final CoreMatrix a = CoreMatrix.from(new NtValue[][]{{CoreNumber.from(true)}});
         assertEquals(CoreNumber.from(true), a.applyCall(new NtValue[]{CoreNumber.from(1), CoreNumber.from(1)}));
+        assertEquals(CoreUnit.getInstance(), a.applyCall(new NtValue[]{CoreNumber.from(5), CoreNumber.from(2)}));
     }
 
     @Test

@@ -20,6 +20,8 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
+import com.ymcmp.ntshell.DispatchException;
+
 /**
  *
  * @author YTENG
@@ -29,6 +31,11 @@ public class CoreLambdaTest {
     @Test
     public void identityFunctionReturnsItself() {
         assertSame(CoreLambda.getIdentityFunction(), CoreLambda.getIdentityFunction().applyCall(CoreLambda.getIdentityFunction()));
+    }
+    
+    @Test(expected = DispatchException.class)
+    public void identityFunctionCanFail() {
+        CoreLambda.getIdentityFunction().applyCall(null, null);
     }
 
     @Test
