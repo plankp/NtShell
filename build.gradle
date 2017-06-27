@@ -12,8 +12,8 @@ repositories {
 }
 
 dependencies {
-    compile group: 'de.erichseifert.gral', name: 'gral-core', version: '0.11'
     compile group: 'com.github.inamik.text.tables', name: 'inamik-text-tables', version: '1.0-SNAPSHOT'
+    compile group: 'net.ericaro', name: 'surfaceplotter', version: '2.0.1'
     testCompile 'junit:junit:4.12'
 }
 

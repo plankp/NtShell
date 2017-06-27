@@ -16,12 +16,13 @@
  */
 package com.ymcmp.ntshell;
 
+import com.ymcmp.ntshell.func.Plot2d;
+import com.ymcmp.ntshell.func.Plot3d;
 import com.ymcmp.ntshell.value.*;
 
-import de.erichseifert.gral.data.DataTable;
-import de.erichseifert.gral.plots.XYPlot;
-import de.erichseifert.gral.plots.lines.LineRenderer;
-import de.erichseifert.gral.ui.InteractivePanel;
+import net.ericaro.surfaceplotter.Mapper;
+import net.ericaro.surfaceplotter.JSurfacePanel;
+import net.ericaro.surfaceplotter.ProgressiveSurfaceModel;
 
 import java.awt.Font;
 import java.awt.Color;
@@ -208,7 +209,6 @@ public class SwingMode implements Frontend {
 
     @Override
     public NtValue findDefinition(final String name) {
-        // Add interfaces to jzy3d
         switch (name) {
         case "illuminati":
             return new CoreLambda(new CoreLambda.Info("Illuminati", "... -> number", "Illuminati confirmed!")) {
@@ -227,57 +227,33 @@ public class SwingMode implements Frontend {
             };
         case "plot":
         case "plot2d":
-            return new CoreLambda(new CoreLambda.Info("plot2d", "(func(number) -> number) -> func", "Wraps a function in another function")) {
+            return new CoreLambda(new CoreLambda.Info("plot2d", "(func(number) -> number) -> func", "Plots the by feeding only the x values")) {
                 @Override
-                public NtValue applyCall(NtValue... f) {
+                public NtValue applyCall(final NtValue[] f) {
                     if (f.length != 1) {
                         throw new DispatchException("plot2d", "Expected one parameter, got " + f.length + " instead");
                     }
-
-                    return new CoreLambda(new CoreLambda.Info("$$plot2d", "func(start:number, end:number, incr:number) -> number", "Draws the graph from start to end increased by incr. The return value is meaningless.")) {
+                    return new CoreLambda(new CoreLambda.Info("$$plot2d", "(xrange?:mat, yrange?:mat) -> unit", "Specify the x and y ranges (both optional)")) {
                         @Override
-                        public NtValue applyCall(NtValue... r) {
-                            if (r.length == 3
-                                    && r[0] instanceof CoreNumber
-                                    && r[1] instanceof CoreNumber
-                                    && r[2] instanceof CoreNumber) {
-
-                                double x = ((CoreNumber) r[0]).toDouble();
-
-                                final double end = ((CoreNumber) r[1]).toDouble();
-                                final double delta = ((CoreNumber) r[2]).toDouble();
-                                if (delta == 0) {
-                                    throw new DispatchException("$$plot2d", "delta cannot be zero: " + delta);
-                                }
-
-                                final DataTable data = new DataTable(Double.class, Double.class);
-                                for (; x <= end; x += delta) {
-                                    final NtValue ret = f[0].applyCall(CoreNumber.from(x));
-                                    if (ret instanceof CoreNumber) {
-                                        data.add(x, ((CoreNumber) ret).toDouble());
-                                    } else {
-                                        data.add(x, Double.NaN);
-                                    }
-                                }
-
-                                final XYPlot plot = new XYPlot(data);
-                                final InteractivePanel panel = new InteractivePanel(plot);
-                                final LineRenderer lines = new BrokenLineRenderer();
-                                plot.setLineRenderers(data, lines);
-
-                                final Color color = new Color(0.0f, 0.3f, 1.0f);
-                                plot.getPointRenderers(data).get(0).setColor(color);
-                                plot.getLineRenderers(data).get(0).setColor(color);
-
-                                final JFrame gframe = new JFrame();
-                                gframe.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
-                                gframe.setSize(400, 300);
-                                gframe.getContentPane().add(panel);
-                                gframe.setVisible(true);
-                            } else {
-                                throw new DispatchException("$$plot2d", "Expected three numbers, found " + r.length + " instead");
-                            }
-                            return CoreNumber.from(0);
+                        public NtValue applyCall(final NtValue[] params) {
+                            appendComponent(new Plot2d(f[0]).draw(params));
+                            return CoreUnit.getInstance();
+                        }
+                    };
+                }
+            };
+        case "plot3d":
+            return new CoreLambda(new CoreLambda.Info("plot3d", "(func(number, number) -> number) -> func", "Plots the by feeding the x and y values")) {
+                @Override
+                public NtValue applyCall(NtValue... f) {
+                    if (f.length != 1) {
+                        throw new DispatchException("plot3d", "Expected one parameter, got " + f.length + " instead");
+                    }
+                    return new CoreLambda(new CoreLambda.Info("$$plot3d", "(xrange?:mat, yrange?:mat, zrange?:mat) -> unit", "Specify the x, y, and z ranges (all optional)")) {
+                        @Override
+                        public NtValue applyCall(final NtValue[] params) {
+                            appendComponent(new Plot3d(f[0]).draw(params));
+                            return CoreUnit.getInstance();
                         }
                     };
                 }
