@@ -20,8 +20,8 @@ import com.ymcmp.ntshell.NtValue;
 import com.ymcmp.ntshell.value.CoreMatrix;
 import com.ymcmp.ntshell.value.CoreNumber;
 
-import net.ericaro.surfaceplotter.JSurfacePanel;
 import net.ericaro.surfaceplotter.Mapper;
+import net.ericaro.surfaceplotter.JSurfacePanel;
 import net.ericaro.surfaceplotter.ProgressiveSurfaceModel;
 
 /**

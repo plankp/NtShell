@@ -19,11 +19,8 @@ package com.ymcmp.ntshell;
 import com.ymcmp.ntshell.rte.DispatchException;
 import com.ymcmp.ntshell.func.Plot2d;
 import com.ymcmp.ntshell.func.Plot3d;
-import com.ymcmp.ntshell.value.*;
 
-import net.ericaro.surfaceplotter.Mapper;
-import net.ericaro.surfaceplotter.JSurfacePanel;
-import net.ericaro.surfaceplotter.ProgressiveSurfaceModel;
+import com.ymcmp.ntshell.value.*;
 
 import java.awt.Font;
 import java.awt.Color;
