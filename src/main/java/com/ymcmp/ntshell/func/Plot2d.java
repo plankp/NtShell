@@ -56,10 +56,10 @@ public class Plot2d {
             }
         });
 
-        if (1 < range.length && range[0] instanceof CoreMatrix) {
+        if (0 < range.length && range[0] instanceof CoreMatrix) {
             PlotUtils.decodeRangeX(range, model);
         }
-        if (2 < range.length && range[1] instanceof CoreMatrix) {
+        if (1 < range.length && range[1] instanceof CoreMatrix) {
             PlotUtils.decodeRangeY(range, model);
         }
 
