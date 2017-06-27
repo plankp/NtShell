@@ -28,31 +28,37 @@ import net.ericaro.surfaceplotter.ProgressiveSurfaceModel;
  *
  * @author YTENG
  */
-public class Plot2d {
+public class Plot2d implements Plotter {
 
     public final NtValue f;
+    public final NtValue g;
 
     public Plot2d(final NtValue f) {
-        this.f = f;
+        this(f, null);
     }
 
-    public JSurfacePanel draw(final NtValue[] range) {
+    public Plot2d(final NtValue f, final NtValue g) {
+        this.f = f;
+        this.g = g;
+    }
+
+    @Override
+    public JSurfacePanel plot(final NtValue[] range) {
         final ProgressiveSurfaceModel model = new ProgressiveSurfaceModel();
         final JSurfacePanel panel = new JSurfacePanel();
         panel.setModel(model);
         model.setMapper(new Mapper() {
             @Override
             public float f1(float x, float y) {
-                final NtValue ret = f.applyCall(CoreNumber.from(x));
-                if (ret instanceof CoreNumber) {
-                    return (float) ((CoreNumber) ret).toDouble();
-                }
-                return Float.NaN;
+                return PlotUtils.toGraphFloat(f.applyCall(CoreNumber.from(x)));
             }
 
             @Override
             public float f2(float x, float y) {
-                return 0;
+                if (g == null) {
+                    return 0;
+                }
+                return PlotUtils.toGraphFloat(g.applyCall(CoreNumber.from(x)));
             }
         });
 
@@ -61,6 +67,10 @@ public class Plot2d {
         }
         if (1 < range.length && range[1] instanceof CoreMatrix) {
             PlotUtils.decodeRangeY(range, model);
+        }
+
+        if (g != null) {
+            model.setBothFunction(true);
         }
 
         model.plot().execute();

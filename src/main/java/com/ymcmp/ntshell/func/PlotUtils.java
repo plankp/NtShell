@@ -51,4 +51,11 @@ class PlotUtils {
         model.setZMin(zmin);
         model.setZMax(zmax);
     }
+
+    public static float toGraphFloat(final NtValue ret) {
+        if (ret instanceof CoreNumber) {
+            return (float) ((CoreNumber) ret).toDouble();
+        }
+        return Float.NaN;
+    }
 }

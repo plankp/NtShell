@@ -19,6 +19,7 @@ package com.ymcmp.ntshell;
 import com.ymcmp.ntshell.rte.DispatchException;
 import com.ymcmp.ntshell.func.Plot2d;
 import com.ymcmp.ntshell.func.Plot3d;
+import com.ymcmp.ntshell.func.Plotter;
 
 import com.ymcmp.ntshell.value.*;
 
@@ -225,32 +226,50 @@ public class SwingMode implements Frontend {
             };
         case "plot":
         case "plot2d":
-            return new CoreLambda(new CoreLambda.Info("plot2d", "(func(number) -> number) -> func", "Plots the by feeding only the x values")) {
+            return new CoreLambda(new CoreLambda.Info("plot2d", "(f:func(number) -> number, g?:func(number) -> number) -> func", "Plots the by feeding only the x values")) {
                 @Override
                 public NtValue applyCall(final NtValue[] f) {
-                    if (f.length != 1) {
-                        throw new DispatchException("plot2d", "Expected one parameter, got " + f.length + " instead");
+                    final Plotter plotter;
+                    switch (f.length) {
+                    case 1:
+                        plotter = new Plot2d(f[0]);
+                        break;
+                    case 2:
+                        plotter = new Plot2d(f[0], f[1]);
+                        break;
+                    default:
+                        throw new DispatchException("plot2d", "Expected one or two functions, got " + f.length + " instead");
                     }
+
                     return new CoreLambda(new CoreLambda.Info("$$plot2d", "(xrange?:mat, yrange?:mat) -> unit", "Specify the x and y ranges (both optional)")) {
                         @Override
                         public NtValue applyCall(final NtValue[] params) {
-                            appendComponent(new Plot2d(f[0]).draw(params));
+                            appendComponent(plotter.plot(params));
                             return CoreUnit.getInstance();
                         }
                     };
                 }
             };
         case "plot3d":
-            return new CoreLambda(new CoreLambda.Info("plot3d", "(func(number, number) -> number) -> func", "Plots the by feeding the x and y values")) {
+            return new CoreLambda(new CoreLambda.Info("plot3d", "(f:func(number, number) -> number, g?:func(number, number) -> number) -> func", "Plots the by feeding the x and y values")) {
                 @Override
                 public NtValue applyCall(NtValue... f) {
-                    if (f.length != 1) {
-                        throw new DispatchException("plot3d", "Expected one parameter, got " + f.length + " instead");
+                    final Plotter plotter;
+                    switch (f.length) {
+                    case 1:
+                        plotter = new Plot3d(f[0]);
+                        break;
+                    case 2:
+                        plotter = new Plot3d(f[0], f[1]);
+                        break;
+                    default:
+                        throw new DispatchException("plot3d", "Expected one or two functions, got " + f.length + " instead");
                     }
+
                     return new CoreLambda(new CoreLambda.Info("$$plot3d", "(xrange?:mat, yrange?:mat, zrange?:mat) -> unit", "Specify the x, y, and z ranges (all optional)")) {
                         @Override
                         public NtValue applyCall(final NtValue[] params) {
-                            appendComponent(new Plot3d(f[0]).draw(params));
+                            appendComponent(plotter.plot(params));
                             return CoreUnit.getInstance();
                         }
                     };
