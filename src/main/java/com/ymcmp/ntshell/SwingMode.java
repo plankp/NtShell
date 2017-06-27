@@ -16,6 +16,7 @@
  */
 package com.ymcmp.ntshell;
 
+import com.ymcmp.ntshell.rte.DispatchException;
 import com.ymcmp.ntshell.func.Plot2d;
 import com.ymcmp.ntshell.func.Plot3d;
 import com.ymcmp.ntshell.value.*;

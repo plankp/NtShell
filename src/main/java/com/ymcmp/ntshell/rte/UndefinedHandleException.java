@@ -14,22 +14,26 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.ymcmp.ntshell;
+package com.ymcmp.ntshell.rte;
 
 /**
  *
  * @author YTENG
  */
-public class DispatchException extends RuntimeException {
+public class UndefinedHandleException extends RuntimeException {
 
-    public DispatchException() {
+    public UndefinedHandleException() {
     }
 
-    public DispatchException(String message) {
+    public UndefinedHandleException(String message) {
         super(message);
     }
 
-    public DispatchException(String name, String message) {
-        super(String.format("from %s: %s", name, message));
+    public UndefinedHandleException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public UndefinedHandleException(Throwable cause) {
+        super(cause);
     }
 }

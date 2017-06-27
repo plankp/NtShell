@@ -46,7 +46,7 @@ public class PiecewiseFuncVal implements AST {
         public CaseBlock transformNegatives() {
             // Ignore the predicate
             final AST nexpr = expr.transformNegatives();
-            if (nexpr == expr) {
+            if (nexpr.equals(expr)) {
                 return this;
             }
             return new CaseBlock(pred, nexpr);
@@ -54,7 +54,7 @@ public class PiecewiseFuncVal implements AST {
 
         public CaseBlock levelOperators() {
             final AST nexpr = expr.levelOperators();
-            if (nexpr == expr) {
+            if (nexpr.equals(expr)) {
                 return this;
             }
             return new CaseBlock(pred, nexpr);
@@ -62,7 +62,7 @@ public class PiecewiseFuncVal implements AST {
 
         public CaseBlock simplifyRationals() {
             final AST nexpr = expr.simplifyRationals();
-            if (nexpr == expr) {
+            if (nexpr.equals(expr)) {
                 return this;
             }
             return new CaseBlock(pred, nexpr);
@@ -70,7 +70,7 @@ public class PiecewiseFuncVal implements AST {
 
         public CaseBlock unfoldConstant() {
             final AST nexpr = expr.unfoldConstant();
-            if (nexpr == expr) {
+            if (nexpr.equals(expr)) {
                 return this;
             }
             return new CaseBlock(pred, nexpr);

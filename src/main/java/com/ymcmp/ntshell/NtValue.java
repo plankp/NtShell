@@ -16,6 +16,7 @@
  */
 package com.ymcmp.ntshell;
 
+import com.ymcmp.ntshell.rte.DispatchException;
 import com.ymcmp.ntshell.value.CoreLambda;
 
 /**

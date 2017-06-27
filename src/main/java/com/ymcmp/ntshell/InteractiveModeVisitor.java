@@ -16,7 +16,10 @@
  */
 package com.ymcmp.ntshell;
 
+import com.ymcmp.ntshell.rte.DispatchException;
 import com.ymcmp.ntshell.ast.*;
+import com.ymcmp.ntshell.rte.BadValueException;
+import com.ymcmp.ntshell.rte.UndefinedHandleException;
 
 import com.ymcmp.ntshell.value.*;
 
@@ -499,7 +502,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
             if (val == null) {
                 val = PREDEF.get(name);
                 if (val == null) {
-                    throw new RuntimeException("Variable " + name + " has not been defined");
+                    throw new UndefinedHandleException("Variable " + name + " has not been defined");
                 }
             }
         }
@@ -521,8 +524,8 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                 }
             }
             return CoreMatrix.from(rows).transpose();
-        } catch (ArrayIndexOutOfBoundsException ex) {
-            throw new RuntimeException("Illegal bounds caused by matrix not having rectangular shape");
+        } catch (ArrayIndexOutOfBoundsException | IllegalArgumentException ex) {
+            throw new BadValueException("Matrix has bad shape", ex);
         }
     }
 
@@ -550,7 +553,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                 return visit(test.expr);
             }
         }
-        throw new RuntimeException("Piecewise function did not handle all possible values!");
+        throw new UndefinedHandleException("Piecewise function did not handle all possible values!");
     }
 
     /**

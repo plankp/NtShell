@@ -47,7 +47,7 @@ public class AssignExpr implements AST {
     @Override
     public AST transformNegatives() {
         final AST nval = value.transformNegatives();
-        if (nval == value) {
+        if (nval.equals(value)) {
             return this;
         }
         return new AssignExpr(to, nval);
@@ -56,7 +56,7 @@ public class AssignExpr implements AST {
     @Override
     public AST levelOperators() {
         final AST nval = value.levelOperators();
-        if (nval == value) {
+        if (nval.equals(value)) {
             return this;
         }
         return new AssignExpr(to, nval);
@@ -65,7 +65,7 @@ public class AssignExpr implements AST {
     @Override
     public AST simplifyRationals() {
         final AST nval = value.simplifyRationals();
-        if (nval == value) {
+        if (nval.equals(value)) {
             return this;
         }
         return new AssignExpr(to, nval);
@@ -74,7 +74,7 @@ public class AssignExpr implements AST {
     @Override
     public AST unfoldConstant() {
         final AST nval = value.unfoldConstant();
-        if (nval == value) {
+        if (nval.equals(value)) {
             return this;
         }
         return new AssignExpr(to, nval);

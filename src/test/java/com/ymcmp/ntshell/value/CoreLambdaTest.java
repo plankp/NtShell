@@ -20,7 +20,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-import com.ymcmp.ntshell.DispatchException;
+import com.ymcmp.ntshell.rte.DispatchException;
 
 /**
  *

@@ -16,7 +16,7 @@
  */
 package com.ymcmp.ntshell.value;
 
-import com.ymcmp.ntshell.DispatchException;
+import com.ymcmp.ntshell.rte.DispatchException;
 import com.ymcmp.ntshell.NtValue;
 
 import java.util.function.Function;

@@ -75,7 +75,7 @@ public class UnaryExpr implements AST {
     @Override
     public AST levelOperators() {
         final AST nbase = base.levelOperators();
-        if (nbase == base) {
+        if (nbase.equals(base)) {
             return this;
         }
         return new UnaryExpr(nbase, op, prefix);
@@ -84,7 +84,7 @@ public class UnaryExpr implements AST {
     @Override
     public AST simplifyRationals() {
         final AST nbase = base.simplifyRationals();
-        if (nbase == base) {
+        if (nbase.equals(base)) {
             return this;
         }
         return new UnaryExpr(nbase, op, prefix);

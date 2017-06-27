@@ -22,7 +22,7 @@ import com.inamik.text.tables.grid.Border;
 import com.inamik.text.tables.grid.Util;
 
 import com.ymcmp.ntshell.NtValue;
-import com.ymcmp.ntshell.DispatchException;
+import com.ymcmp.ntshell.rte.DispatchException;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -543,10 +543,8 @@ public class CoreMatrix extends NtValue {
             return Helper.EMPTY_MAT;
         }
 
-        if (mat.length == 0) {
-            if (newLinearLength > 0) {
-                throw new MatrixBoundMismatchException("New shape is bigger than old shape: (linear length) " + newLinearLength + " > 0");
-            }
+        if (mat.length == 0 && newLinearLength > 0) {
+            throw new MatrixBoundMismatchException("New shape is bigger than old shape: (linear length) " + newLinearLength + " > 0");
         }
 
         final int oldLinearLength = mat.length * mat[0].length;

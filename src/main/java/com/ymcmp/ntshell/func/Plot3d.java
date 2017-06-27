@@ -16,7 +16,7 @@
  */
 package com.ymcmp.ntshell.func;
 
-import com.ymcmp.ntshell.DispatchException;
+import com.ymcmp.ntshell.rte.DispatchException;
 import com.ymcmp.ntshell.NtValue;
 import com.ymcmp.ntshell.value.CoreMatrix;
 import com.ymcmp.ntshell.value.CoreNumber;

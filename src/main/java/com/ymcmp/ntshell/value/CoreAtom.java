@@ -17,6 +17,7 @@
 package com.ymcmp.ntshell.value;
 
 import com.ymcmp.ntshell.NtValue;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -114,10 +115,8 @@ public class CoreAtom extends CoreMatrix {
                 final int start = (int) ((CoreNumber) params[0]).toDouble();
                 int end = (int) ((CoreNumber) params[1]).toDouble();
 
-                if (end < 0) {
-                    if (++end == 0) {
-                        end = str.length() + 1;
-                    }
+                if (end < 0 && ++end == 0) {
+                    end = str.length() + 1;
                 }
 
                 return slice(translateIndex(start), translateIndex(end));
