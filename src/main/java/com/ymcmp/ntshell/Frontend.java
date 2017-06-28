@@ -20,7 +20,7 @@ package com.ymcmp.ntshell;
  *
  * @author YTENG
  */
-public interface Frontend extends AutoCloseable {
+public interface Frontend extends AutoCloseable, NtLibrary {
 
     public String readLine();
 
@@ -58,6 +58,8 @@ public interface Frontend extends AutoCloseable {
         errWriteLine();
     }
 
+    public void linkLibrary(NtLibrary library);
+
     /**
      * Cleans up resources after the session has either aborted due to failure
      * or has terminated normally.
@@ -66,15 +68,4 @@ public interface Frontend extends AutoCloseable {
     public default void close() {
         // By default, there is nothing to clean up
     }
-
-    /**
-     * Looks for a definition (typically a function or variable) that is
-     * specific to the particular front end. Search order is local definitions,
-     * then here, then predefinitions.
-     *
-     * @param name The name of the definition
-     * @return The value of the definition. Returns {@code null} if none was
-     * found.
-     */
-    public NtValue findDefinition(String name);
 }

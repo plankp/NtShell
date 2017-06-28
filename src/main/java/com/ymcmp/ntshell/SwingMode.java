@@ -47,7 +47,7 @@ import javax.swing.text.StyleConstants;
  *
  * @author YTENG
  */
-public class SwingMode implements Frontend {
+public class SwingMode extends AbstractFrontend {
 
     private static final SimpleAttributeSet STYLE_ERR = new SimpleAttributeSet();
     private static final SimpleAttributeSet STYLE_OUT = new SimpleAttributeSet();
@@ -173,7 +173,7 @@ public class SwingMode implements Frontend {
                 return;
             }
         }
-        Frontend.super.write(o);
+        super.write(o);
     }
 
     private String toToolTipText(final String str) {
@@ -208,6 +208,11 @@ public class SwingMode implements Frontend {
 
     @Override
     public NtValue findDefinition(final String name) {
+        final NtValue val = super.findDefinition(name);
+        if (val != null) {
+            return val;
+        }
+
         switch (name) {
         case "illuminati":
             return new CoreLambda(new CoreLambda.Info("Illuminati", "... -> number", "Illuminati confirmed!")) {

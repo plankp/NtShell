@@ -24,7 +24,7 @@ import java.io.InputStreamReader;
  *
  * @author YTENG
  */
-public class ConsoleMode implements Frontend {
+public class ConsoleMode extends AbstractFrontend {
 
     private BufferedReader br;
 
@@ -74,10 +74,5 @@ public class ConsoleMode implements Frontend {
             br.close();
         } catch (IOException ex) {
         }
-    }
-
-    @Override
-    public NtValue findDefinition(String name) {
-        return null;
     }
 }

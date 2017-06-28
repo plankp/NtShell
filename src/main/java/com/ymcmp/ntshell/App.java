@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import ntshell.rt.lib.Core;
 
 /**
  *
@@ -85,6 +86,8 @@ public class App {
     }
 
     public static void interactiveMode(final Frontend env) {
+        env.linkLibrary(Core.getInstance());
+
         env.writeLine("NtShell (interactive mode)\nType `~help` for help\n");
         boolean showAST = false;
         boolean transNeg = true;

@@ -16,10 +16,9 @@
  */
 package com.ymcmp.ntshell;
 
-import com.ymcmp.ntshell.rte.DispatchException;
+import com.ymcmp.ntshell.rte.*;
+
 import com.ymcmp.ntshell.ast.*;
-import com.ymcmp.ntshell.rte.BadValueException;
-import com.ymcmp.ntshell.rte.UndefinedHandleException;
 
 import com.ymcmp.ntshell.value.*;
 
@@ -29,7 +28,6 @@ import java.util.HashMap;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.IntStream;
 
 /**
  *
@@ -42,173 +40,6 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
     private static final Map<String, NtValue> PREDEF = new HashMap<>();
 
     static {
-        // Constants
-        PREDEF.put("pi", CoreNumber.getPi());
-        PREDEF.put("e", CoreNumber.getE());
-        PREDEF.put("true", CoreNumber.from(true));
-        PREDEF.put("false", CoreNumber.from(false));
-
-        // Not-as-interesting Functions
-        PREDEF.put("id", CoreLambda.getIdentityFunction());
-        PREDEF.put("twice", new CoreLambda(new CoreLambda.Info("twice", "[applyCall] -> func", "Returns a function that behaves like the following: <code>twice(f) => x -> f(f(x))</code>")) {
-               @Override
-               public NtValue applyCall(NtValue[] input) {
-                   // twice (f) => x -> f(f(x))
-                   if (input.length == 1) {
-                       return input[0].applyCompose(input[0]);
-                   }
-                   throw new DispatchException("twice", "Expected one parameter, got " + input.length + " instead");
-               }
-           });
-
-        // Atom-related Functions
-        PREDEF.put("matrix", new CoreLambda(new CoreLambda.Info("matrix", "atom -> matrix", "Converts the atom into its equivalent matrix")) {
-               @Override
-               public NtValue applyCall(final NtValue[] params) {
-                   if (params.length == 1 && params[0] instanceof CoreAtom) {
-                       return ((CoreAtom) params[0]).toMatrix();
-                   }
-                   throw new DispatchException("matrix", "Expected a atom, got " + params.length + " instead");
-               }
-           });
-
-        // Matrix-related Functions
-        PREDEF.put("group", new CoreLambda(new CoreLambda.Info("group", "(...) -> mat", "Converts the parameters into a one dimensional matrix")) {
-               @Override
-               public NtValue applyCall(final NtValue[] params) {
-                   return CoreMatrix.from(new NtValue[][]{params});
-               }
-           });
-        PREDEF.put("atom", new CoreLambda(new CoreLambda.Info("atom", "mat -> atom", "Converts the matrix into its equivalent atom. Not all matricies have an equivalent atom.")) {
-               @Override
-               public NtValue applyCall(final NtValue[] params) {
-                   if (params.length == 1 && params[0] instanceof CoreMatrix) {
-                       return ((CoreMatrix) params[0]).toAtom();
-                   }
-                   throw new DispatchException("atom", "Expected a matrix, got " + params.length + " instead");
-               }
-           });
-        PREDEF.put("iota", new CoreLambda(new CoreLambda.Info("iota", "bound:number -> mat", "Creates a one-row matrix with the elements 1 to (bound). Returns an empty matrix if bound is not bigger than 1.")) {
-               @Override
-               public NtValue applyCall(final NtValue[] params) {
-                   if (params.length == 1 && params[0] instanceof CoreNumber) {
-                       return CoreMatrix.from(new CoreNumber[][]{
-                           IntStream.rangeClosed(1, (int) ((CoreNumber) params[0]).toDouble())
-                           .mapToObj(CoreNumber::from)
-                           .toArray(CoreNumber[]::new)});
-                   }
-                   throw new DispatchException("iota", "Expected a number, got " + params.length + " instead");
-               }
-           });
-        PREDEF.put("reshape", new CoreLambda(new CoreLambda.Info("reshape", "mat -> func", "Reshapes a matrix based. The original matrix is left untouched after the transformation.")) {
-               @Override
-               public NtValue applyCall(final NtValue[] matrix) {
-                   if (matrix.length == 1 && matrix[0] instanceof CoreMatrix) {
-                       return new CoreLambda(new CoreLambda.Info("$$reshape", "func(row:num, col:num) -> mat", "Reshapes the matrix into (row) * (col). If the new matrix is bigger, an empty matrix is returned. If the new matrix is smaller, the excess values will be truncated. The original matrix is left untouched.")) {
-                           @Override
-                           public NtValue applyCall(final NtValue[] params) {
-                               if (params.length == 2
-                                       && params[0] instanceof CoreNumber
-                                       && params[1] instanceof CoreNumber) {
-                                   final int rows = (int) ((CoreNumber) params[0]).toDouble();
-                                   final int cols = (int) ((CoreNumber) params[1]).toDouble();
-                                   try {
-                                       return ((CoreMatrix) matrix[0]).reshape(rows, cols);
-                                   } catch (CoreMatrix.MatrixBoundMismatchException ex) {
-                                       return CoreMatrix.getEmptyMatrix();
-                                   }
-                               }
-                               throw new DispatchException("Expected two numbers, got " + params.length + " instead");
-                           }
-                       };
-                   }
-                   throw new DispatchException("reshape", "Expected a matrix, got " + matrix.length + " instead");
-               }
-           });
-        PREDEF.put("transpose", new CoreLambda(new CoreLambda.Info("transpose", "mat -> mat", "Transposes a matrix. The original matrix is left untouched.")) {
-               @Override
-               public NtValue applyCall(NtValue... params) {
-                   if (params.length == 1 && params[0] instanceof CoreMatrix) {
-                       return ((CoreMatrix) params[0]).transpose();
-                   }
-                   throw new DispatchException("transpose", "Expected a matrix, got " + params.length + " instead");
-               }
-           });
-        PREDEF.put("flip_x", new CoreLambda(new CoreLambda.Info("flip_x", "mat -> mat", "Flips a matrix by the x axis. The original matrix is left untouched.")) {
-               @Override
-               public NtValue applyCall(NtValue... params) {
-                   if (params.length == 1 && params[0] instanceof CoreMatrix) {
-                       return ((CoreMatrix) params[0]).flipOnX();
-                   }
-                   throw new DispatchException("flip_x", "Expected a matrix, got " + params.length + " instead");
-               }
-           });
-        PREDEF.put("flip_y", new CoreLambda(new CoreLambda.Info("flip_y", "mat -> mat", "Flips a matrix by the y axis. The original matrix is left untouched.")) {
-               @Override
-               public NtValue applyCall(NtValue... params) {
-                   if (params.length == 1 && params[0] instanceof CoreMatrix) {
-                       return ((CoreMatrix) params[0]).flipOnY();
-                   }
-                   throw new DispatchException("flip_y", "Expected a matrix, got " + params.length + " instead");
-               }
-           });
-        PREDEF.put("map", new CoreLambda(new CoreLambda.Info("map", "mat -> func", "Wraps matrix in a map context. A map is defined as an equivalent application on all elements. The original matrix is left untouched after the transformation.")) {
-               @Override
-               public NtValue applyCall(final NtValue[] mat) {
-                   if (mat.length == 1 && mat[0] instanceof CoreMatrix) {
-                       return new CoreLambda(new CoreLambda.Info("$$map", "func([supports applyCall]) -> mat", "Performs the specified transformation on the matrix elements. The original matrix is left untouched.")) {
-                           @Override
-                           public NtValue applyCall(final NtValue[] f) {
-                               if (f.length == 1) {
-                                   return ((CoreMatrix) mat[0]).map(f[0]);
-                               }
-                               throw new DispatchException("Expected an instance supporting applyCall, got " + f.length + " instead");
-                           }
-                       };
-                   }
-                   throw new DispatchException("map", "Expected a matrix, got " + mat.length + " instead");
-               }
-           });
-
-        // Short-hand Functions
-        PREDEF.put("summation", new CoreLambda(new CoreLambda.Info("summation", "f:[applyCall] -> func", "Wraps (f) inside a summation sequence")) {
-               @Override
-               public NtValue applyCall(final NtValue[] f) {
-                   // summation (f)(m, n) => while ++m <= n { ret += f(m); }
-                   if (f.length == 1) {
-                       return new CoreLambda(new CoreLambda.Info("$$summation", "func(start:number, end:number) -> [applyAdd]", "Performs summation from (start) to (end) with the increment of 1")) {
-                           @Override
-                           public NtValue applyCall(final NtValue[] params) {
-                               final double n;
-                               double m;
-                               if (params.length == 2
-                                       && params[0] instanceof CoreNumber
-                                       && params[1] instanceof CoreNumber) {
-                                   m = ((CoreNumber) params[0]).toDouble();
-                                   n = ((CoreNumber) params[1]).toDouble();
-
-                                   NtValue ret = null;
-                                   // Do summation here
-                                   do {
-                                       NtValue t = f[0].applyCall(CoreNumber.from(m));
-                                       if (ret == null) {
-                                           ret = t;
-                                       } else {
-                                           ret = ret.applyAdd(t);
-                                       }
-                                       m += 1.0;
-                                   } while (m <= n);
-                                   // ret should never be null at this point
-                                   return ret;
-                               }
-                               throw new DispatchException("Expected two numbers, got " + params.length + " instead");
-                           }
-                       };
-                   }
-                   throw new DispatchException("summation", "Expected one parameter, got " + f.length + " instead");
-               }
-           });
-
         // Math Functions
         PREDEF.put("rad", new CoreLambda(new CoreLambda.Info("rad", "number -> number", "Converts a number into its representation in radians")) {
                @Override
