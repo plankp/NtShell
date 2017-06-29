@@ -182,8 +182,14 @@ public class Parser {
             while (peekNextToken(tokens).type != Token.Type.RBRACE) {
                 try {
                     applicants.add(consumeExpr(tokens));
-                    if (peekNextToken(tokens).type == Token.Type.COMMA) {
+                    switch (peekNextToken(tokens).type) {
+                    case COMMA:
                         tokens.remove(0);
+                        break;
+                    case RBRACE:
+                        break; // the loop will deal with it
+                    default:
+                        throw new ParserException("Expected a , or ) but found " + peekNextToken(tokens) + " instead");
                     }
                 } catch (RuntimeException ex) {
                     throw new ParserException("Paramters need to be split with commas", ex);
@@ -231,6 +237,7 @@ public class Parser {
             // = LBRACE <expr> RBRACE                                        (0)
             // | LBRACE RBRACE YIELD <expr>                                  (1)
             // | LBRACE <ident> (COMMA <ident>)+ COMMA? RBRACE YIELD <expr>  (2)
+            // | LBRACE <ident> RBRACE YIELD <expr>                          (3)
             tokens.remove(0);
             switch (tokens.get(0).type) {
             case RBRACE:
@@ -243,6 +250,9 @@ public class Parser {
                 case RBRACE:
                     // (0)
                     tokens.remove(0);
+                    if (peekNextToken(tokens).type == Token.Type.YIELD) {
+                        return new AnonFuncVal(first, consumeYield(tokens));
+                    }
                     return new VariableVal(first);
                 case COMMA: {
                     // (2)

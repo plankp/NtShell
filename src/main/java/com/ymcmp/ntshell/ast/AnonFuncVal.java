@@ -35,8 +35,8 @@ public class AnonFuncVal implements AST {
     public final Token[] inputs;
     public final AST output;
 
-    public AnonFuncVal(Token inputs, AST output) {
-        this(new Token[]{inputs}, output);
+    public AnonFuncVal(Token input, AST output) {
+        this(new Token[]{input}, output);
     }
 
     public AnonFuncVal(Token[] inputs, AST output) {
