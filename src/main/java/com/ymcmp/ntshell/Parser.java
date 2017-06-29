@@ -1,0 +1,445 @@
+/**
+ *     Copyright (C) 2017  Paul Teng
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+package com.ymcmp.ntshell;
+
+import com.ymcmp.ntshell.ast.*;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ *
+ * @author YTENG
+ */
+public class Parser {
+
+    private Frontend environment;
+
+    public Parser() {
+        this(null);
+    }
+
+    public Parser(final Frontend env) {
+        this.environment = env;
+    }
+
+    public void switchFrontend(final Frontend env) {
+        this.environment = env;
+    }
+
+    public AST consumeExpr(final List<Token> tokens) {
+        return consumeAddLikeExpr(tokens);
+    }
+
+    public AST consumeAddLikeExpr(final List<Token> tokens) {
+        // = <mullike>
+        // | <mullike> ((ADD | SUB) <mullike>)+
+        AST lhs = consumeMulLikeExpr(tokens);
+        cons_loop:
+        while (true) {
+            switch (peekNextToken(tokens).type) {
+            case ADD:
+            case SUB:
+                final Token op = tokens.remove(0);
+                lhs = new BinaryExpr(lhs, consumeMulLikeExpr(tokens), op);
+                break;
+            default:
+                break cons_loop;
+            }
+        }
+        return lhs;
+    }
+
+    public AST consumeMulLikeExpr(final List<Token> tokens) {
+        // = <upre>
+        // | <upre> <pow>
+        // | <upre> ((MUL | DIV | MOD) <upre>)+
+        AST lhs = consumeUPreExpr(tokens);
+        cons_loop:
+        while (true) {
+            switch (peekNextToken(tokens).type) {
+            case MUL:
+            case DIV:
+            case MOD:
+                final Token op = tokens.remove(0);
+                lhs = new BinaryExpr(lhs, consumeUPreExpr(tokens), op);
+                break;
+            default:
+                final AST mulexpr = consumePowExpr(tokens);
+                if (mulexpr == null) {
+                    break cons_loop;
+                }
+                lhs = new BinaryExpr(lhs, mulexpr, new Token(Token.Type.MUL, null));
+                break;
+            }
+        }
+        return lhs;
+    }
+
+    public AST consumeUPreExpr(final List<Token> tokens) {
+        // = <pow>
+        // | (ADD | SUB) <pow>
+        switch (peekNextToken(tokens).type) {
+        case ADD:
+        case SUB:
+            final Token op = tokens.remove(0);
+            final AST base = consumePowExpr(tokens);
+            return new UnaryExpr(base, op, true);
+        default:
+            return consumePowExpr(tokens);
+        }
+    }
+
+    public AST consumePowExpr(final List<Token> tokens) {
+        // = <upost>
+        // | <upost> POW <pow>
+        final AST base = consumeUPostExpr(tokens);
+        if (peekNextToken(tokens).type == Token.Type.POW) {
+            final Token pow = tokens.remove(0);
+            return new BinaryExpr(base, consumePowExpr(tokens), pow);
+        }
+        return base;
+    }
+
+    public AST consumeUPostExpr(final List<Token> tokens) {
+        // = <compose> PERCENT?
+        final AST base = consumeCompose(tokens);
+        switch (peekNextToken(tokens).type) {
+        case PERCENT:
+            return new UnaryExpr(base, tokens.remove(0), false);
+        default:
+            return base;
+        }
+    }
+
+    public AST consumeCompose(final List<Token> tokens) {
+        // = <partial>
+        // | <partial> COMPOSE <partial>
+        AST base = consumePartialExpr(tokens);
+        while (true) {
+            if (peekNextToken(tokens).type == Token.Type.COMPOSE) {
+                final Token op = tokens.remove(0);
+                base = new BinaryExpr(base, consumePartialExpr(tokens), op);
+            } else {
+                return base;
+            }
+        }
+    }
+
+    public AST consumePartialExpr(final List<Token> tokens) {
+        // = <apply>
+        // | (<apply> SCOPE)+ <apply>
+        final AST base = consumeApplyExpr(tokens);
+        if (peekNextToken(tokens).type == Token.Type.SCOPE) {
+            final List<AST> params = new ArrayList<>();
+            params.add(base);
+            while (peekNextToken(tokens).type == Token.Type.SCOPE) {
+                tokens.remove(0);
+                params.add(consumeApplyExpr(tokens));
+            }
+            final AST applicant = params.remove(params.size() - 1);
+            final AST[] placeholders = params.toArray(new AST[params.size()]);
+            if (applicant instanceof ApplyExpr) {
+//                partialApply {
+//                  placeholders: [iota(5)],
+//                  applicant: reshape()(2, 2)
+//                } # wrong!
+//
+//                partialApply {
+//                  placeholders: [iota(5)],
+//                  applicant: reshape
+//                }()(2,2) # correct!
+                final ApplyExpr expr = (ApplyExpr) applicant;
+                return expr.wrapLeftMostApplicant(e -> new PartialApplyExpr(placeholders, e));
+            }
+            return new PartialApplyExpr(placeholders, applicant);
+        }
+        return base;
+    }
+
+    public AST consumeApplyExpr(final List<Token> tokens) {
+        // = <val>
+        // | <val> LBRACE RBRACE <apply>
+        // | <val> LBRACE <expr> (COMMA <expr>)* COMMA? RBRACE <apply>
+        AST base = consumeVal(tokens);
+        while (peekNextToken(tokens).type == Token.Type.LBRACE) {
+            tokens.remove(0);
+            final List<AST> applicants = new ArrayList<>();
+            while (peekNextToken(tokens).type != Token.Type.RBRACE) {
+                try {
+                    applicants.add(consumeExpr(tokens));
+                    if (peekNextToken(tokens).type == Token.Type.COMMA) {
+                        tokens.remove(0);
+                    }
+                } catch (RuntimeException ex) {
+                    throw new ParserException("Paramters need to be split with commas", ex);
+                }
+            }
+            tokens.remove(0);
+            base = new ApplyExpr(base, applicants.toArray(new AST[applicants.size()]));
+        }
+        return base;
+    }
+
+    public AST consumeVal(final List<Token> tokens) {
+        if (tokens.isEmpty()) {
+            return null;
+        }
+
+        switch (peekNextToken(tokens).type) {
+        case NUMBER:
+            return new NumberVal(tokens.remove(0));
+        case ATOM:
+            return new AtomVal(tokens.remove(0));
+        case IDENT: {
+            final Token name = tokens.remove(0);
+            // = IDENT YIELD <expr>  (0)
+            // | IDENT SET <expr>    (1)
+            // | IDENT               (2)
+            switch (peekNextToken(tokens).type) {
+            case YIELD:
+                // (0)
+                return new AnonFuncVal(name, consumeYield(tokens));
+            case SET:
+                // (1)
+                tokens.remove(0);
+                return new AssignExpr(name, consumeExpr(tokens));
+            default:
+                // (2)
+                return new VariableVal(name);
+            }
+        }
+        case LCURL:
+            return consumePiecewiseFunc(tokens);
+        case LBLK:
+            return consumeMatrix(tokens);
+        case LBRACE: {
+            // = LBRACE <expr> RBRACE                                        (0)
+            // | LBRACE RBRACE YIELD <expr>                                  (1)
+            // | LBRACE <ident> (COMMA <ident>)+ COMMA? RBRACE YIELD <expr>  (2)
+            tokens.remove(0);
+            switch (tokens.get(0).type) {
+            case RBRACE:
+                // (1)
+                tokens.remove(0);
+                return new AnonFuncVal(new Token[0], consumeYield(tokens));
+            case IDENT: {
+                final Token first = tokens.remove(0);
+                switch (peekNextToken(tokens).type) {
+                case RBRACE:
+                    // (0)
+                    tokens.remove(0);
+                    return new VariableVal(first);
+                case COMMA: {
+                    // (2)
+                    final List<Token> inputs = new ArrayList<>();
+                    inputs.add(first);
+                    tokens.remove(0);
+                    while (peekNextToken(tokens).type == Token.Type.IDENT) {
+                        inputs.add(tokens.remove(0));
+                        if (peekNextToken(tokens).type == Token.Type.COMMA) {
+                            tokens.remove(0);
+                        } else {
+                            break;
+                        }
+                    }
+                    if (peekNextToken(tokens).type == Token.Type.RBRACE) {
+                        tokens.remove(0);
+                        return new AnonFuncVal(inputs.toArray(new Token[inputs.size()]),
+                                               consumeYield(tokens));
+                    } else {
+                        throw new ParserException("Anonymous function parameter list unclosed");
+                    }
+                }
+                default:
+                    // (0)
+                    tokens.add(0, first);
+                    return consumeTrailBrace(tokens);
+                }
+            }
+            default:
+                return consumeTrailBrace(tokens);
+            }
+        }
+        default:
+            return null;
+        }
+    }
+
+    private AST consumeMatrix(final List<Token> tokens) throws ParserException {
+        // = LBLK RBLK         (0)
+        // | LBLK <row>+ RBLK  (1)
+        tokens.remove(0);
+        final List<MatrixVal.Column> elems = new ArrayList<>();
+        while (peekNextToken(tokens).type != Token.Type.RBLK) {
+            try {
+                elems.add(consumeRow(tokens));
+            } catch (MatrixRowUnclosedException ex) {
+                if (peekNextToken(tokens).type == Token.Type.RBLK) {
+                    elems.add(ex.currentColumn);
+                    break;
+                }
+                throw new ParserException(ex.getMessage());
+            }
+        }
+        tokens.remove(0);
+        return new MatrixVal(elems.toArray(new MatrixVal.Column[elems.size()]));
+    }
+
+    private AST consumePiecewiseFunc(final List<Token> tokens) throws ParserException {
+        // = LCURL <$case> (COMMA <$case>)+ COMMA? RCURL
+        tokens.remove(0);
+        final List<PiecewiseFuncVal.CaseBlock> cases = new ArrayList<>();
+        cons_loop:
+        while (peekNextToken(tokens).type != Token.Type.RCURL) {
+            cases.add(consumeCase(tokens));
+            switch (peekNextToken(tokens).type) {
+            case COMMA:
+                tokens.remove(0);
+                break;
+            case RCURL:
+                break cons_loop;
+            default:
+                throw new ParserException("Case statements are split with commas, found " + peekNextToken(tokens));
+            }
+        }
+        tokens.remove(0);
+        if (cases.isEmpty()) {
+            return new NumberVal(new Token(Token.Type.NUMBER, "0"));
+        }
+        return new PiecewiseFuncVal(cases.toArray(new PiecewiseFuncVal.CaseBlock[cases.size()]));
+    }
+
+    private AST consumeTrailBrace(final List<Token> tokens) {
+        // try (0)
+        final AST expr = consumeExpr(tokens);
+        if (peekNextToken(tokens).type == Token.Type.RBRACE) {
+            tokens.remove(0);
+            return expr;
+        } else {
+            throw new ParserException("Missing )");
+        }
+    }
+
+    private MatrixVal.Column consumeRow(final List<Token> tokens) throws MatrixRowUnclosedException {
+        // = <expr> SEMI
+        // | <expr> (COMMA <expr>)* COMMA? SEMI
+        final List<AST> elems = new ArrayList<>();
+        cons_loop:
+        while (peekNextToken(tokens).type != Token.Type.SEMI) {
+            elems.add(consumeExpr(tokens));
+            switch (peekNextToken(tokens).type) {
+            case COMMA:
+                tokens.remove(0);
+                break;
+            case SEMI:
+                break cons_loop;
+            default:
+                throw new MatrixRowUnclosedException(new MatrixVal.Column(elems.toArray(new AST[elems.size()])));
+            }
+        }
+        tokens.remove(0);
+        return new MatrixVal.Column(elems.toArray(new AST[elems.size()]));
+    }
+
+    private AST consumeYield(final List<Token> tokens) {
+        if (peekNextToken(tokens).type == Token.Type.YIELD) {
+            tokens.remove(0);
+            return consumeExpr(tokens);
+        } else {
+            throw new ParserException("Missing -> for input-less function");
+        }
+    }
+
+    private PiecewiseFuncVal.CaseBlock consumeCase(final List<Token> tokens) {
+        final AST action = consumeExpr(tokens);
+        if (peekNextToken(tokens).type == Token.Type.K_IF) {
+            tokens.remove(0);
+            return new PiecewiseFuncVal.CaseBlock(consumePred(tokens), action);
+        }
+        throw new ParserException("Each piecewise case requires a condition");
+    }
+
+    private AST consumePred(final List<Token> tokens) {
+        return consumeOr(tokens);
+    }
+
+    private AST consumeOr(final List<Token> tokens) {
+        // = <and> (OR <and>)+
+        // | <and>
+        AST base = consumeAnd(tokens);
+        while (true) {
+            if (peekNextToken(tokens).type == Token.Type.K_OR) {
+                final Token op = tokens.remove(0);
+                base = new BinaryExpr(base, consumeAnd(tokens), op);
+            } else {
+                return base;
+            }
+        }
+    }
+
+    private AST consumeAnd(final List<Token> tokens) {
+        // = <rel> (AND <rel>)+
+        // | <rel>
+        AST base = consumeRel(tokens);
+        while (true) {
+            if (peekNextToken(tokens).type == Token.Type.K_AND) {
+                final Token op = tokens.remove(0);
+                base = new BinaryExpr(base, consumeRel(tokens), op);
+            } else {
+                return base;
+            }
+        }
+    }
+
+    private AST consumeRel(final List<Token> tokens) {
+        // = <expr> (LT | LE | GE | GT | EQL | NEQ) <expr>
+        // | <expr>
+        final AST lhs = consumeExpr(tokens);
+        switch (peekNextToken(tokens).type) {
+        case LT:
+        case LE:
+        case GE:
+        case GT:
+        case EQL:
+        case NEQ:
+            final Token op = tokens.remove(0);
+            return new BinaryExpr(lhs, consumeExpr(tokens), op);
+        default:
+            return lhs;
+        }
+    }
+
+    public Token peekNextToken(final List<Token> toks) {
+        while (toks.isEmpty()) {
+            if (environment == null) {
+                return Token.getNilToken();
+            }
+            final String line = environment.readLine();
+            if (line == null || line.isEmpty()) {
+                return Token.getNilToken();
+            }
+            try {
+                toks.addAll(Lexer.lex(line));
+            } catch (LexerException ex) {
+                environment.errWriteLine(ex.getMessage());
+                environment.errWriteLine("That line will be ignored!");
+            }
+        }
+        return toks.get(0);
+    }
+}

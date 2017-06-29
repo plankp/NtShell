@@ -25,19 +25,10 @@ import com.ymcmp.ntshell.value.CoreMatrix;
  *
  * @author YTENG
  */
-public final class Group extends CoreLambda {
+final class Group extends CoreLambda {
 
-    private static class Helper {
-
-        static final Group INSTANCE = new Group();
-    }
-
-    private Group() {
+    public Group() {
         super(new CoreLambda.Info("group", "(...) -> mat", "Converts the parameters into a one dimensional matrix"));
-    }
-
-    public static NtValue getInstance() {
-        return Helper.INSTANCE;
     }
 
     @Override

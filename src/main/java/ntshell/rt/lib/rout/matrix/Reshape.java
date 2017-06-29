@@ -28,19 +28,10 @@ import com.ymcmp.ntshell.value.CoreNumber;
  *
  * @author YTENG
  */
-public final class Reshape extends CoreLambda {
+final class Reshape extends CoreLambda {
 
-    private static class Helper {
-
-        static final Reshape INSTANCE = new Reshape();
-    }
-
-    private Reshape() {
+    public Reshape() {
         super(new CoreLambda.Info("reshape", "mat -> func", "Reshapes a matrix based. The original matrix is left untouched after the transformation."));
-    }
-
-    public static NtValue getInstance() {
-        return Helper.INSTANCE;
     }
 
     @Override

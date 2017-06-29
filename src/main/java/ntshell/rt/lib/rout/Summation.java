@@ -29,17 +29,14 @@ import com.ymcmp.ntshell.value.CoreNumber;
  */
 public final class Summation extends CoreLambda {
 
-    private static class Helper {
-
-        static final Summation INSTANCE = new Summation();
-    }
+    private static final Summation INSTANCE = new Summation();
 
     private Summation() {
         super(new CoreLambda.Info("summation", "f:[applyCall] -> func", "Wraps (f) inside a summation sequence"));
     }
 
     public static NtValue getInstance() {
-        return Helper.INSTANCE;
+        return INSTANCE;
     }
 
     @Override

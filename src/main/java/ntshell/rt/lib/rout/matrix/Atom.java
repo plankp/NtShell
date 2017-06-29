@@ -27,19 +27,10 @@ import com.ymcmp.ntshell.value.CoreMatrix;
  *
  * @author YTENG
  */
-public final class Atom extends CoreLambda {
+final class Atom extends CoreLambda {
 
-    private static class Helper {
-
-        static final Atom INSTANCE = new Atom();
-    }
-
-    private Atom() {
+    public Atom() {
         super(new CoreLambda.Info("atom", "mat -> atom", "Converts the matrix into its equivalent atom. Not all matricies have an equivalent atom."));
-    }
-
-    public static NtValue getInstance() {
-        return Helper.INSTANCE;
     }
 
     @Override

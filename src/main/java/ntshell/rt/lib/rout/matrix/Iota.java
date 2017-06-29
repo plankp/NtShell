@@ -30,19 +30,10 @@ import java.util.stream.IntStream;
  *
  * @author YTENG
  */
-public final class Iota extends CoreLambda {
+final class Iota extends CoreLambda {
 
-    private static class Helper {
-
-        static final Iota INSTANCE = new Iota();
-    }
-
-    private Iota() {
+    public Iota() {
         super(new CoreLambda.Info("iota", "bound:number -> mat", "Creates a one-row matrix with the elements 1 to (bound). Returns an empty matrix if bound is not bigger than 1."));
-    }
-
-    public static NtValue getInstance() {
-        return Helper.INSTANCE;
     }
 
     @Override

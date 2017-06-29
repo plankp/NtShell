@@ -19,38 +19,30 @@ package ntshell.rt.lib.rout.matrix;
 import com.ymcmp.ntshell.NtLibrary;
 import com.ymcmp.ntshell.NtValue;
 
+import java.util.HashMap;
+
 /**
  *
  * @author YTENG
  */
 public final class Loader implements NtLibrary {
 
-    public Loader() {
+    private static final HashMap<String, NtValue> INSTANCES = new HashMap<>();
+
+    static {
+        INSTANCES.put("atom", new Atom());
+        INSTANCES.put("flip_x", new FlipX());
+        INSTANCES.put("flip_y", new FlipY());
+        INSTANCES.put("group", new Group());
+        INSTANCES.put("iota", new Iota());
+        INSTANCES.put("map", new Map());
+        INSTANCES.put("matrix", new Matrix());
+        INSTANCES.put("reshape", new Reshape());
+        INSTANCES.put("transpose", new Transpose());
     }
 
     @Override
     public NtValue findDefinition(String name) {
-        switch (name) {
-        case "matrix":
-            return Matrix.getInstance();
-        case "group":
-            return Group.getInstance();
-        case "atom":
-            return Atom.getInstance();
-        case "iota":
-            return Iota.getInstance();
-        case "reshape":
-            return Reshape.getInstance();
-        case "transpose":
-            return Transpose.getInstance();
-        case "flip_x":
-            return FlipX.getInstance();
-        case "flip_y":
-            return FlipY.getInstance();
-        case "map":
-            return Map.getInstance();
-        default:
-        }
-        return null;
+        return INSTANCES.get(name);
     }
 }

@@ -24,12 +24,12 @@ import static org.junit.Assert.*;
  *
  * @author YTENG
  */
-public class AppTest {
+public class LexerTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testLexingNullString() {
         try {
-            App.lexString(null, null);
+            Lexer.lex(null);
         } catch (LexerException ex) {
         }
         fail("Illegal argument exception should have been thrown");
@@ -68,7 +68,7 @@ public class AppTest {
             new Token(Token.Type.EQL, "=="), new Token(Token.Type.NEQ, "/=")
         };
         try {
-            final Object[] toks = App.lexString(source, null).toArray();
+            final Object[] toks = Lexer.lex(source).toArray();
             assertArrayEquals(expected, toks);
         } catch (LexerException ex) {
             fail("LexerException should not have been thrown");

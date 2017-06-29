@@ -27,19 +27,10 @@ import com.ymcmp.ntshell.value.CoreMatrix;
  *
  * @author YTENG
  */
-public final class Map extends CoreLambda {
+final class Map extends CoreLambda {
 
-    private static class Helper {
-
-        static final Map INSTANCE = new Map();
-    }
-
-    private Map() {
+    public Map() {
         super(new CoreLambda.Info("map", "mat -> func", "Wraps matrix in a map context. A map is defined as an equivalent application on all elements. The original matrix is left untouched after the transformation."));
-    }
-
-    public static NtValue getInstance() {
-        return Helper.INSTANCE;
     }
 
     @Override

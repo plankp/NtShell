@@ -27,19 +27,10 @@ import com.ymcmp.ntshell.value.CoreMatrix;
  *
  * @author YTENG
  */
-public final class Transpose extends CoreLambda {
+final class Transpose extends CoreLambda {
 
-    private static class Helper {
-
-        static final Transpose INSTANCE = new Transpose();
-    }
-
-    private Transpose() {
+    public Transpose() {
         super(new CoreLambda.Info("transpose", "mat -> mat", "Transposes a matrix. The original matrix is left untouched."));
-    }
-
-    public static NtValue getInstance() {
-        return Helper.INSTANCE;
     }
 
     @Override

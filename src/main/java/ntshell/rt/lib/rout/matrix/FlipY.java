@@ -27,19 +27,10 @@ import com.ymcmp.ntshell.value.CoreMatrix;
  *
  * @author YTENG
  */
-public final class FlipY extends CoreLambda {
+final class FlipY extends CoreLambda {
 
-    private static class Helper {
-
-        static final FlipY INSTANCE = new FlipY();
-    }
-
-    private FlipY() {
+    public FlipY() {
         super(new CoreLambda.Info("flip_y", "mat -> mat", "Flips a matrix by the y axis. The original matrix is left untouched."));
-    }
-
-    public static NtValue getInstance() {
-        return Helper.INSTANCE;
     }
 
     @Override

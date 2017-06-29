@@ -28,17 +28,14 @@ import com.ymcmp.ntshell.value.CoreLambda;
  */
 public final class Twice extends CoreLambda {
 
-    private static class Helper {
-
-        static final Twice INSTANCE = new Twice();
-    }
+    private static final Twice INSTANCE = new Twice();
 
     private Twice() {
         super(new CoreLambda.Info("twice", "[applyCall] -> func", "Returns a function that behaves like the following: <code>twice(f) => x -> f(f(x))</code>"));
     }
 
     public static NtValue getInstance() {
-        return Helper.INSTANCE;
+        return INSTANCE;
     }
 
     @Override
