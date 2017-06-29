@@ -161,94 +161,102 @@ public class Lexer {
 
     public static int lexAtom(final int pos, final char[] arr, final List<Token> tokens) {
         int i = pos;
-        final StringBuilder buf = new StringBuilder().append('@');
-        if (isIdent(arr[++i])) {
-            while (i < arr.length && isIdent(arr[i])) {
-                buf.append(arr[i++]);
+        if (arr[i] == '@') {
+            final StringBuilder buf = new StringBuilder().append(arr[i]);
+            if (isIdent(arr[++i])) {
+                while (i < arr.length && isIdent(arr[i])) {
+                    buf.append(arr[i++]);
+                }
+                --i;
+                final String ident = buf.toString();
+                tokens.add(new Token(Token.Type.ATOM, ident));
+                return i;
             }
-            --i;
-            final String ident = buf.toString();
-            tokens.add(new Token(Token.Type.ATOM, ident));
-            return i;
         }
         return i;
     }
 
     public static int lexIdentifier(final int pos, final char[] arr, final List<Token> tokens) {
         int i = pos;
-        final StringBuilder buf = new StringBuilder();
-        while (i < arr.length && isIdent(arr[i])) {
-            buf.append(arr[i++]);
+        if (isIdent(arr[i])) {
+            final StringBuilder buf = new StringBuilder();
+            while (i < arr.length && isIdent(arr[i])) {
+                buf.append(arr[i++]);
+            }
+            --i;
+            final String ident = buf.toString();
+            tokens.add(new Token(KWORDS.getOrDefault(ident, Token.Type.IDENT), ident));
         }
-        --i;
-        final String ident = buf.toString();
-        tokens.add(new Token(KWORDS.getOrDefault(ident, Token.Type.IDENT), ident));
         return i;
     }
 
     public static int lexZeroPrefixedNumber(final int pos, final char[] arr, final List<Token> tokens) {
         int i = pos;
-        final StringBuilder buf = new StringBuilder();
-        buf.append('0');
-        if (++i < arr.length) {
-            switch (arr[i]) {
-            case 'b':
-                // binary
-                buf.append(arr[i++]);
-                while (i < arr.length && isBinary(arr[i])) {
+        if (arr[i] == '0') {
+            final StringBuilder buf = new StringBuilder();
+            buf.append('0');
+            if (++i < arr.length) {
+                switch (arr[i]) {
+                case 'b':
+                    // binary
                     buf.append(arr[i++]);
-                }
-                break;
-            case 'c':
-                // octal
-                buf.append(arr[i++]);
-                while (i < arr.length && isOctal(arr[i])) {
+                    while (i < arr.length && isBinary(arr[i])) {
+                        buf.append(arr[i++]);
+                    }
+                    break;
+                case 'c':
+                    // octal
                     buf.append(arr[i++]);
-                }
-                break;
-            case 'd':
-                // decimal
-                buf.append(arr[i++]);
-                while (i < arr.length && isDecimal(arr[i])) {
+                    while (i < arr.length && isOctal(arr[i])) {
+                        buf.append(arr[i++]);
+                    }
+                    break;
+                case 'd':
+                    // decimal
                     buf.append(arr[i++]);
-                }
-                break;
-            case 'x':
-                // hexadecimal
-                buf.append(arr[i++]);
-                while (i < arr.length && isHexadecimal(arr[i])) {
+                    while (i < arr.length && isDecimal(arr[i])) {
+                        buf.append(arr[i++]);
+                    }
+                    break;
+                case 'x':
+                    // hexadecimal
                     buf.append(arr[i++]);
-                }
-                break;
-            case '.':
-                // float-point
-                buf.append(arr[i++]);
-                while (i < arr.length && isDecimal(arr[i])) {
+                    while (i < arr.length && isHexadecimal(arr[i])) {
+                        buf.append(arr[i++]);
+                    }
+                    break;
+                case '.':
+                    // float-point
                     buf.append(arr[i++]);
+                    while (i < arr.length && isDecimal(arr[i])) {
+                        buf.append(arr[i++]);
+                    }
+                    break;
+                default:
                 }
-                break;
-            default:
             }
+            --i;
+            tokens.add(new Token(Token.Type.NUMBER, buf.toString()));
         }
-        --i;
-        tokens.add(new Token(Token.Type.NUMBER, buf.toString()));
         return i;
     }
 
     public static int lexNumber(final int pos, final char[] arr, final List<Token> tokens) {
         int i = pos;
-        final StringBuilder buf = new StringBuilder();
-        while (i < arr.length && isDecimal(arr[i])) {
-            buf.append(arr[i++]);
-        }
-        if (i < arr.length && arr[i] == '.') {
-            buf.append(arr[i++]);
+        if (isDecimal(arr[i])) {
+            final StringBuilder buf = new StringBuilder();
             while (i < arr.length && isDecimal(arr[i])) {
                 buf.append(arr[i++]);
             }
+            if (i < arr.length && arr[i] == '.') {
+                buf.append(arr[i++]);
+                while (i < arr.length && isDecimal(arr[i])) {
+                    buf.append(arr[i++]);
+                }
+            }
+            --i;
+            tokens.add(new Token(Token.Type.NUMBER, buf.toString()));
         }
-        --i;
-        tokens.add(new Token(Token.Type.NUMBER, buf.toString()));
         return i;
     }
 
@@ -271,5 +279,4 @@ public class Lexer {
     public static boolean isIdent(final char c) {
         return (c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c == '_') || (c == '$') || (c == '\'');
     }
-
 }

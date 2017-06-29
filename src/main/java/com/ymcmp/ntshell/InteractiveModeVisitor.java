@@ -314,6 +314,10 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
         this.env = env;
     }
 
+    public void reset() {
+        vars.clear();
+    }
+
     @Override
     public CoreAtom visitAtomVal(AtomVal atom) {
         return CoreAtom.from(atom.val.text.substring(1));

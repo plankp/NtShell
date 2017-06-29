@@ -16,6 +16,9 @@
  */
 package com.ymcmp.ntshell;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -25,6 +28,120 @@ import static org.junit.Assert.*;
  * @author YTENG
  */
 public class LexerTest {
+
+    @Test
+    public void testIsBinary() {
+        for (char c = 0; c < 255; ++c) {
+            // only 0 and 1 is binary
+            assertEquals(c == '0' || c == '1', Lexer.isBinary(c));
+        }
+    }
+
+    @Test
+    public void testIsDecimal() {
+        for (char c = 0; c < 255; ++c) {
+            // only 0 to 9 is decimal
+            assertEquals(c >= '0' && c <= '9', Lexer.isDecimal(c));
+        }
+    }
+
+    @Test
+    public void testIsOctal() {
+        for (char c = 0; c < 255; ++c) {
+            // only 0 to 7 is octal
+            assertEquals(c >= '0' && c <= '7', Lexer.isOctal(c));
+        }
+    }
+
+    @Test
+    public void testIsHex() {
+        for (char c = 0; c < 255; ++c) {
+            // only 0 to 9 and a to f is hex
+            assertEquals((c >= '0' && c <= '9')
+                    || (c >= 'a' && c <= 'f')
+                    || (c >= 'A' && c <= 'F'), Lexer.isHexadecimal(c));
+        }
+    }
+
+    @Test
+    public void testIsIdent() {
+        for (char c = 0; c < 255; ++c) {
+            // 0 to 9, a to z, A to Z, underscore, dollar sign, single quote
+            assertEquals((c >= '0' && c <= '9')
+                    || (c >= 'A' && c <= 'Z')
+                    || (c >= 'a' && c <= 'z')
+                    || (c == '_')
+                    || (c == '$')
+                    || (c == '\''), Lexer.isIdent(c));
+        }
+    }
+
+    @Test
+    public void testLexAtom() {
+        final char[] str = "@atom ".toCharArray();
+        final List<Token> arr = new ArrayList<>();
+        final int end = Lexer.lexAtom(0, str, arr);
+        assertEquals(4, end);
+        assertEquals(Arrays.asList(new Token(Token.Type.ATOM, "@atom")), arr);
+        assertEquals(1, Lexer.lexAtom(1, str, arr));
+    }
+
+    @Test
+    public void testLexIdent() {
+        final char[] str = " atom".toCharArray();
+        final List<Token> arr = new ArrayList<>();
+        final int end = Lexer.lexIdentifier(1, str, arr);
+        assertEquals(4, end);
+        assertEquals(Arrays.asList(new Token(Token.Type.IDENT, "atom")), arr);
+        assertEquals(0, Lexer.lexIdentifier(0, str, arr));
+    }
+
+    @Test
+    public void testLexNumber() {
+        final char[] str = " 123 1.23".toCharArray();
+        final List<Token> arr = new ArrayList<>();
+        int end = Lexer.lexNumber(1, str, arr);
+        assertEquals(3, end);
+        assertEquals(Arrays.asList(new Token(Token.Type.NUMBER, "123")), arr);
+
+        arr.clear();
+        end = Lexer.lexNumber(5, str, arr);
+        assertEquals(8, end);
+        assertEquals(Arrays.asList(new Token(Token.Type.NUMBER, "1.23")), arr);
+
+        assertEquals(0, Lexer.lexNumber(0, str, arr));
+    }
+
+    @Test
+    public void testLexZeroPrefixedNumber() {
+        final char[] str = " 0 0b0010 0c775 0d012 0xabcd".toCharArray();
+        final List<Token> arr = new ArrayList<>();
+        int end = Lexer.lexZeroPrefixedNumber(1, str, arr);
+        assertEquals(1, end);
+        assertEquals(Arrays.asList(new Token(Token.Type.NUMBER, "0")), arr);
+
+        arr.clear();
+        end = Lexer.lexZeroPrefixedNumber(3, str, arr);
+        assertEquals(8, end);
+        assertEquals(Arrays.asList(new Token(Token.Type.NUMBER, "0b0010")), arr);
+
+        arr.clear();
+        end = Lexer.lexZeroPrefixedNumber(10, str, arr);
+        assertEquals(14, end);
+        assertEquals(Arrays.asList(new Token(Token.Type.NUMBER, "0c775")), arr);
+
+        arr.clear();
+        end = Lexer.lexZeroPrefixedNumber(16, str, arr);
+        assertEquals(20, end);
+        assertEquals(Arrays.asList(new Token(Token.Type.NUMBER, "0d012")), arr);
+
+        arr.clear();
+        end = Lexer.lexZeroPrefixedNumber(22, str, arr);
+        assertEquals(27, end);
+        assertEquals(Arrays.asList(new Token(Token.Type.NUMBER, "0xabcd")), arr);
+
+        assertEquals(0, Lexer.lexZeroPrefixedNumber(0, str, arr));
+    }
 
     @Test(expected = IllegalArgumentException.class)
     public void testLexingNullString() {
@@ -36,8 +153,17 @@ public class LexerTest {
     }
 
     @Test
+    public void testLexingIllegalCharacter() {
+        try {
+            Lexer.lex("`");
+            fail("LexerException should have been thrown");
+        } catch (LexerException ex) {
+        }
+    }
+
+    @Test
     public void testLexingAllPossibleTokens() {
-        final String source = "# Comment\n\t\r{[(<;,.>)]}:+-*/%=-><=>=@atom 01 0b0100 0c712 0d0 0xAFcd 0.1923 123abc123 and or if mod==/=";
+        final String source = "# Comment\n\t\r{[(<;,.>)]}:+-*/%=-><=>=@atom 01 0b0100 0c712 0d0 0xAFcd 0.1923 123abc123 and or if mod==/=^";
         final Object[] expected = {
             // # Comment\n\t\r => Nothing
             // {[(<
@@ -64,8 +190,8 @@ public class LexerTest {
             new Token(Token.Type.NUMBER, "123"), new Token(Token.Type.IDENT, "abc123"),
             // and or if mod
             new Token(Token.Type.K_AND, "and"), new Token(Token.Type.K_OR, "or"), new Token(Token.Type.K_IF, "if"), new Token(Token.Type.MOD, "mod"),
-            // ==/=
-            new Token(Token.Type.EQL, "=="), new Token(Token.Type.NEQ, "/=")
+            // ==/=^
+            new Token(Token.Type.EQL, "=="), new Token(Token.Type.NEQ, "/="), new Token(Token.Type.POW, "^")
         };
         try {
             final Object[] toks = Lexer.lex(source).toArray();

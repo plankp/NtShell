@@ -21,7 +21,6 @@ import com.ymcmp.ntshell.ast.*;
 import java.awt.HeadlessException;
 
 import java.util.List;
-import java.util.ArrayList;
 
 import ntshell.rt.lib.Core;
 
@@ -38,7 +37,7 @@ public class App {
     private boolean levelOp = true;
     private boolean simplifyRat = true;
     private boolean unfoldConst = true;
-    private boolean evaluate = true;
+
     private Frontend environment = null;
 
     /**
@@ -95,7 +94,9 @@ public class App {
     public void interactiveMode() {
         environment.linkLibrary(Core.getInstance());
         environment.writeLine("NtShell (interactive mode)\nType `~help` for help\n");
-        InteractiveModeVisitor session = new InteractiveModeVisitor(environment);
+        final InteractiveModeVisitor session = new InteractiveModeVisitor(environment);
+
+        boolean evaluate = true;
 
         while (true) {
             final String input = environment.readLine();
@@ -142,7 +143,7 @@ public class App {
                 evaluate = false;
                 continue;
             case "~restart":
-                session = new InteractiveModeVisitor(environment);
+                session.reset();
                 continue;
             case "":
                 continue;
@@ -182,7 +183,8 @@ public class App {
         }
     }
 
-    private AST procRuleRewrite(AST ast) {
+    private AST procRuleRewrite(final AST tree) {
+        AST ast = tree;
         if (transNeg) {
             ast = ast.transformNegatives();
             if (showAST) {
