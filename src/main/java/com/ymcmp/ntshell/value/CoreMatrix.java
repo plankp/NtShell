@@ -23,6 +23,7 @@ import com.inamik.text.tables.grid.Util;
 
 import com.ymcmp.ntshell.NtValue;
 import com.ymcmp.ntshell.rte.DispatchException;
+import com.ymcmp.ntshell.rte.TailCallTrigger;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -437,7 +438,7 @@ public class CoreMatrix extends NtValue {
 
         return new CoreMatrix(Arrays.stream(mat)
                 .map(Arrays::stream)
-                .map(s -> s.map(transformer::applyCall))
+                .map(s -> s.map(f -> TailCallTrigger.call(transformer, f)))
                 .map(s -> s.toArray(NtValue[]::new))
                 .toArray(NtValue[][]::new));
     }

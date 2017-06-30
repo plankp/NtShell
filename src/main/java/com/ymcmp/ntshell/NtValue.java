@@ -17,6 +17,8 @@
 package com.ymcmp.ntshell;
 
 import com.ymcmp.ntshell.rte.DispatchException;
+import com.ymcmp.ntshell.rte.TailCallTrigger;
+
 import com.ymcmp.ntshell.value.CoreLambda;
 
 /**
@@ -36,7 +38,7 @@ public abstract class NtValue {
         return new CoreLambda() {
             @Override
             public NtValue applyCall(NtValue[] params) {
-                return NtValue.this.applyCall(params).applyPercentage();
+                return TailCallTrigger.call(NtValue.this, params).applyPercentage();
             }
         };
     }
@@ -51,7 +53,7 @@ public abstract class NtValue {
         return new CoreLambda() {
             @Override
             public NtValue applyCall(NtValue[] params) {
-                return NtValue.this.applyCall(params).applyNegative();
+                return TailCallTrigger.call(NtValue.this, params).applyNegative();
             }
         };
     }
@@ -66,7 +68,7 @@ public abstract class NtValue {
         return new CoreLambda() {
             @Override
             public NtValue applyCall(NtValue[] params) {
-                return NtValue.this.applyCall(params).applyPositive();
+                return TailCallTrigger.call(NtValue.this, params).applyPositive();
             }
         };
     }
@@ -83,7 +85,8 @@ public abstract class NtValue {
         return new CoreLambda() {
             @Override
             public NtValue applyCall(NtValue[] params) {
-                return NtValue.this.applyCall(params).applyAdd(rhs.applyCall(params));
+                return TailCallTrigger.call(NtValue.this, params)
+                        .applyAdd(TailCallTrigger.call(rhs, params));
             }
         };
     }
@@ -99,7 +102,8 @@ public abstract class NtValue {
         return new CoreLambda() {
             @Override
             public NtValue applyCall(NtValue[] params) {
-                return NtValue.this.applyCall(params).applySub(rhs.applyCall(params));
+                return TailCallTrigger.call(NtValue.this, params)
+                        .applySub(TailCallTrigger.call(rhs, params));
             }
         };
     }
@@ -116,7 +120,8 @@ public abstract class NtValue {
         return new CoreLambda() {
             @Override
             public NtValue applyCall(NtValue[] params) {
-                return NtValue.this.applyCall(params).applyMul(rhs.applyCall(params));
+                return TailCallTrigger.call(NtValue.this, params)
+                        .applyMul(TailCallTrigger.call(rhs, params));
             }
         };
     }
@@ -132,7 +137,8 @@ public abstract class NtValue {
         return new CoreLambda() {
             @Override
             public NtValue applyCall(NtValue[] params) {
-                return NtValue.this.applyCall(params).applyDiv(rhs.applyCall(params));
+                return TailCallTrigger.call(NtValue.this, params)
+                        .applyDiv(TailCallTrigger.call(rhs, params));
             }
         };
     }
@@ -148,7 +154,8 @@ public abstract class NtValue {
         return new CoreLambda() {
             @Override
             public NtValue applyCall(NtValue[] params) {
-                return NtValue.this.applyCall(params).applyMod(rhs.applyCall(params));
+                return TailCallTrigger.call(NtValue.this, params)
+                        .applyMod(TailCallTrigger.call(rhs, params));
             }
         };
     }
@@ -164,7 +171,8 @@ public abstract class NtValue {
         return new CoreLambda() {
             @Override
             public NtValue applyCall(NtValue[] params) {
-                return NtValue.this.applyCall(params).applyPow(rhs.applyCall(params));
+                return TailCallTrigger.call(NtValue.this, params)
+                        .applyPow(TailCallTrigger.call(rhs, params));
             }
         };
     }
@@ -183,7 +191,8 @@ public abstract class NtValue {
             @Override
             public NtValue applyCall(NtValue[] params) {
                 // (f . g)(x) => f(g(x))
-                return NtValue.this.applyCall(rhs.applyCall(params));
+                return TailCallTrigger.call(NtValue.this,
+                                            TailCallTrigger.call(rhs, params));
             }
         };
     }

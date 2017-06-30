@@ -19,6 +19,7 @@ package ntshell.rt.lib.rout;
 import com.ymcmp.ntshell.NtValue;
 
 import com.ymcmp.ntshell.rte.DispatchException;
+import com.ymcmp.ntshell.rte.TailCallTrigger;
 
 import com.ymcmp.ntshell.value.CoreLambda;
 import com.ymcmp.ntshell.value.CoreNumber;
@@ -57,7 +58,7 @@ public final class Summation extends CoreLambda {
                         NtValue ret = null;
                         // Do summation here
                         do {
-                            NtValue t = f[0].applyCall(CoreNumber.from(m));
+                            NtValue t = TailCallTrigger.call(f[0], CoreNumber.from(m));
                             if (ret == null) {
                                 ret = t;
                             } else {

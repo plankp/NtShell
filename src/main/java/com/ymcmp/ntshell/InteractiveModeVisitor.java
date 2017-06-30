@@ -304,6 +304,8 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
     private final Map<String, NtValue> vars;
     private final Frontend env;
 
+    private boolean tailCall;
+
     public InteractiveModeVisitor(final Frontend env) {
         this.vars = new HashMap<>();
         this.env = env;
@@ -316,6 +318,14 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
 
     public void reset() {
         vars.clear();
+    }
+
+    public NtValue eval(final AST ast) {
+        try {
+            return visit(ast);
+        } catch (TailCallTrigger ex) {
+            return TailCallTrigger.applyTailCall(ex);
+        }
     }
 
     @Override
@@ -355,7 +365,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
             for (int x = 0; x < rows.length; ++x) {
                 final int columnCount = rows[x].length;
                 for (int y = 0; y < columnCount; ++y) {
-                    rows[x][y] = visit(matrix.getCell(x, y));
+                    rows[x][y] = eval(matrix.getCell(x, y));
                 }
             }
             return CoreMatrix.from(rows).transpose();
@@ -366,6 +376,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
 
     @Override
     public CoreLambda visitAnonFuncVal(final AnonFuncVal anonFunc) {
+        // params -> val     val is guaranteed in tail call position
         return new CoreLambda(new CoreLambda.Info("<lambda>", "takes " + anonFunc.inputs.length + " parameter(s)", "<code>" + anonFunc.toString() + "</code>")) {
             @Override
             public NtValue applyCall(NtValue... params) {
@@ -376,6 +387,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                 for (int i = 0; i < params.length; ++i) {
                     vis.vars.put(anonFunc.inputs[i].text, params[i]);
                 }
+                vis.tailCall = true;
                 return vis.visit(anonFunc.output);
             }
         };
@@ -383,9 +395,14 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
 
     @Override
     public NtValue visitPiecewiseFuncVal(final PiecewiseFuncVal piecewiseFunc) {
+        // { val if cond }   val is guaranteed in tail call position
         for (final PiecewiseFuncVal.CaseBlock test : piecewiseFunc.cases) {
-            if (visit(test.pred).isTruthy()) {
-                return visit(test.expr);
+            if (eval(test.pred).isTruthy()) {
+                final boolean tcSave = tailCall;
+                tailCall = true;
+                final NtValue ret = visit(test.expr);
+                tailCall = tcSave;
+                return ret;
             }
         }
         throw new UndefinedHandleException("Piecewise function did not handle all possible values!");
@@ -450,17 +467,24 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
 
     @Override
     public NtValue visitApplyExpr(final ApplyExpr apply) {
-        final NtValue instance = visit(apply.instance);
+        final NtValue instance = eval(apply.instance);
         final NtValue[] params = Arrays.stream(apply.params)
                 .map(this::visit)
                 .toArray(NtValue[]::new);
-        return instance.applyCall(params);
+        return constructTailCall(instance, params);
+    }
+
+    private NtValue constructTailCall(final NtValue instance, final NtValue[] params) throws TailCallTrigger {
+        if (tailCall) {
+            throw new TailCallTrigger(instance, params);
+        }
+        return TailCallTrigger.call(instance, params);
     }
 
     @Override
     public NtValue visitPartialApplyExpr(final PartialApplyExpr apply) {
         // placeholders are all eagerly evaluated
-        final NtValue applicant = visit(apply.applicant);
+        final NtValue applicant = eval(apply.applicant);
         final NtValue[] placeholders = Arrays.stream(apply.placeholders)
                 .map(this::visit)
                 .toArray(NtValue[]::new);
@@ -470,14 +494,14 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                 final NtValue[] params = new NtValue[placeholders.length + remainder.length];
                 System.arraycopy(placeholders, 0, params, 0, placeholders.length);
                 System.arraycopy(remainder, 0, params, placeholders.length, remainder.length);
-                return applicant.applyCall(params);
+                return constructTailCall(applicant, params);
             }
         };
     }
 
     @Override
     public NtValue visitUnaryExpr(final UnaryExpr unary) {
-        final NtValue base = visit(unary.base);
+        final NtValue base = eval(unary.base);
         if (unary.prefix) {
             switch (unary.op.type) {
             case ADD:
@@ -499,8 +523,8 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
 
     @Override
     public NtValue visitBinaryExpr(final BinaryExpr binary) {
-        final NtValue lhs = visit(binary.lhs);
-        final NtValue rhs = visit(binary.rhs);
+        final NtValue lhs = eval(binary.lhs);
+        final NtValue rhs = eval(binary.rhs);
         switch (binary.op.type) {
         case ADD:
             return lhs.applyAdd(rhs);
@@ -562,9 +586,9 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
             NtValue ret = null;
             for (int i = 0; i < commutative.nodes.length; ++i) {
                 if (ret == null) {
-                    ret = visit(commutative.nodes[i]);
+                    ret = eval(commutative.nodes[i]);
                 } else {
-                    ret = ret.applyAdd(visit(commutative.nodes[i]));
+                    ret = ret.applyAdd(eval(commutative.nodes[i]));
                 }
             }
             return ret;
@@ -573,9 +597,9 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
             NtValue ret = null;
             for (int i = 0; i < commutative.nodes.length; ++i) {
                 if (ret == null) {
-                    ret = visit(commutative.nodes[i]);
+                    ret = eval(commutative.nodes[i]);
                 } else {
-                    ret = ret.applyMul(visit(commutative.nodes[i]));
+                    ret = ret.applyMul(eval(commutative.nodes[i]));
                 }
             }
             return ret;
@@ -587,7 +611,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
 
     @Override
     public NtValue visitAssignExpr(AssignExpr assign) {
-        final NtValue val = visit(assign.value);
+        final NtValue val = eval(assign.value);
         vars.put(assign.to.text, val);
         return val;
     }
@@ -597,7 +621,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
         return new CoreLambda() {
             @Override
             public NtValue applyCall(NtValue[] y) {
-                final NtValue ret = base.applyCall(y);
+                final NtValue ret = TailCallTrigger.call(base, y);
                 if (ret instanceof CoreNumber) {
                     final double tmp = ((CoreNumber) ret).toDouble();
                     if (Double.isFinite(tmp)) {
@@ -617,7 +641,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                             y[0] = ky.applyAdd(CoreNumber.from(gap));
                         }
 
-                        final double current = ((CoreNumber) base.applyCall(y)).toDouble();
+                        final double current = ((CoreNumber) TailCallTrigger.call(base, y)).toDouble();
                         final double newDelta = Math.abs(current - prev);
 
                         if (newDelta <= delta) {
