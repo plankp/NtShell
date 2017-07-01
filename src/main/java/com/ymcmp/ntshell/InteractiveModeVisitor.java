@@ -377,18 +377,24 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
     @Override
     public CoreLambda visitAnonFuncVal(final AnonFuncVal anonFunc) {
         // params -> val     val is guaranteed in tail call position
+        final Map<String, NtValue> scope = new HashMap<>(vars);
         return new CoreLambda(new CoreLambda.Info("<lambda>", "takes " + anonFunc.inputs.length + " parameter(s)", "<code>" + anonFunc.toString() + "</code>")) {
             @Override
             public NtValue applyCall(NtValue... params) {
                 if (params.length != anonFunc.inputs.length) {
                     throw new DispatchException("Expected " + anonFunc.inputs.length + " parameter(s) but got " + params.length);
                 }
-                final InteractiveModeVisitor vis = new InteractiveModeVisitor(vars, env);
+                final InteractiveModeVisitor vis = new InteractiveModeVisitor(scope, env);
+                vis.tailCall = true;
+                // add not-yet-defined outer references. these are *not* considered local
+                vars.forEach((k, v) -> vis.vars.putIfAbsent(k, v));
                 for (int i = 0; i < params.length; ++i) {
                     vis.vars.put(anonFunc.inputs[i].text, params[i]);
                 }
-                vis.tailCall = true;
-                return vis.visit(anonFunc.output);
+                final NtValue ret = vis.visit(anonFunc.output);
+                // save local variables
+                vis.vars.forEach((k, v) -> scope.replace(k, v));
+                return ret;
             }
         };
     }

@@ -17,7 +17,6 @@
 package com.ymcmp.ntshell.rte;
 
 import com.ymcmp.ntshell.NtValue;
-import java.util.Arrays;
 
 /**
  * This class uses exception to rewind the stack to emulate a tail call.

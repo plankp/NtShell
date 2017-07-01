@@ -39,6 +39,8 @@ public final class Loader implements NtLibrary {
         INSTANCES.put("matrix", new Matrix());
         INSTANCES.put("reshape", new Reshape());
         INSTANCES.put("transpose", new Transpose());
+        INSTANCES.put("foldr", new FoldRight());
+        INSTANCES.put("foldl", new FoldLeft());
     }
 
     @Override

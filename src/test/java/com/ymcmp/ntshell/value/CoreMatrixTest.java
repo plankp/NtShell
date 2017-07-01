@@ -343,4 +343,20 @@ public class CoreMatrixTest {
     public void applyDivOnMatrixIsNotSupported() {
         CoreMatrix.getEmptyMatrix().applyDiv(CoreMatrix.getEmptyMatrix());
     }
+
+    @Test
+    public void testReduceLeft() {
+        final CoreMatrix mat = CoreMatrix.from(new NtValue[][]{
+            {CoreNumber.from(1), CoreNumber.from(2), CoreNumber.from(3)}
+        });
+        assertEquals(CoreNumber.from(0 - 1 - 2 - 3), mat.reduceLeft(NtValue::applySub, CoreNumber.from(0)));
+    }
+
+    @Test
+    public void testReduceRight() {
+        final CoreMatrix mat = CoreMatrix.from(new NtValue[][]{
+            {CoreNumber.from(1), CoreNumber.from(2), CoreNumber.from(3)}
+        });
+        assertEquals(CoreNumber.from(0 - 3 - 2 - 1), mat.reduceRight(NtValue::applySub, CoreNumber.from(0)));
+    }
 }

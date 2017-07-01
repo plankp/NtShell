@@ -33,6 +33,7 @@ import java.util.Arrays;
 
 import java.util.function.Function;
 import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
 import java.util.regex.Pattern;
 
 /**
@@ -441,6 +442,85 @@ public class CoreMatrix extends NtValue {
                 .map(s -> s.map(f -> TailCallTrigger.call(transformer, f)))
                 .map(s -> s.toArray(NtValue[]::new))
                 .toArray(NtValue[][]::new));
+    }
+
+    /**
+     * Performs a left reduction on the matrix.Given a matrix {@code [1, 2, 3]},
+     * a reduction of subtraction with initial value of 0 results in
+     * {@code 0 - 1 - 2 - 3}.
+     *
+     * @param accum The accumulator
+     * @param initial The initial value
+     * @return Either the initial value or the accumulated value
+     */
+    public NtValue reduceLeft(final BinaryOperator<NtValue> accum, final NtValue initial) {
+        return reduceLeft(new CoreLambda() {
+            @Override
+            public NtValue applyCall(final NtValue[] params) {
+                return accum.apply(params[0], params[1]);
+            }
+        }, initial);
+    }
+
+    /**
+     * Performs a left reduction on the matrix. null null     {@link CoreMatrix#reduceLeft(java.util.function.BinaryOperator,
+     * com.ymcmp.ntshell.NtValue)}
+     *
+     * @param accum Must support
+     * {@link NtValue#applyCall(com.ymcmp.ntshell.NtValue...)}
+     * @param initial The initial value
+     * @return Either the initial value or the accumulated value
+     */
+    public NtValue reduceLeft(final NtValue accum, final NtValue initial) {
+        if (mat.length == 0) {
+            return initial;
+        }
+
+        return Arrays.stream(mat)
+                .flatMap(Arrays::stream)
+                .reduce(initial, (a, b) -> accum.applyCall(a, b));
+    }
+
+    /**
+     * Performs a right reduction on the matrix. Given a matrix
+     * {@code [1, 2, 3]}, a reduction of subtraction with initial value of 0
+     * results in {@code 0 - 3 - 2 - 1}.
+     *
+     * @param accum The accumulator
+     * @param initial The initial value
+     * @return Either the initial value or the accumulated value
+     */
+    public NtValue reduceRight(final BinaryOperator<NtValue> accum, final NtValue initial) {
+        return reduceRight(new CoreLambda() {
+            @Override
+            public NtValue applyCall(final NtValue[] params) {
+                return accum.apply(params[0], params[1]);
+            }
+        }, initial);
+    }
+
+    /**
+     * Performs a right reduction on the matrix. null null     {@link CoreMatrix#reduceRight(java.util.function.BinaryOperator,
+     * com.ymcmp.ntshell.NtValue)}
+     *
+     * @param accum Must support
+     * {@link NtValue#applyCall(com.ymcmp.ntshell.NtValue...)}
+     * @param initial The initial value
+     * @return Either the initial value or the accumulated value
+     */
+    public NtValue reduceRight(final NtValue accum, final NtValue initial) {
+        if (mat.length == 0) {
+            return initial;
+        }
+
+        NtValue ret = initial;
+        final NtValue[] lst = Arrays.stream(mat)
+                .flatMap(Arrays::stream)
+                .toArray(NtValue[]::new);
+        for (int i = lst.length; i > 0; --i) {
+            ret = accum.applyCall(ret, lst[i - 1]);
+        }
+        return ret;
     }
 
     /**
