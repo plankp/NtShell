@@ -376,27 +376,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
 
     @Override
     public CoreLambda visitAnonFuncVal(final AnonFuncVal anonFunc) {
-        // params -> val     val is guaranteed in tail call position
-        final Map<String, NtValue> scope = new HashMap<>(vars);
-        return new CoreLambda(new CoreLambda.Info("<lambda>", "takes " + anonFunc.inputs.length + " parameter(s)", "<code>" + anonFunc.toString() + "</code>")) {
-            @Override
-            public NtValue applyCall(NtValue... params) {
-                if (params.length != anonFunc.inputs.length) {
-                    throw new DispatchException("Expected " + anonFunc.inputs.length + " parameter(s) but got " + params.length);
-                }
-                final InteractiveModeVisitor vis = new InteractiveModeVisitor(scope, env);
-                vis.tailCall = true;
-                // add not-yet-defined outer references. these are *not* considered local
-                vars.forEach((k, v) -> vis.vars.putIfAbsent(k, v));
-                for (int i = 0; i < params.length; ++i) {
-                    vis.vars.put(anonFunc.inputs[i].text, params[i]);
-                }
-                final NtValue ret = vis.visit(anonFunc.output);
-                // save local variables
-                vis.vars.forEach((k, v) -> scope.replace(k, v));
-                return ret;
-            }
-        };
+        return new UserDefLambda(anonFunc);
     }
 
     @Override
@@ -664,5 +644,42 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                 return CoreNumber.from(Double.NaN);
             }
         };
+    }
+
+    private class UserDefLambda extends CoreLambda {
+
+        public final Map<String, NtValue> lambdaLocals = new HashMap<>();
+
+        public final AnonFuncVal decl;
+
+        public UserDefLambda(final AnonFuncVal decl) {
+            super(new Info("<user defined lambda>", "Accepts " + decl.inputs.length + " parameter(s)", "<code>" + decl.toString() + "</code>"));
+            this.decl = decl;
+        }
+
+        @Override
+        public NtValue applyCall(final NtValue[] params) {
+            // params -> val     val is guaranteed in tail call position
+            if (params.length != decl.inputs.length) {
+                throw new DispatchException("Expected " + decl.inputs.length + " parameter(s) but got " + params.length);
+            }
+            final InteractiveModeVisitor vis = new InteractiveModeVisitor(vars, env) {
+                @Override
+                public NtValue visitAssignExpr(final AssignExpr assign) {
+                    final NtValue val = super.visitAssignExpr(assign);
+                    // save it as a local variable
+                    lambdaLocals.put(assign.to.text, val);
+                    return val;
+                }
+            };
+            vis.tailCall = true;
+            // add local variables
+            vis.vars.putAll(lambdaLocals);
+            for (int i = 0; i < params.length; ++i) {
+                vis.vars.put(decl.inputs[i].text, params[i]);
+            }
+            final NtValue ret = vis.visit(decl.output);
+            return ret;
+        }
     }
 }
