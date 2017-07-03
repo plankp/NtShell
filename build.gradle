@@ -14,6 +14,7 @@ repositories {
 dependencies {
     compile group: 'com.github.inamik.text.tables', name: 'inamik-text-tables', version: '1.0-SNAPSHOT'
     compile group: 'net.ericaro', name: 'surfaceplotter', version: '2.0.1'
+    compile group: 'net.sourceforge.argparse4j', name: 'argparse4j', version: '0.7.0'
     testCompile 'junit:junit:4.12'
 }
 

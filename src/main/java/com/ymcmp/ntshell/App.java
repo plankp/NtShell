@@ -16,11 +16,20 @@
  */
 package com.ymcmp.ntshell;
 
+import net.sourceforge.argparse4j.ArgumentParsers;
+import net.sourceforge.argparse4j.inf.ArgumentParser;
+import net.sourceforge.argparse4j.inf.Namespace;
+import net.sourceforge.argparse4j.impl.Arguments;
+
 import com.ymcmp.ntshell.ast.*;
 
 import java.awt.HeadlessException;
+import java.io.FileReader;
+import java.io.IOException;
 
 import java.util.List;
+import net.sourceforge.argparse4j.inf.MutuallyExclusiveGroup;
+import net.sourceforge.argparse4j.inf.Subparsers;
 
 import ntshell.rt.lib.Core;
 
@@ -38,39 +47,31 @@ public class App {
     private boolean simplifyRat = true;
     private boolean unfoldConst = true;
 
+    private InteractiveModeVisitor session = null;
     private Frontend environment = null;
 
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        boolean gui = true; // terminal as fallback
-        if (args.length == 1) {
-            switch (args[0]) {
-            case "-t":
-            case "--term":
-                gui = false;
-                break;
-            case "-g":
-            case "--gui":
-                gui = true;
-                break;
-            default:
-                System.out.println("Unrecognized option " + args[0]);
-                printCmdHelp();
-                return;
-            case "-h":
-            case "--help":
-                printCmdHelp();
-                return;
-            }
-        }
+        final ArgumentParser parser = ArgumentParsers.newArgumentParser("ntshell")
+                .description("Not quite your conventional shell");
+        parser.addArgument("-m", "--mode")
+                .setDefault(true)
+                .type(Arguments.booleanType("gui", "term"))
+                .help("specifies the mode to launch in (defaults to gui with terminal as fallback)");
+        parser.addArgument("-f", "--file")
+                .nargs("?")
+                .type(FileReader.class)
+                .setDefault((Object) null)
+                .help("executes the specified file");
+        final Namespace res = parser.parseArgsOrFail(args);
 
         final App app = new App();
-        if (gui) {
+        final FileReader reader = res.get("file");
+        if (res.getBoolean("mode")) {
             try (final Frontend inst = new SwingMode()) {
-                app.switchFrontend(inst);
-                app.interactiveMode();
+                app.executeFrontend(inst, reader);
                 return;
             } catch (HeadlessException ex) {
                 System.err.println("Fallback to terminal!");
@@ -78,24 +79,51 @@ public class App {
         }
 
         try (final Frontend inst = new ConsoleMode()) {
-            app.switchFrontend(inst);
-            app.interactiveMode();
+            app.executeFrontend(inst, reader);
         }
     }
 
-    private static void printCmdHelp() {
-        System.out.println("Options are --term -t --gui -g --help -h");
+    public void executeFrontend(final Frontend inst, final FileReader reader) {
+        switchFrontend(inst);
+        initSession();
+        if (reader != null) {
+            loadStartupFile(reader);
+            // release reader
+            try {
+                reader.close();
+            } catch (IOException ex) {
+                // do nothing
+            }
+        }
+        interactiveMode();
     }
 
     public void switchFrontend(final Frontend env) {
         parser.switchFrontend(this.environment = env);
     }
 
-    public void interactiveMode() {
+    public void initSession() {
         environment.linkLibrary(Core.getInstance());
         environment.writeLine("NtShell (interactive mode)\nType `~help` for help\n");
-        final InteractiveModeVisitor session = new InteractiveModeVisitor(environment);
+        session = new InteractiveModeVisitor(environment);
+    }
 
+    public void loadStartupFile(final FileReader reader) {
+        try {
+            final List<Token> toks = Lexer.lexFromReader(reader);
+            while (!toks.isEmpty()) {
+                final AST tree = new Parser().consumeExpr(toks);
+                session.visit(tree);
+
+                while (!toks.isEmpty() && toks.get(0).type == Token.Type.SEMI) {
+                    toks.remove(0);
+                }
+            }
+        } catch (LexerException ex) {
+        }
+    }
+
+    public void interactiveMode() {
         boolean evaluate = true;
 
         while (true) {
