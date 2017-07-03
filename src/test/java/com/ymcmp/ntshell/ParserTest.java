@@ -34,7 +34,7 @@ public class ParserTest {
     public void parseConsFunction() {
         try {
             final String expr = "cons = (x, y) -> m -> x:y:m()";
-            final AST tree = parser.consumeExpr(Lexer.lex(expr));
+            final AST tree = parser.consumeExpr(Lexer.lexFromString(expr));
             final AST expected = new AssignExpr(makeIdent("cons"),
                                                 new AnonFuncVal(new Token[]{makeIdent("x"), makeIdent("y")},
                                                                 new AnonFuncVal(makeIdent("m"),
@@ -51,7 +51,7 @@ public class ParserTest {
     public void parseCarFunction() {
         try {
             final String expr = "car = (z) -> z((p, q) -> p)";
-            final AST tree = parser.consumeExpr(Lexer.lex(expr));
+            final AST tree = parser.consumeExpr(Lexer.lexFromString(expr));
             final AST expected = new AssignExpr(makeIdent("car"),
                                                 new AnonFuncVal(makeIdent("z"),
                                                                 new ApplyExpr(new VariableVal(makeIdent("z")),
@@ -72,7 +72,7 @@ public class ParserTest {
                     + "    b                     if i == n,\n"
                     + "    fib(i + 1, b, a + b)  if i /= n,\n"
                     + "  })(0, 0, 1)";
-            final AST tree = parser.consumeExpr(Lexer.lex(expr));
+            final AST tree = parser.consumeExpr(Lexer.lexFromString(expr));
             final AST expected = new AssignExpr(makeIdent("fib"),
                                                 new AnonFuncVal(makeIdent("n"),
                                                                 new ApplyExpr(new AssignExpr(makeIdent("fib"),

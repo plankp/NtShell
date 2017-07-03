@@ -156,7 +156,7 @@ public class App {
             }
 
             try {
-                final List<Token> toks = Lexer.lex(input);
+                final List<Token> toks = Lexer.lexFromString(input);
 
                 while (!toks.isEmpty()) {
                     AST ast = parser.consumeExpr(toks);

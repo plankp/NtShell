@@ -444,7 +444,7 @@ public class Parser {
                 return Token.getNilToken();
             }
             try {
-                toks.addAll(Lexer.lex(line));
+                toks.addAll(Lexer.lexFromString(line));
             } catch (LexerException ex) {
                 environment.errWriteLine(ex.getMessage());
                 environment.errWriteLine("That line will be ignored!");

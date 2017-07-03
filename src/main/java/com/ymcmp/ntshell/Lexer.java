@@ -16,10 +16,15 @@
  */
 package com.ymcmp.ntshell;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.Reader;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 /**
  *
@@ -36,12 +41,37 @@ public class Lexer {
         KWORDS.put("or", Token.Type.K_OR);
     }
 
-    public static List<Token> lex(final String str) throws LexerException {
+    public static List<Token> lexFromReader(final Reader reader) throws LexerException {
+        if (reader == null) {
+            throw new IllegalArgumentException("Cannot lex from a null reader");
+        }
+
+        final BufferedReader br = new BufferedReader(reader);
+        final List<Token> lst = new ArrayList<>();
+
+        try {
+            String s;
+            while ((s = br.readLine()) != null) {
+                lex(s, lst);
+            }
+        } catch (IOException ex) {
+            // Return what we have so far
+        }
+
+        return lst;
+    }
+
+    public static List<Token> lexFromString(final String str) throws LexerException {
+        final List<Token> tokens = new ArrayList<>();
+        lex(str, tokens);
+        return tokens;
+    }
+
+    private static void lex(final String str, final List<Token> tokens) throws LexerException {
         if (str == null) {
             throw new IllegalArgumentException("Cannot lex a null string");
         }
 
-        final List<Token> tokens = new ArrayList<>();
         char[] arr = str.toCharArray();
         for (int i = 0; i < arr.length; ++i) {
             switch (arr[i]) {
@@ -156,7 +186,6 @@ public class Lexer {
                 throw new LexerException("Unrecognized character of `" + arr[i] + "'");
             }
         }
-        return tokens;
     }
 
     public static int lexAtom(final int pos, final char[] arr, final List<Token> tokens) {

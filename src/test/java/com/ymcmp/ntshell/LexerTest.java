@@ -16,6 +16,7 @@
  */
 package com.ymcmp.ntshell;
 
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -146,7 +147,16 @@ public class LexerTest {
     @Test(expected = IllegalArgumentException.class)
     public void testLexingNullString() {
         try {
-            Lexer.lex(null);
+            Lexer.lexFromString(null);
+        } catch (LexerException ex) {
+        }
+        fail("Illegal argument exception should have been thrown");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testLexingNullReader() {
+        try {
+            Lexer.lexFromReader(null);
         } catch (LexerException ex) {
         }
         fail("Illegal argument exception should have been thrown");
@@ -155,7 +165,7 @@ public class LexerTest {
     @Test
     public void testLexingIllegalCharacter() {
         try {
-            Lexer.lex("`");
+            Lexer.lexFromString("`");
             fail("LexerException should have been thrown");
         } catch (LexerException ex) {
         }
@@ -194,8 +204,10 @@ public class LexerTest {
             new Token(Token.Type.EQL, "=="), new Token(Token.Type.NEQ, "/="), new Token(Token.Type.POW, "^")
         };
         try {
-            final Object[] toks = Lexer.lex(source).toArray();
-            assertArrayEquals(expected, toks);
+            final Object[] toks1 = Lexer.lexFromString(source).toArray();
+            assertArrayEquals(expected, toks1);
+            final Object[] toks2 = Lexer.lexFromReader(new StringReader(source)).toArray();
+            assertArrayEquals(expected, toks2);
         } catch (LexerException ex) {
             fail("LexerException should not have been thrown");
         }
