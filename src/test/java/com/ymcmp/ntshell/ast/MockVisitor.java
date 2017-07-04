@@ -35,6 +35,11 @@ public final class MockVisitor extends Visitor<Object> {
     }
 
     @Override
+    public Object visitUnitVal(UnitVal atom) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
     public Object visitNumberVal(NumberVal number) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }

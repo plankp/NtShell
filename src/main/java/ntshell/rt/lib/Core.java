@@ -56,6 +56,8 @@ public final class Core implements NtLibrary {
         }
 
         switch (name) {
+        case "nil":
+            return CoreUnit.getInstance();
         case "pi":
             return CoreNumber.getPi();
         case "e":

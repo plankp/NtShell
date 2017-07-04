@@ -238,11 +238,16 @@ public class Parser {
             // | LBRACE RBRACE YIELD <expr>                                  (1)
             // | LBRACE <ident> (COMMA <ident>)+ COMMA? RBRACE YIELD <expr>  (2)
             // | LBRACE <ident> RBRACE YIELD <expr>                          (3)
+            // | LBRACE RBRACE                                               (4)
             tokens.remove(0);
             switch (tokens.get(0).type) {
             case RBRACE:
                 // (1)
                 tokens.remove(0);
+                if (peekNextToken(tokens).type != Token.Type.YIELD) {
+                    // (4)
+                    return new UnitVal();
+                }
                 return new AnonFuncVal(new Token[0], consumeYield(tokens));
             case IDENT: {
                 final Token first = tokens.remove(0);

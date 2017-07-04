@@ -352,6 +352,11 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
     }
 
     @Override
+    public CoreUnit visitUnitVal(final UnitVal atom) {
+        return CoreUnit.getInstance();
+    }
+
+    @Override
     public CoreNumber visitNumberVal(final NumberVal number) {
         return CoreNumber.from(number.toDouble());
     }
