@@ -87,7 +87,7 @@ public class App {
         switchFrontend(inst);
         initSession();
         if (reader != null) {
-            loadStartupFile(reader);
+            loadStartupFile(reader, session);
             // release reader
             try {
                 reader.close();
@@ -108,7 +108,7 @@ public class App {
         session = new InteractiveModeVisitor(environment);
     }
 
-    public void loadStartupFile(final FileReader reader) {
+    public static void loadStartupFile(final FileReader reader, final Visitor<?> session) {
         try {
             final List<Token> toks = Lexer.lexFromReader(reader);
             while (!toks.isEmpty()) {

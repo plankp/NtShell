@@ -71,4 +71,15 @@ public class AtomVal implements AST {
         final AtomVal other = (AtomVal) obj;
         return Objects.equals(this.val, other.val);
     }
+
+    public String toAtom() {
+        if (val.text.length() == 1) {
+            return "";
+        }
+        final String atom = val.text.substring(1);
+        if (atom.charAt(0) == '"' && atom.charAt(atom.length() - 1) == '"') {
+            return atom.substring(1, atom.length() - 1);
+        }
+        return atom;
+    }
 }

@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
 
 /**
  *
@@ -192,15 +191,25 @@ public class Lexer {
         int i = pos;
         if (arr[i] == '@') {
             final StringBuilder buf = new StringBuilder().append(arr[i]);
-            if (isIdent(arr[++i])) {
+            ++i;
+            if (isIdent(arr[i])) {
                 while (i < arr.length && isIdent(arr[i])) {
                     buf.append(arr[i++]);
                 }
-                --i;
-                final String ident = buf.toString();
-                tokens.add(new Token(Token.Type.ATOM, ident));
-                return i;
+            } else if (arr[i] == '"') {
+                // @"stuff" => we look for the next ". The quoting *not* nested
+                buf.append('"');
+                ++i;
+                while (i < arr.length && arr[i] != '"') {
+                    buf.append(arr[i++]);
+                }
+                // Append the last " also
+                buf.append(arr[i++]);
             }
+            --i;
+            final String atom = buf.toString();
+            tokens.add(new Token(Token.Type.ATOM, atom));
+            return i;
         }
         return i;
     }

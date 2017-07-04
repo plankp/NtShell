@@ -22,6 +22,9 @@ import com.ymcmp.ntshell.ast.*;
 
 import com.ymcmp.ntshell.value.*;
 
+import java.io.FileReader;
+import java.io.IOException;
+
 import java.util.Map;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -301,6 +304,21 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
            });
     }
 
+    private final CoreLambda FUNC_LOAD_FILE = new CoreLambda(new CoreLambda.Info("Load file", "atom -> number", "Tries to load a NtShell script into the current context. Returns anything but zero on success")) {
+        @Override
+        public NtValue applyCall(final NtValue[] params) {
+            if (params.length == 1 && params[0] instanceof CoreAtom) {
+                final String path = params[0].toString();
+                try (final FileReader reader = new FileReader(path)) {
+                    App.loadStartupFile(reader, InteractiveModeVisitor.this);
+                    return CoreNumber.from(true);
+                } catch (IOException ex) {
+                }
+            }
+            return CoreNumber.from(false);
+        }
+    };
+
     private final Map<String, NtValue> vars;
     private final Frontend env;
 
@@ -329,8 +347,8 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
     }
 
     @Override
-    public CoreAtom visitAtomVal(AtomVal atom) {
-        return CoreAtom.from(atom.val.text.substring(1));
+    public CoreAtom visitAtomVal(final AtomVal atom) {
+        return CoreAtom.from(atom.toAtom());
     }
 
     @Override
@@ -347,6 +365,9 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
             if (val == null) {
                 val = PREDEF.get(name);
                 if (val == null) {
+                    if (name.equals("load_file")) {
+                        return FUNC_LOAD_FILE;
+                    }
                     throw new UndefinedHandleException("Variable " + name + " has not been defined");
                 }
             }

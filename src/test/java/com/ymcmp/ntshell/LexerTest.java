@@ -88,6 +88,15 @@ public class LexerTest {
     }
 
     @Test
+    public void testLexQuotedAtom() {
+        final char[] str = "@\"ab\"".toCharArray();
+        final List<Token> arr = new ArrayList<>();
+        final int end = Lexer.lexAtom(0, str, arr);
+        assertEquals(4, end);
+        assertEquals(Arrays.asList(new Token(Token.Type.ATOM, "@\"ab\"")), arr);
+    }
+
+    @Test
     public void testLexIdent() {
         final char[] str = " atom".toCharArray();
         final List<Token> arr = new ArrayList<>();
