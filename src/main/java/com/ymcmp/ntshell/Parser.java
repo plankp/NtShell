@@ -355,19 +355,26 @@ public class Parser {
         // | <expr> (COMMA <expr>)* COMMA? SEMI
         final List<AST> elems = new ArrayList<>();
         cons_loop:
-        while (peekNextToken(tokens).type != Token.Type.SEMI) {
+        while (true) {
+            switch (peekNextToken(tokens).type) {
+            case SEMI:
+                tokens.remove(0);
+                break cons_loop;
+            case RBLK:
+                break cons_loop;
+            }
+
             elems.add(consumeExpr(tokens));
             switch (peekNextToken(tokens).type) {
             case COMMA:
                 tokens.remove(0);
                 break;
             case SEMI:
-                break cons_loop;
+                break;
             default:
                 throw new MatrixRowUnclosedException(new MatrixVal.Column(elems.toArray(new AST[elems.size()])));
             }
         }
-        tokens.remove(0);
         return new MatrixVal.Column(elems.toArray(new AST[elems.size()]));
     }
 

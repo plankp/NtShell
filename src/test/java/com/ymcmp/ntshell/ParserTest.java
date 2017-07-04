@@ -49,10 +49,12 @@ public class ParserTest {
     @Test
     public void parseUnaryAndPow() {
         try {
-            final String expr = "-x^2";
+            final String expr = "-x^2^3";
             final AST tree = parser.consumeExpr(Lexer.lexFromString(expr));
             final AST expected = new UnaryExpr(new BinaryExpr(new VariableVal(makeIdent("x")),
-                                                              NumberVal.fromLong(2),
+                                                              new BinaryExpr(NumberVal.fromLong(2),
+                                                                             NumberVal.fromLong(3),
+                                                                             new Token(Token.Type.POW, "^")),
                                                               new Token(Token.Type.POW, "^")),
                                                new Token(Token.Type.SUB, "-"), true);
             assertEquals(expected.toString(), tree.toString());
@@ -71,6 +73,34 @@ public class ParserTest {
                                                               new Token(Token.Type.COMPOSE, ".")),
                                                new AST[]{new UnaryExpr(NumberVal.fromLong(5),
                                                                        new Token(Token.Type.PERCENT, "%"), false)});
+            assertEquals(expected.toString(), tree.toString());
+        } catch (LexerException ex) {
+            fail("No exception should be thrown");
+        }
+    }
+
+    @Test
+    public void parseUnit() {
+        try {
+            final String expr = "(() -> ())()";
+            final AST tree = parser.consumeExpr(Lexer.lexFromString(expr));
+            final AST expected = new ApplyExpr(new AnonFuncVal(new Token[0],
+                                                               new UnitVal()),
+                                               new AST[0]);
+            assertEquals(expected.toString(), tree.toString());
+        } catch (LexerException ex) {
+            fail("No exception should be thrown");
+        }
+    }
+
+    @Test
+    public void parseMatrix() {
+        try {
+            final String expr = "[1, 2;3, 4,]";
+            final AST tree = parser.consumeExpr(Lexer.lexFromString(expr));
+            final AST expected = new MatrixVal(new MatrixVal.Column[]{
+                new MatrixVal.Column(new AST[]{NumberVal.fromLong(1), NumberVal.fromLong(2)}),
+                new MatrixVal.Column(new AST[]{NumberVal.fromLong(3), NumberVal.fromLong(4)})});
             assertEquals(expected.toString(), tree.toString());
         } catch (LexerException ex) {
             fail("No exception should be thrown");
@@ -97,7 +127,7 @@ public class ParserTest {
     @Test
     public void parseCarFunction() {
         try {
-            final String expr = "car = (z) -> z((p, q) -> p)";
+            final String expr = "car = (z) -> z((p, q) -> (p))";
             final AST tree = parser.consumeExpr(Lexer.lexFromString(expr));
             final AST expected = new AssignExpr(makeIdent("car"),
                                                 new AnonFuncVal(makeIdent("z"),
@@ -117,7 +147,7 @@ public class ParserTest {
                     + "fib = n ->\n"
                     + "  (fib = (i, a, b) -> {\n"
                     + "    b                     if i == n,\n"
-                    + "    fib(i + 1, b, a + b)  if i /= n,\n"
+                    + "    fib(i + 1, b, a + b)  if i /= n\n"
                     + "  })(0, 0, 1)";
             final AST tree = parser.consumeExpr(Lexer.lexFromString(expr));
             final AST expected = new AssignExpr(makeIdent("fib"),
