@@ -31,6 +31,53 @@ public class ParserTest {
     final Parser parser = new Parser();
 
     @Test
+    public void parseMulLikeExpr() {
+        try {
+            final String expr = "2 / 3k(@a)";
+            final AST tree = parser.consumeExpr(Lexer.lexFromString(expr));
+            final AST expected = new BinaryExpr(new BinaryExpr(NumberVal.fromLong(2),
+                                                               NumberVal.fromLong(3),
+                                                               new Token(Token.Type.DIV, "/")),
+                                                new ApplyExpr(new VariableVal(makeIdent("k")), new AST[]{AtomVal.fromString("@a")}),
+                                                new Token(Token.Type.MUL, null));
+            assertEquals(expected.toString(), tree.toString());
+        } catch (LexerException ex) {
+            fail("No exception should be thrown");
+        }
+    }
+
+    @Test
+    public void parseUnaryAndPow() {
+        try {
+            final String expr = "-x^2";
+            final AST tree = parser.consumeExpr(Lexer.lexFromString(expr));
+            final AST expected = new UnaryExpr(new BinaryExpr(new VariableVal(makeIdent("x")),
+                                                              NumberVal.fromLong(2),
+                                                              new Token(Token.Type.POW, "^")),
+                                               new Token(Token.Type.SUB, "-"), true);
+            assertEquals(expected.toString(), tree.toString());
+        } catch (LexerException ex) {
+            fail("No exception should be thrown");
+        }
+    }
+
+    @Test
+    public void parseComposeAndPercent() {
+        try {
+            final String expr = "(f . g)(5%)";
+            final AST tree = parser.consumeExpr(Lexer.lexFromString(expr));
+            final AST expected = new ApplyExpr(new BinaryExpr(new VariableVal(makeIdent("f")),
+                                                              new VariableVal(makeIdent("g")),
+                                                              new Token(Token.Type.COMPOSE, ".")),
+                                               new AST[]{new UnaryExpr(NumberVal.fromLong(5),
+                                                                       new Token(Token.Type.PERCENT, "%"), false)});
+            assertEquals(expected.toString(), tree.toString());
+        } catch (LexerException ex) {
+            fail("No exception should be thrown");
+        }
+    }
+
+    @Test
     public void parseConsFunction() {
         try {
             final String expr = "cons = (x, y) -> m -> x:y:m()";

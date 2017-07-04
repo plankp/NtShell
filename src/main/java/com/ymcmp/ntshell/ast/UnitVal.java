@@ -17,7 +17,6 @@
 package com.ymcmp.ntshell.ast;
 
 import com.ymcmp.ntshell.AST;
-import com.ymcmp.ntshell.Token;
 import com.ymcmp.ntshell.Visitor;
 
 /**
