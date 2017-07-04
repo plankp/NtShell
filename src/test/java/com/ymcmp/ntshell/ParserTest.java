@@ -108,6 +108,22 @@ public class ParserTest {
     }
 
     @Test
+    public void parseLogic() {
+        try {
+            final String expr = "1 and 1 or 0";
+            final AST tree = parser.consumePred(Lexer.lexFromString(expr));
+            final AST expected = new BinaryExpr(new BinaryExpr(NumberVal.fromLong(1),
+                                                               NumberVal.fromLong(1),
+                                                               new Token(Token.Type.K_AND, "and")),
+                                                NumberVal.fromLong(0),
+                                                new Token(Token.Type.K_OR, "or"));
+            assertEquals(expected.toString(), tree.toString());
+        } catch (LexerException ex) {
+            fail("No exception should be thrown");
+        }
+    }
+
+    @Test
     public void parseConsFunction() {
         try {
             final String expr = "cons = (x, y) -> m -> x:y:m()";

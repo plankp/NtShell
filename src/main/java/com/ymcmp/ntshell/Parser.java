@@ -362,6 +362,7 @@ public class Parser {
                 break cons_loop;
             case RBLK:
                 break cons_loop;
+            default:
             }
 
             elems.add(consumeExpr(tokens));
@@ -396,7 +397,7 @@ public class Parser {
         throw new ParserException("Each piecewise case requires a condition");
     }
 
-    private AST consumePred(final List<Token> tokens) {
+    public AST consumePred(final List<Token> tokens) {
         return consumeOr(tokens);
     }
 

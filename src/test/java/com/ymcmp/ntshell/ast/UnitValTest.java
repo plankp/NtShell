@@ -16,35 +16,23 @@
  */
 package com.ymcmp.ntshell.ast;
 
-import com.ymcmp.ntshell.AST;
-import com.ymcmp.ntshell.Visitor;
+import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 /**
  *
  * @author YTENG
  */
-public final class UnitVal implements AST {
+public class UnitValTest {
 
-    @Override
-    public <T> T accept(Visitor<T> vis) {
-        return vis.visitUnitVal(this);
+    @Test(expected = UnsupportedOperationException.class)
+    public void testVisit() {
+        MockVisitor.VISITOR.visit(new UnitVal());
     }
 
-    @Override
-    public String toString() {
-        return "()";
-    }
-
-    @Override
-    public int hashCode() {
-        return 1;
-    }
-
-    @Override
-    public boolean equals(final Object val) {
-        if (val == null) {
-            return false;
-        }
-        return val.getClass() == this.getClass();
+    @Test
+    public void unitValEqualsItself() {
+        assertTrue(new UnitVal().equals(new UnitVal()));
     }
 }
