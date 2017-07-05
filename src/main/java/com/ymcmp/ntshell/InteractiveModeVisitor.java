@@ -290,9 +290,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                            @Override
                            public NtValue applyCall(NtValue[] x) {
                                final NtValue[] xRight = Arrays.copyOf(x, x.length);
-                               System.out.println("APP-LEFT:  " + Arrays.toString(x));
                                final NtValue llim = genLimitBody(f[0], true).applyCall(x);
-                               System.out.println("APP-RIGHT: " + Arrays.toString(xRight));
                                final NtValue rlim = genLimitBody(f[0], false).applyCall(xRight);
                                if (llim instanceof CoreNumber && ((CoreNumber) llim).isFinite() && llim.equals(rlim)) {
                                    return llim;
