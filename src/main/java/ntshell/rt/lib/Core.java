@@ -41,6 +41,7 @@ public final class Core implements NtLibrary {
 
     private Core() {
         submodules.add(new ntshell.rt.lib.rout.matrix.Loader());
+        submodules.add(new ntshell.rt.lib.rout.trig.Loader());
     }
 
     public static NtLibrary getInstance() {
@@ -73,6 +74,16 @@ public final class Core implements NtLibrary {
             return Twice.getInstance();
         case "summation":
             return Summation.getInstance();
+        case "sqrt":
+            return Sqrt.getInstance();
+        case "cbrt":
+            return Cbrt.getInstance();
+        case "square":
+            return Square.getInstance();
+        case "cube":
+            return Cube.getInstance();
+        case "abs":
+            return Abs.getInstance();
         default:
         }
         return null;

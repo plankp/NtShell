@@ -39,7 +39,12 @@ public class CoreNumber extends NtValue implements Comparable<CoreNumber> {
     public static final CoreNumber ONE = new CoreNumber(1L);
     public static final CoreNumber ZERO = new CoreNumber(0L);
     public static final CoreNumber TEN = new CoreNumber(10L);
+
     public static final CoreNumber HALF = new CoreNumber(1L, 2L);
+    public static final CoreNumber THIRD = new CoreNumber(1L, 3L);
+
+    public static final CoreNumber TWO = new CoreNumber(2L);
+    public static final CoreNumber THREE = new CoreNumber(3L);
 
     public static final CoreNumber NAN = new CoreNumber(0L, 0L);
     public static final CoreNumber POS_INF = new CoreNumber(1L, 0L);
@@ -136,6 +141,12 @@ public class CoreNumber extends NtValue implements Comparable<CoreNumber> {
         }
         if (val == 1L) {
             return ONE;
+        }
+        if (val == 2L) {
+            return TWO;
+        }
+        if (val == 3L) {
+            return THREE;
         }
         if (val == 10L) {
             return TEN;
