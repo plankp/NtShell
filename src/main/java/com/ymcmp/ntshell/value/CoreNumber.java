@@ -33,8 +33,20 @@ import org.apfloat.Apfloat;
  */
 public class CoreNumber extends NtValue implements Comparable<CoreNumber> {
 
-    public BigInteger numerator;
-    public BigInteger denominator;
+    public static final CoreNumber PI = new CoreNumber(884279719003555L, 281474976710656L);
+    public static final CoreNumber E = new CoreNumber(6121026514868073L, 2251799813685248L);
+
+    public static final CoreNumber ONE = new CoreNumber(1L);
+    public static final CoreNumber ZERO = new CoreNumber(0L);
+    public static final CoreNumber TEN = new CoreNumber(10L);
+    public static final CoreNumber HALF = new CoreNumber(1L, 2L);
+
+    public static final CoreNumber NAN = new CoreNumber(0L, 0L);
+    public static final CoreNumber POS_INF = new CoreNumber(1L, 0L);
+    public static final CoreNumber NEG_INF = new CoreNumber(-1L, 0L);
+
+    private BigInteger numerator;
+    private BigInteger denominator;
 
     private CoreNumber(final long val) {
         this(BigInteger.valueOf(val), BigInteger.ONE);
@@ -101,18 +113,6 @@ public class CoreNumber extends NtValue implements Comparable<CoreNumber> {
             denominator = denominator.negate();
         }
     }
-
-    private static final CoreNumber PI = new CoreNumber(884279719003555L, 281474976710656L);
-    private static final CoreNumber E = new CoreNumber(6121026514868073L, 2251799813685248L);
-
-    private static final CoreNumber ONE = new CoreNumber(1L);
-    private static final CoreNumber ZERO = new CoreNumber(0L);
-    private static final CoreNumber TEN = new CoreNumber(10L);
-    private static final CoreNumber HALF = new CoreNumber(1L, 2L);
-
-    private static final CoreNumber NAN = new CoreNumber(0L, 0L);
-    private static final CoreNumber POS_INF = new CoreNumber(1L, 0L);
-    private static final CoreNumber NEG_INF = new CoreNumber(-1L, 0L);
 
     public static CoreNumber getPi() {
         return PI;
@@ -387,12 +387,10 @@ public class CoreNumber extends NtValue implements Comparable<CoreNumber> {
         if (base.signum() == 0) {
             return BigDecimal.ZERO;
         }
-        if (base.signum() < 0) {
-            // If exp is even, it is impossible (real number range)
-            // If exp is odd, calculate as if base was positive and add negative sign
-            if (exp % 2 == 0) {
-                throw new IllegalArgumentException("nth root can only be calculated for positive numbers");
-            }
+        // If exp is even, it is impossible (real number range)
+        // If exp is odd, calculate as if base was positive and add negative sign
+        if (base.signum() < 0 && exp % 2 == 0) {
+            throw new IllegalArgumentException("nth root can only be calculated for positive numbers");
         }
         final BigDecimal p = BigDecimal.valueOf(.1).movePointLeft(12);
         BigDecimal xPrev = base;
