@@ -18,93 +18,175 @@ package com.ymcmp.ntshell.value;
 
 import com.ymcmp.ntshell.NtValue;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.math.RoundingMode;
+
+import java.util.Objects;
+
+import org.apfloat.Apfloat;
+
 /**
- * Numbers in NtShell
+ * Numbers in NtShell in the form of rational numbers
  *
  * @author YTENG
  */
 public class CoreNumber extends NtValue implements Comparable<CoreNumber> {
 
-    public final double val;
+    public BigInteger numerator;
+    public BigInteger denominator;
 
-    private static class Helper {
-
-        static final CoreNumber NEG_INF = new CoreNumber(Double.NEGATIVE_INFINITY);
-        static final CoreNumber POS_INF = new CoreNumber(Double.POSITIVE_INFINITY);
-        static final CoreNumber NaN = new CoreNumber(Double.NaN);
-        static final CoreNumber NEG_ONE = new CoreNumber(-1);
-        static final CoreNumber ONE = new CoreNumber(1);
-        static final CoreNumber ZERO = new CoreNumber(0);
-
-        static final CoreNumber THREE = new CoreNumber(3);
-        static final CoreNumber PI = new CoreNumber(Math.PI);
-        static final CoreNumber E = new CoreNumber(Math.E);
+    private CoreNumber(final long val) {
+        this(BigInteger.valueOf(val), BigInteger.ONE);
     }
 
-    protected CoreNumber(double d) {
-        this.val = d;
+    private CoreNumber(final long numer, final long denom) {
+        this(BigInteger.valueOf(numer), BigInteger.valueOf(denom));
+    }
+
+    private CoreNumber(final BigInteger val) {
+        this(val, BigInteger.ONE);
+    }
+
+    private CoreNumber(final BigInteger numer, final BigInteger denom) {
+        this.numerator = numer;
+        this.denominator = denom;
     }
 
     @Override
     public String toString() {
-        return Double.toString(val);
+        simplify();
+        if (isNaN()) {
+            return "Undefined";
+        }
+        if (isInfinite()) {
+            if (isNegative()) {
+                return "-Infinity";
+            }
+            return "Infinity";
+        }
+        return toDecimal()
+                .stripTrailingZeros()
+                .toPlainString();
     }
 
-    public double toDouble() {
-        return val;
+    public Apfloat toApfloat() {
+        return new Apfloat(toDecimal());
     }
+
+    public BigDecimal toDecimal() {
+        return toDecimal(12);
+    }
+
+    public BigDecimal toDecimal(final int digits) {
+        return toDecimal(digits, RoundingMode.HALF_UP);
+    }
+
+    public BigDecimal toDecimal(final int digits, final RoundingMode mode) {
+        return new BigDecimal(numerator)
+                .divide(new BigDecimal(denominator), digits, mode);
+    }
+
+    public void simplify() {
+        final BigInteger gcd = numerator.gcd(denominator);
+        if (gcd.compareTo(BigInteger.ZERO) > 0) {
+            numerator = numerator.divide(gcd);
+            denominator = denominator.divide(gcd);
+        }
+
+        // canonical form is that numerator takes the sign, denominator is
+        // always positive.
+        if (denominator.signum() < 0) {
+            numerator = numerator.negate();
+            denominator = denominator.negate();
+        }
+    }
+
+    private static final CoreNumber PI = new CoreNumber(884279719003555L, 281474976710656L);
+    private static final CoreNumber E = new CoreNumber(6121026514868073L, 2251799813685248L);
+
+    private static final CoreNumber ONE = new CoreNumber(1L);
+    private static final CoreNumber ZERO = new CoreNumber(0L);
+    private static final CoreNumber TEN = new CoreNumber(10L);
+    private static final CoreNumber HALF = new CoreNumber(1L, 2L);
+
+    private static final CoreNumber NAN = new CoreNumber(0L, 0L);
+    private static final CoreNumber POS_INF = new CoreNumber(1L, 0L);
+    private static final CoreNumber NEG_INF = new CoreNumber(-1L, 0L);
 
     public static CoreNumber getPi() {
-        return Helper.PI;
+        return PI;
     }
 
     public static CoreNumber getE() {
-        return Helper.E;
+        return E;
+    }
+
+    public static CoreNumber from(Apfloat f) {
+        return from(f.toString(false));
     }
 
     public static CoreNumber from(boolean b) {
-        return b ? Helper.ONE : Helper.ZERO;
+        return b ? ONE : ZERO;
+    }
+
+    public static CoreNumber from(long val) {
+        if (val == 0L) {
+            return ZERO;
+        }
+        if (val == 1L) {
+            return ONE;
+        }
+        if (val == 10L) {
+            return TEN;
+        }
+        final CoreNumber n = new CoreNumber(val);
+        n.simplify();
+        return n;
+    }
+
+    public static CoreNumber from(long numer, long denom) {
+        if (denom == 1L) {
+            return from(numer);
+        }
+
+        if (numer == 1L && denom == 2L) {
+            return HALF;
+        }
+        final CoreNumber n = new CoreNumber(numer, denom);
+        n.simplify();
+        return n;
     }
 
     public static CoreNumber from(double d) {
-        // NaN does not equal to NaN, so no d == Double.NaN
         if (Double.isNaN(d)) {
-            return Helper.NaN;
+            return NAN;
         }
+        if (Double.isInfinite(d)) {
+            if (d < 0) {
+                return NEG_INF;
+            }
+            return POS_INF;
+        }
+        return from(Double.toString(d));
+    }
 
-        if (d == Double.POSITIVE_INFINITY) {
-            return Helper.POS_INF;
-        }
-        if (d == Double.NEGATIVE_INFINITY) {
-            return Helper.NEG_INF;
-        }
+    public static CoreNumber from(String str) {
+        final BigDecimal dec = new BigDecimal(str);
+        return from(dec);
+    }
 
-        if (d == 0) {
-            return Helper.ZERO;
-        }
-        if (d == 1) {
-            return Helper.ONE;
-        }
-        if (d == -1) {
-            return Helper.NEG_ONE;
-        }
-        if (d == 3) {
-            return Helper.THREE;
-        }
-
-        if (d == Math.PI) {
-            return Helper.PI;
-        }
-        if (d == Math.E) {
-            return Helper.E;
-        }
-        return new CoreNumber(d);
+    public static CoreNumber from(final BigDecimal dec) {
+        final CoreNumber n = new CoreNumber(dec.unscaledValue(), BigInteger.TEN.pow(dec.scale()));
+        n.simplify();
+        return n;
     }
 
     @Override
     public int hashCode() {
-        int hash = 5;
-        hash = 83 * hash + (int) (Double.doubleToLongBits(this.val) ^ (Double.doubleToLongBits(this.val) >>> 32));
+        int hash = 3;
+        hash = 71 * hash + Objects.hashCode(this.numerator);
+        hash = 71 * hash + Objects.hashCode(this.denominator);
         return hash;
     }
 
@@ -119,8 +201,7 @@ public class CoreNumber extends NtValue implements Comparable<CoreNumber> {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final CoreNumber other = (CoreNumber) obj;
-        return Double.doubleToLongBits(this.val) == Double.doubleToLongBits(other.val);
+        return this.compareTo((CoreNumber) obj) == 0;
     }
 
     @Override
@@ -131,12 +212,17 @@ public class CoreNumber extends NtValue implements Comparable<CoreNumber> {
 
     @Override
     public CoreNumber applyNegative() {
-        return CoreNumber.from(-val);
+        final CoreNumber n = new CoreNumber(numerator.negate(), denominator);
+        n.simplify();
+        return n;
     }
 
     @Override
     public CoreNumber applyPercentage() {
-        return CoreNumber.from(val / 100.0);
+        final CoreNumber n = new CoreNumber(numerator,
+                                            denominator.multiply(BigInteger.TEN).multiply(BigInteger.TEN));
+        n.simplify();
+        return n;
     }
 
     @Override
@@ -150,7 +236,18 @@ public class CoreNumber extends NtValue implements Comparable<CoreNumber> {
     @Override
     public NtValue applyAdd(NtValue rhs) {
         if (rhs instanceof CoreNumber) {
-            return CoreNumber.from(val + ((CoreNumber) rhs).val);
+            final CoreNumber rhsn = (CoreNumber) rhs;
+            final CoreNumber n;
+            if (denominator.equals(rhsn.denominator)) {
+                // 2/5 + 1/5 => (1+2)/5
+                n = new CoreNumber(numerator.add(rhsn.numerator), denominator);
+            } else {
+                // 1/2 + 2/3 => (1*3 + 2*2)/(2*3)
+                n = new CoreNumber(numerator.multiply(rhsn.denominator).add(rhsn.numerator.multiply(denominator)),
+                                   denominator.multiply(rhsn.denominator));
+            }
+            n.simplify();
+            return n;
         }
         if (rhs instanceof CoreMatrix) {
             // Addition is commutative
@@ -162,7 +259,18 @@ public class CoreNumber extends NtValue implements Comparable<CoreNumber> {
     @Override
     public NtValue applySub(NtValue rhs) {
         if (rhs instanceof CoreNumber) {
-            return CoreNumber.from(val - ((CoreNumber) rhs).val);
+            final CoreNumber rhsn = (CoreNumber) rhs;
+            final CoreNumber n;
+            if (denominator.equals(rhsn.denominator)) {
+                // 2/5 - 1/5 => (1-2)/5
+                n = new CoreNumber(numerator.subtract(rhsn.numerator), denominator);
+            } else {
+                // 1/2 - 2/3 => (1*3 - 2*2)/(2*3)
+                n = new CoreNumber(numerator.multiply(rhsn.denominator).subtract(rhsn.numerator.multiply(denominator)),
+                                   denominator.multiply(rhsn.denominator));
+            }
+            n.simplify();
+            return n;
         }
         if (rhs instanceof CoreMatrix) {
             return ((CoreMatrix) rhs).applyRSub(this);
@@ -173,7 +281,11 @@ public class CoreNumber extends NtValue implements Comparable<CoreNumber> {
     @Override
     public NtValue applyMul(NtValue rhs) {
         if (rhs instanceof CoreNumber) {
-            return CoreNumber.from(val * ((CoreNumber) rhs).val);
+            final CoreNumber rhsn = (CoreNumber) rhs;
+            final CoreNumber n = new CoreNumber(numerator.multiply(rhsn.numerator),
+                                                denominator.multiply(rhsn.denominator));
+            n.simplify();
+            return n;
         }
         if (rhs instanceof CoreMatrix) {
             // Multiplication is commutative
@@ -185,7 +297,11 @@ public class CoreNumber extends NtValue implements Comparable<CoreNumber> {
     @Override
     public NtValue applyDiv(NtValue rhs) {
         if (rhs instanceof CoreNumber) {
-            return CoreNumber.from(val / ((CoreNumber) rhs).val);
+            final CoreNumber rhsn = (CoreNumber) rhs;
+            final CoreNumber n = new CoreNumber(numerator.multiply(rhsn.denominator),
+                                                denominator.multiply(rhsn.numerator));
+            n.simplify();
+            return n;
         }
         if (rhs instanceof CoreMatrix) {
             return ((CoreMatrix) rhs).applyRDiv(this);
@@ -196,7 +312,12 @@ public class CoreNumber extends NtValue implements Comparable<CoreNumber> {
     @Override
     public NtValue applyMod(NtValue rhs) {
         if (rhs instanceof CoreNumber) {
-            return CoreNumber.from(val % ((CoreNumber) rhs).val);
+            // a mod b = a - b*floor(a/b)
+            final CoreNumber rhsn = (CoreNumber) rhs;
+            final CoreNumber beFloor = (CoreNumber) this.applyDiv(rhsn);
+            final CoreNumber n = (CoreNumber) applySub(rhsn.applyMul(new CoreNumber(beFloor.toDecimal(1, RoundingMode.FLOOR).toBigInteger())));
+            n.simplify();
+            return n;
         }
         if (rhs instanceof CoreMatrix) {
             return ((CoreMatrix) rhs).applyRMod(this);
@@ -207,7 +328,28 @@ public class CoreNumber extends NtValue implements Comparable<CoreNumber> {
     @Override
     public NtValue applyPow(NtValue rhs) {
         if (rhs instanceof CoreNumber) {
-            return CoreNumber.from(Math.pow(val, ((CoreNumber) rhs).val));
+            // (1/2)^(2/3) => 1^(2/3)/2^(2/3)
+            final CoreNumber rhsn = (CoreNumber) rhs;
+            final CoreNumber n = new CoreNumber(numerator, denominator);
+            if (rhsn.isNegative()) {
+                n.inverse();
+            }
+            try {
+                // only take absolute value of numerator since in canonical form,
+                // denominator is always positive, and numerator dictates the sign
+                n.numerator = pow(n.numerator, rhsn.numerator.abs());
+                n.denominator = pow(n.denominator, rhsn.numerator.abs());
+                n.simplify();
+
+                final int cmp = rhsn.denominator.compareTo(BigInteger.ONE);
+                if (cmp == 0) {
+                    return n;
+                }
+                return CoreNumber.from(root(rhsn.denominator.intValueExact(), n.toDecimal()));
+            } catch (IllegalArgumentException | ArithmeticException ex) {
+                // Most likely caused by having a negative base when rooting
+                return NAN;
+            }
         }
         if (rhs instanceof CoreMatrix) {
             return ((CoreMatrix) rhs).applyRPow(this);
@@ -215,28 +357,102 @@ public class CoreNumber extends NtValue implements Comparable<CoreNumber> {
         return super.applyPow(rhs);
     }
 
+    private static BigInteger pow(final BigInteger base, final BigInteger exp) {
+        if (exp.equals(BigInteger.ZERO)) {
+            return BigInteger.ONE;
+        }
+        if (exp.equals(BigInteger.ONE)) {
+            return base;
+        }
+        if (exp.signum() < 0) {
+            throw new IllegalArgumentException("Exponent must be positive: " + exp);
+        }
+
+        // exponent by squaring (based on wikipedia article)
+        BigInteger x = base;
+        BigInteger y = BigInteger.ONE;
+        BigInteger n = exp;
+        while (n.compareTo(BigInteger.ONE) > 0) {
+            if (n.testBit(0)) {
+                // n is odd
+                y = x.multiply(y);
+            }
+            x = x.pow(2);
+            n = n.shiftRight(1);
+        }
+        return x.multiply(y);
+    }
+
+    private static BigDecimal root(final int exp, final BigDecimal base) {
+        if (base.signum() == 0) {
+            return BigDecimal.ZERO;
+        }
+        if (base.signum() < 0) {
+            // If exp is even, it is impossible (real number range)
+            // If exp is odd, calculate as if base was positive and add negative sign
+            if (exp % 2 == 0) {
+                throw new IllegalArgumentException("nth root can only be calculated for positive numbers");
+            }
+        }
+        final BigDecimal p = BigDecimal.valueOf(.1).movePointLeft(12);
+        BigDecimal xPrev = base;
+        BigDecimal x = base.divide(new BigDecimal(exp), 12, RoundingMode.HALF_DOWN);  // starting "guessed" value...
+        while (x.subtract(xPrev).abs().compareTo(p) > 0) {
+            xPrev = x;
+            x = BigDecimal.valueOf(exp - 1.0)
+                    .multiply(x)
+                    .add(base.divide(x.pow(exp - 1), 12, RoundingMode.HALF_DOWN))
+                    .divide(new BigDecimal(exp), 12, RoundingMode.HALF_DOWN);
+        }
+        return x;
+    }
+
+    public void inverse() {
+        final BigInteger tmp = denominator;
+        denominator = numerator;
+        numerator = tmp;
+    }
+
     @Override
     public boolean isTruthy() {
-        if (Double.isNaN(val)) {
-            return false;
-        }
-        return val != 0.0;
+        simplify();
+        return numerator.signum() != 0;
+    }
+
+    public boolean isNegative() {
+        simplify();
+        return numerator.signum() < 0;
     }
 
     public boolean isFinite() {
-        return Double.isFinite(val);
+        // anything with a denominator of non-zero
+        return denominator.signum() != 0;
     }
 
     public boolean isInfinite() {
-        return Double.isInfinite(val);
+        // x/0 where x != 0
+        return numerator.signum() != 0 && denominator.signum() == 0;
     }
 
     public boolean isNaN() {
-        return Double.isNaN(val);
+        return numerator.signum() == 0 && denominator.signum() == 0;
     }
 
     @Override
     public int compareTo(CoreNumber o) {
-        return Double.compare(val, o.val);
+        // 3/4 vs 5/6 => 3*6=18, 4*5=20 => 5/6 is greater
+        return numerator.multiply(o.denominator).compareTo(denominator.multiply(o.numerator));
+    }
+
+    public CoreNumber addOne() {
+        final CoreNumber n = new CoreNumber(numerator.add(denominator), denominator);
+        n.simplify();
+        return n;
+    }
+
+    public CoreNumber abs() {
+        final CoreNumber n = new CoreNumber(numerator.abs(), denominator.abs());
+        n.simplify();
+        return n;
     }
 }

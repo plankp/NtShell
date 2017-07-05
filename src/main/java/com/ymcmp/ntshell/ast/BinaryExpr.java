@@ -221,8 +221,6 @@ public class BinaryExpr implements AST {
         case DIV:
             // (/ a a)  => 1
             // (/ a 1)  => a
-            // (/ a 0)  => Inf
-            // (/ a -0) => -Inf
             // (/ 0 0)  => NaN
             // (/ (* 3 a) 3)  => a
             // (/ (* 3 a) a)  => 3
@@ -234,9 +232,6 @@ public class BinaryExpr implements AST {
             }
             if (nrhs.equals(NumberVal.fromLong(1))) {
                 return nlhs;
-            }
-            if (nrhs.equals(NumberVal.fromLong(0))) {
-                return NumberVal.fromDouble(Double.POSITIVE_INFINITY);
             }
             break;
         default:

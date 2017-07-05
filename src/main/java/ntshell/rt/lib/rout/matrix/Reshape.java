@@ -43,8 +43,8 @@ final class Reshape extends CoreLambda {
                     if (params.length == 2
                             && params[0] instanceof CoreNumber
                             && params[1] instanceof CoreNumber) {
-                        final int rows = (int) ((CoreNumber) params[0]).toDouble();
-                        final int cols = (int) ((CoreNumber) params[1]).toDouble();
+                        final int rows = ((CoreNumber) params[0]).toDecimal().intValue();
+                        final int cols = ((CoreNumber) params[1]).toDecimal().intValue();
                         try {
                             return ((CoreMatrix) matrix[0]).reshape(rows, cols);
                         } catch (CoreMatrix.MatrixBoundMismatchException ex) {

@@ -30,31 +30,41 @@ class PlotUtils {
 
     public static void decodeRangeX(final NtValue[] range, final ProgressiveSurfaceModel model) {
         final CoreMatrix xrange = (CoreMatrix) range[0];
-        final float min = (float) ((CoreNumber) xrange.getCell(0, 0)).toDouble();
-        final float max = (float) ((CoreNumber) xrange.getCell(0, 1)).toDouble();
+        final float min = (float) ((CoreNumber) xrange.getCell(0, 0)).toDecimal().floatValue();
+        final float max = (float) ((CoreNumber) xrange.getCell(0, 1)).toDecimal().floatValue();
         model.setXMin(min);
         model.setXMax(max);
     }
 
     public static void decodeRangeY(final NtValue[] range, final ProgressiveSurfaceModel model) {
         final CoreMatrix yrange = (CoreMatrix) range[1];
-        final float ymin = (float) ((CoreNumber) yrange.getCell(0, 0)).toDouble();
-        final float ymax = (float) ((CoreNumber) yrange.getCell(0, 1)).toDouble();
+        final float ymin = (float) ((CoreNumber) yrange.getCell(0, 0)).toDecimal().floatValue();
+        final float ymax = (float) ((CoreNumber) yrange.getCell(0, 1)).toDecimal().floatValue();
         model.setYMin(ymin);
         model.setYMax(ymax);
     }
 
     public static void decodeRangeZ(final NtValue[] range, final ProgressiveSurfaceModel model) {
         final CoreMatrix zrange = (CoreMatrix) range[2];
-        final float zmin = (float) ((CoreNumber) zrange.getCell(0, 0)).toDouble();
-        final float zmax = (float) ((CoreNumber) zrange.getCell(0, 1)).toDouble();
+        final float zmin = (float) ((CoreNumber) zrange.getCell(0, 0)).toDecimal().floatValue();
+        final float zmax = (float) ((CoreNumber) zrange.getCell(0, 1)).toDecimal().floatValue();
         model.setZMin(zmin);
         model.setZMax(zmax);
     }
 
     public static float toGraphFloat(final NtValue ret) {
         if (ret instanceof CoreNumber) {
-            return (float) ((CoreNumber) ret).toDouble();
+            final CoreNumber n = (CoreNumber) ret;
+            if (n.isNaN()) {
+                return Float.NaN;
+            }
+            if (n.isInfinite()) {
+                if (n.isNegative()) {
+                    return Float.NEGATIVE_INFINITY;
+                }
+                return Float.POSITIVE_INFINITY;
+            }
+            return n.toDecimal().floatValue();
         }
         return Float.NaN;
     }

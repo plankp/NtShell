@@ -63,7 +63,7 @@ public class SwingMode extends AbstractFrontend {
     private JFrame frame = new JFrame("NtShell");
     private DefaultStyledDocument document = new DefaultStyledDocument();
     private JTextPane area = new JTextPane(document);
-    private JScrollPane scroller = new JScrollPane(area, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    private JScrollPane scroller = new JScrollPane(area, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     private StringBuffer input = new StringBuffer();
     private boolean inputOn = false;
 

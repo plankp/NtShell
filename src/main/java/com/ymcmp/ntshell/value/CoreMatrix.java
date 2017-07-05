@@ -123,7 +123,7 @@ public class CoreMatrix extends NtValue {
             if (el instanceof CoreMatrix) {
                 buf.append(((CoreMatrix) el).toAtom().str);
             } else if (el instanceof CoreNumber) {
-                buf.append((char) ((CoreNumber) el).toDouble());
+                buf.append((char) ((CoreNumber) el).toDecimal().intValue());
             } else {
                 throw new ClassCastException("Cannot convert " + el.getClass().getSimpleName() + " to character");
             }
@@ -200,8 +200,8 @@ public class CoreMatrix extends NtValue {
         if (params.length == 2
                 && params[0] instanceof CoreNumber
                 && params[1] instanceof CoreNumber) {
-            final int row = (int) ((CoreNumber) params[0]).toDouble();
-            final int column = (int) ((CoreNumber) params[1]).toDouble();
+            final int row = (int) ((CoreNumber) params[0]).toDecimal().intValue();
+            final int column = (int) ((CoreNumber) params[1]).toDecimal().intValue();
             try {
                 return getCell(row - 1, column - 1);
             } catch (ArrayIndexOutOfBoundsException ex) {

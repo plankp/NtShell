@@ -106,11 +106,11 @@ public class Parser {
 
     public AST consumePowExpr(final List<Token> tokens) {
         // = <upost>
-        // | <upost> POW <pow>
+        // | <upost> POW <upre>
         final AST base = consumeUPostExpr(tokens);
         if (peekNextToken(tokens).type == Token.Type.POW) {
             final Token pow = tokens.remove(0);
-            return new BinaryExpr(base, consumePowExpr(tokens), pow);
+            return new BinaryExpr(base, consumeUPreExpr(tokens), pow);
         }
         return base;
     }

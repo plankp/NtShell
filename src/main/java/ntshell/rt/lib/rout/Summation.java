@@ -47,25 +47,25 @@ public final class Summation extends CoreLambda {
             return new CoreLambda(new CoreLambda.Info("$$summation", "func(start:number, end:number) -> [applyAdd]", "Performs summation from (start) to (end) with the increment of 1")) {
                 @Override
                 public NtValue applyCall(final NtValue[] params) {
-                    final double n;
-                    double m;
+                    final CoreNumber n;
+                    CoreNumber m;
                     if (params.length == 2
                             && params[0] instanceof CoreNumber
                             && params[1] instanceof CoreNumber) {
-                        m = ((CoreNumber) params[0]).toDouble();
-                        n = ((CoreNumber) params[1]).toDouble();
+                        m = ((CoreNumber) params[0]);
+                        n = ((CoreNumber) params[1]);
 
                         NtValue ret = null;
                         // Do summation here
                         do {
-                            NtValue t = TailCallTrigger.call(f[0], CoreNumber.from(m));
+                            NtValue t = TailCallTrigger.call(f[0], m);
                             if (ret == null) {
                                 ret = t;
                             } else {
                                 ret = ret.applyAdd(t);
                             }
-                            m += 1.0;
-                        } while (m <= n);
+                            m = m.addOne();
+                        } while (m.compareTo(n) <= 0);
                         // ret should never be null at this point
                         return ret;
                     }

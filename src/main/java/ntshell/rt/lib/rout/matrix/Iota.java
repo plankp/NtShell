@@ -40,7 +40,7 @@ final class Iota extends CoreLambda {
     public NtValue applyCall(final NtValue[] params) {
         if (params.length == 1 && params[0] instanceof CoreNumber) {
             return CoreMatrix.from(new CoreNumber[][]{
-                IntStream.rangeClosed(1, (int) ((CoreNumber) params[0]).toDouble())
+                IntStream.rangeClosed(1, ((CoreNumber) params[0]).toDecimal().intValue())
                 .mapToObj(CoreNumber::from)
                 .toArray(CoreNumber[]::new)});
         }

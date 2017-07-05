@@ -24,6 +24,7 @@ import com.ymcmp.ntshell.value.*;
 
 import java.io.FileReader;
 import java.io.IOException;
+import java.math.RoundingMode;
 
 import java.util.Map;
 import java.util.Arrays;
@@ -31,6 +32,9 @@ import java.util.HashMap;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.apfloat.Apfloat;
+import org.apfloat.ApfloatMath;
 
 /**
  *
@@ -48,7 +52,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                @Override
                public NtValue applyCall(NtValue[] input) {
                    if (input.length == 1 && input[0] instanceof CoreNumber) {
-                       return CoreNumber.from(Math.toRadians(((CoreNumber) input[0]).toDouble()));
+                       return CoreNumber.from(ApfloatMath.toRadians(((CoreNumber) input[0]).toApfloat()));
                    }
                    throw new DispatchException("rad", "Expected a number but got " + input.length);
                }
@@ -57,7 +61,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                @Override
                public NtValue applyCall(NtValue[] input) {
                    if (input.length == 1 && input[0] instanceof CoreNumber) {
-                       return CoreNumber.from(Math.toDegrees(((CoreNumber) input[0]).toDouble()));
+                       return CoreNumber.from(ApfloatMath.toDegrees(((CoreNumber) input[0]).toApfloat()));
                    }
                    throw new DispatchException("deg", "Expected a number but got " + input.length);
                }
@@ -66,7 +70,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                @Override
                public NtValue applyCall(NtValue[] input) {
                    if (input.length == 1 && input[0] instanceof CoreNumber) {
-                       return CoreNumber.from(Math.sin(((CoreNumber) input[0]).toDouble()));
+                       return CoreNumber.from(ApfloatMath.sin(((CoreNumber) input[0]).toApfloat()));
                    }
                    throw new DispatchException("sin", "Expected a number but got " + input.length);
                }
@@ -75,7 +79,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                @Override
                public NtValue applyCall(NtValue[] input) {
                    if (input.length == 1 && input[0] instanceof CoreNumber) {
-                       return CoreNumber.from(Math.sinh(((CoreNumber) input[0]).toDouble()));
+                       return CoreNumber.from(ApfloatMath.sinh(((CoreNumber) input[0]).toApfloat()));
                    }
                    throw new DispatchException("sinh", "Expected a number but got " + input.length);
                }
@@ -84,7 +88,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                @Override
                public NtValue applyCall(NtValue[] input) {
                    if (input.length == 1 && input[0] instanceof CoreNumber) {
-                       return CoreNumber.from(Math.cos(((CoreNumber) input[0]).toDouble()));
+                       return CoreNumber.from(ApfloatMath.cos(((CoreNumber) input[0]).toApfloat()));
                    }
                    throw new DispatchException("cos", "Expected a number but got " + input.length);
                }
@@ -93,7 +97,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                @Override
                public NtValue applyCall(NtValue[] input) {
                    if (input.length == 1 && input[0] instanceof CoreNumber) {
-                       return CoreNumber.from(Math.cosh(((CoreNumber) input[0]).toDouble()));
+                       return CoreNumber.from(ApfloatMath.cosh(((CoreNumber) input[0]).toApfloat()));
                    }
                    throw new DispatchException("cosh", "Expected a number but got " + input.length);
                }
@@ -102,7 +106,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                @Override
                public NtValue applyCall(NtValue[] input) {
                    if (input.length == 1 && input[0] instanceof CoreNumber) {
-                       return CoreNumber.from(Math.tan(((CoreNumber) input[0]).toDouble()));
+                       return CoreNumber.from(ApfloatMath.tan(((CoreNumber) input[0]).toApfloat()));
                    }
                    throw new DispatchException("tan", "Expected a number but got " + input.length);
                }
@@ -111,7 +115,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                @Override
                public NtValue applyCall(NtValue[] input) {
                    if (input.length == 1 && input[0] instanceof CoreNumber) {
-                       return CoreNumber.from(Math.tanh(((CoreNumber) input[0]).toDouble()));
+                       return CoreNumber.from(ApfloatMath.tanh(((CoreNumber) input[0]).toApfloat()));
                    }
                    throw new DispatchException("tanh", "Expected a number but got " + input.length);
                }
@@ -120,7 +124,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                @Override
                public NtValue applyCall(NtValue[] input) {
                    if (input.length == 1 && input[0] instanceof CoreNumber) {
-                       return CoreNumber.from(Math.asin(((CoreNumber) input[0]).toDouble()));
+                       return CoreNumber.from(ApfloatMath.asin(((CoreNumber) input[0]).toApfloat()));
                    }
                    throw new DispatchException("asin", "Expected a number but got " + input.length);
                }
@@ -129,7 +133,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                @Override
                public NtValue applyCall(NtValue[] input) {
                    if (input.length == 1 && input[0] instanceof CoreNumber) {
-                       return CoreNumber.from(Math.acos(((CoreNumber) input[0]).toDouble()));
+                       return CoreNumber.from(ApfloatMath.acos(((CoreNumber) input[0]).toApfloat()));
                    }
                    throw new DispatchException("acos", "Expected a number but got " + input.length);
                }
@@ -138,13 +142,13 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                @Override
                public NtValue applyCall(NtValue[] input) {
                    if (input.length == 1 && input[0] instanceof CoreNumber) {
-                       return CoreNumber.from(Math.atan(((CoreNumber) input[0]).toDouble()));
+                       return CoreNumber.from(ApfloatMath.atan(((CoreNumber) input[0]).toApfloat()));
                    }
                    if (input.length == 2
                            && input[0] instanceof CoreNumber
                            && input[1] instanceof CoreNumber) {
-                       return CoreNumber.from(Math.atan2(((CoreNumber) input[0]).toDouble(),
-                                                         ((CoreNumber) input[1]).toDouble()));
+                       return CoreNumber.from(ApfloatMath.atan2(((CoreNumber) input[0]).toApfloat(),
+                                                                ((CoreNumber) input[1]).toApfloat()));
                    }
                    throw new DispatchException("atan", "Expected one or two numbers but got " + input.length);
                }
@@ -153,7 +157,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                @Override
                public NtValue applyCall(NtValue[] input) {
                    if (input.length == 1 && input[0] instanceof CoreNumber) {
-                       return CoreNumber.from(Math.sqrt(((CoreNumber) input[0]).toDouble()));
+                       return CoreNumber.from(ApfloatMath.sqrt(((CoreNumber) input[0]).toApfloat()));
                    }
                    throw new DispatchException("sqrt", "Expected a number but got " + input.length);
                }
@@ -162,7 +166,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                @Override
                public NtValue applyCall(NtValue[] input) {
                    if (input.length == 1 && input[0] instanceof CoreNumber) {
-                       return CoreNumber.from(Math.cbrt(((CoreNumber) input[0]).toDouble()));
+                       return CoreNumber.from(ApfloatMath.cbrt(((CoreNumber) input[0]).toApfloat()));
                    }
                    throw new DispatchException("cbrt", "Expected a number but got " + input.length);
                }
@@ -171,7 +175,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                @Override
                public NtValue applyCall(NtValue[] input) {
                    if (input.length == 1 && input[0] instanceof CoreNumber) {
-                       return CoreNumber.from(Math.pow(((CoreNumber) input[0]).toDouble(), 2));
+                       return CoreNumber.from(ApfloatMath.pow(((CoreNumber) input[0]).toApfloat(), 2));
                    }
                    throw new DispatchException("square", "Expected a number but got " + input.length);
                }
@@ -180,7 +184,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                @Override
                public NtValue applyCall(NtValue[] input) {
                    if (input.length == 1 && input[0] instanceof CoreNumber) {
-                       return CoreNumber.from(Math.pow(((CoreNumber) input[0]).toDouble(), 3));
+                       return CoreNumber.from(ApfloatMath.pow(((CoreNumber) input[0]).toApfloat(), 3));
                    }
                    throw new DispatchException("cube", "Expected a number but got " + input.length);
                }
@@ -189,7 +193,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                @Override
                public NtValue applyCall(NtValue[] input) {
                    if (input.length == 1 && input[0] instanceof CoreNumber) {
-                       return CoreNumber.from(Math.abs(((CoreNumber) input[0]).toDouble()));
+                       return CoreNumber.from(ApfloatMath.abs(((CoreNumber) input[0]).toApfloat()));
                    }
                    throw new DispatchException("abs", "Expected a number but got " + input.length);
                }
@@ -198,7 +202,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                @Override
                public NtValue applyCall(NtValue[] input) {
                    if (input.length == 1 && input[0] instanceof CoreNumber) {
-                       return CoreNumber.from(Math.ceil(((CoreNumber) input[0]).toDouble()));
+                       return CoreNumber.from(ApfloatMath.ceil(((CoreNumber) input[0]).toApfloat()));
                    }
                    throw new DispatchException("ceil", "Expected a number but got " + input.length);
                }
@@ -207,7 +211,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                @Override
                public NtValue applyCall(NtValue[] input) {
                    if (input.length == 1 && input[0] instanceof CoreNumber) {
-                       return CoreNumber.from(Math.floor(((CoreNumber) input[0]).toDouble()));
+                       return CoreNumber.from(ApfloatMath.floor(((CoreNumber) input[0]).toApfloat()));
                    }
                    throw new DispatchException("floor", "Expected a number but got " + input.length);
                }
@@ -216,7 +220,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                @Override
                public NtValue applyCall(NtValue[] input) {
                    if (input.length == 1 && input[0] instanceof CoreNumber) {
-                       return CoreNumber.from(Math.round(((CoreNumber) input[0]).toDouble()));
+                       return CoreNumber.from(ApfloatMath.round(((CoreNumber) input[0]).toApfloat(), 0, RoundingMode.HALF_UP));
                    }
                    throw new DispatchException("round", "Expected a number but got " + input.length);
                }
@@ -225,7 +229,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                @Override
                public NtValue applyCall(NtValue[] input) {
                    if (input.length == 1 && input[0] instanceof CoreNumber) {
-                       return CoreNumber.from(Math.log(((CoreNumber) input[0]).toDouble()));
+                       return CoreNumber.from(ApfloatMath.log(((CoreNumber) input[0]).toApfloat()));
                    }
                    throw new DispatchException("ln", "Expected a number but got " + input.length);
                }
@@ -234,22 +238,22 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                @Override
                public NtValue applyCall(NtValue[] input) {
                    if (input.length == 1 && input[0] instanceof CoreNumber) {
-                       return CoreNumber.from(Math.log10(((CoreNumber) input[0]).toDouble()));
+                       return CoreNumber.from(ApfloatMath.log(((CoreNumber) input[0]).toApfloat(), new Apfloat(10L)));
                    }
                    throw new DispatchException("log", "Expected a number but got " + input.length);
                }
            });
         PREDEF.put("log_base", new CoreLambda(new CoreLambda.Info("log_base", "func(number) -> func", "Creates a logarithm with the specified base")) {
                @Override
-               public NtValue applyCall(NtValue... params) {
+               public NtValue applyCall(final NtValue[] params) {
                    if (params.length == 1 && params[0] instanceof CoreNumber) {
                        // log_base (10)(100) => 2
-                       final double base = ((CoreNumber) params[0]).toDouble();
+                       final Apfloat base = ((CoreNumber) params[0]).toApfloat();
                        return new CoreLambda(new CoreLambda.Info("$$log_base", "func(number) -> number", "Calculates the logarithm of a value with a predefined base")) {
                            @Override
-                           public NtValue applyCall(NtValue... params) {
+                           public NtValue applyCall(final NtValue[] params) {
                                if (params.length == 1 && params[0] instanceof CoreNumber) {
-                                   return CoreNumber.from(Math.log(((CoreNumber) params[0]).toDouble()) / Math.log(base));
+                                   return CoreNumber.from(ApfloatMath.log(((CoreNumber) params[0]).toApfloat(), base));
                                }
                                throw new DispatchException("Expected one number but got " + params.length);
                            }
@@ -290,10 +294,8 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                                final NtValue llim = genLimitBody(f[0], true).applyCall(x);
                                System.out.println("APP-RIGHT: " + Arrays.toString(xRight));
                                final NtValue rlim = genLimitBody(f[0], false).applyCall(xRight);
-                               if (llim instanceof CoreNumber && rlim instanceof CoreNumber) {
-                                   if (llim.equals(rlim) && ((CoreNumber) llim).isFinite()) {
-                                       return llim;
-                                   }
+                               if (llim instanceof CoreNumber && ((CoreNumber) llim).isFinite() && llim.equals(rlim)) {
+                                   return llim;
                                }
                                return CoreNumber.from(Double.NaN);
                            }
@@ -428,20 +430,20 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
      * @param d The double being rounded
      * @return The rounded value (or the value if not finite)
      */
-    private static double limitRound(final double d) {
-        if (!Double.isFinite(d)) {
+    private static CoreNumber limitRound(final CoreNumber d) {
+        if (!d.isFinite()) {
             return d;
         }
 
-        final String s = Double.toString(Math.abs(d));
-        final boolean positive = d >= 0;
+        final String s = d.abs().toString();
+        final boolean positive = d.compareTo(CoreNumber.from(0)) >= 0;
 
         final Matcher roundUpMatcher = LIM_ROUND_UP.matcher(s);
         if (roundUpMatcher.find()) {
             final int roundUpIdx = roundUpMatcher.start();
             if (roundUpIdx == 0) {
                 // 99999 => 100000
-                return Double.parseDouble('1' + s.replaceAll("\\d", "0")) * (positive ? 1 : -1);
+                return CoreNumber.from((positive ? '1' : "-1") + s.replaceAll("\\d", "0"));
             }
             if (roundUpIdx >= 0 && roundUpIdx < s.length()) {
                 //  199999 =>  200000
@@ -454,7 +456,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                 } else {
                     ++head[head.length - 1];
                 }
-                return Double.parseDouble(String.valueOf(head) + tail) * (positive ? 1 : -1);
+                return CoreNumber.from((positive ? '+' : '-') + String.valueOf(head) + tail);
             }
         }
 
@@ -463,14 +465,14 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
             final int roundDownIdx = roundDownMatcher.start();
             if (roundDownIdx == 0) {
                 // 0.00001 => 0
-                return Double.parseDouble(s.replaceAll("\\d", "0")) * (positive ? 1 : -1);
+                return CoreNumber.from((positive ? '+' : '-') + s.replaceAll("\\d", "0"));
             }
             if (roundDownIdx >= 0 && roundDownIdx < s.length()) {
                 //  100001 =>  100000
                 // -100001 => -100000
                 final String head = s.substring(0, roundDownIdx);
                 final String tail = s.substring(roundDownIdx).replaceAll("\\d", "0");
-                return Double.parseDouble(head + tail) * (positive ? 1 : -1);
+                return CoreNumber.from((positive ? '+' : '-') + head + tail);
             }
         }
         // Cannot be rounded: value was already in most rounded form
@@ -635,37 +637,37 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
             public NtValue applyCall(NtValue[] y) {
                 final NtValue ret = TailCallTrigger.call(base, y);
                 if (ret instanceof CoreNumber) {
-                    final double tmp = ((CoreNumber) ret).toDouble();
-                    if (Double.isFinite(tmp)) {
+                    final CoreNumber tmp = (CoreNumber) ret;
+                    if (tmp.isFinite()) {
                         return ret;
                     }
 
                     final NtValue ky = y[0];
-                    double gap = 0.01;
-                    double prev = 0;
+                    NtValue gap = CoreNumber.from(1, 100);
+                    CoreNumber prev = CoreNumber.from(0);
 
-                    double delta = Double.MAX_VALUE;
+                    CoreNumber delta = CoreNumber.from(Double.POSITIVE_INFINITY);
                     for (int i = 0; i < 5; ++i) {
-                        gap *= 0.1;
+                        gap = gap.applyMul(CoreNumber.from(1, 10));
                         if (leftSide) {
-                            y[0] = ky.applySub(CoreNumber.from(gap));
+                            y[0] = ky.applySub(gap);
                         } else {
-                            y[0] = ky.applyAdd(CoreNumber.from(gap));
+                            y[0] = ky.applyAdd(gap);
                         }
 
-                        final double current = ((CoreNumber) TailCallTrigger.call(base, y)).toDouble();
-                        final double newDelta = Math.abs(current - prev);
+                        final CoreNumber current = (CoreNumber) TailCallTrigger.call(base, y);
+                        final CoreNumber newDelta = ((CoreNumber) current.applySub(prev)).abs();
 
-                        if (newDelta <= delta) {
+                        if (newDelta.compareTo(delta) <= 0) {
                             delta = newDelta;
                             prev = current;
-                        } else if (current < prev) {
+                        } else if (current.compareTo(prev) < 0) {
                             return CoreNumber.from(Double.NEGATIVE_INFINITY);
-                        } else if (current > prev) {
+                        } else if (current.compareTo(prev) > 0) {
                             return CoreNumber.from(Double.POSITIVE_INFINITY);
                         }
                     }
-                    return CoreNumber.from(limitRound(prev));
+                    return limitRound(prev);
                 }
                 return CoreNumber.from(Double.NaN);
             }
