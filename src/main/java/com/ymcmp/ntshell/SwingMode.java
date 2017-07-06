@@ -78,6 +78,29 @@ public class SwingMode extends AbstractFrontend {
 
         KeyEventDispatcher ked = e -> {
             if (inputOn && e.getID() == KeyEvent.KEY_PRESSED) {
+                if (e.isControlDown()) {
+                    switch (e.getKeyCode()) {
+                    case KeyEvent.VK_A:
+                        area.setSelectionStart(0);
+                        area.setSelectionEnd(document.getLength());
+                        break;
+                    case KeyEvent.VK_C:
+                        area.copy();
+                        break;
+                    case KeyEvent.VK_L:
+                        try {
+                            // remove all but the last line
+                            final String content = document.getText(0, document.getLength());
+                            final int lastLineBreak = content.lastIndexOf('\n');
+                            document.remove(0, lastLineBreak + 1);
+                        } catch (BadLocationException ex) {
+                        }
+                        break;
+                    default:
+                    }
+                    return true;
+                }
+
                 if (e.getKeyCode() == KeyEvent.VK_BACK_SPACE) {
                     if (input.length() > 0) {
                         input.deleteCharAt(input.length() - 1);
