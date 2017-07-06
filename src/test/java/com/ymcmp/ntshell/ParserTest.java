@@ -33,14 +33,14 @@ public class ParserTest {
     @Test
     public void parseDoEndBlock() {
         try {
-            final String expr = "do a = 1; b = 2; a <- a + b end";
+            final String expr = "do a = 1; b = 2; do a <- a + b end end";
             final AST tree = parser.consumeExpr(Lexer.lexFromString(expr));
             final AST expected = new DoEndExpr(new AssignExpr(makeIdent("a"), NumberVal.fromLong(1), true),
                                                new AssignExpr(makeIdent("b"), NumberVal.fromLong(2), true),
-                                               new AssignExpr(makeIdent("a"),
-                                                              new BinaryExpr(new VariableVal(makeIdent("a")),
-                                                                             new VariableVal(makeIdent("b")),
-                                                                             new Token(Token.Type.ADD, "+")), false));
+                                               new DoEndExpr(new AssignExpr(makeIdent("a"),
+                                                                            new BinaryExpr(new VariableVal(makeIdent("a")),
+                                                                                           new VariableVal(makeIdent("b")),
+                                                                                           new Token(Token.Type.ADD, "+")), false)));
             assertEquals(expected.toString(), tree.toString());
         } catch (LexerException ex) {
             fail("No exception should be thrown");

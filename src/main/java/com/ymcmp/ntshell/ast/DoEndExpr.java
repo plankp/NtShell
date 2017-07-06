@@ -66,6 +66,10 @@ public final class DoEndExpr implements AST {
 
     @Override
     public AST levelOperators() {
+        // (do-end a) => a
+        if (exprs.length == 1) {
+            return exprs[0].levelOperators();
+        }
         return new DoEndExpr(Arrays.stream(exprs)
                 .map(AST::levelOperators).toArray(AST[]::new));
     }
