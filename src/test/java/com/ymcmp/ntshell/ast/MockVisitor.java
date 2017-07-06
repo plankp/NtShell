@@ -93,4 +93,9 @@ public final class MockVisitor extends Visitor<Object> {
     public Object visitAssignExpr(AssignExpr assign) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
+
+    @Override
+    public Object visitDoEndExpr(DoEndExpr assign) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
 }

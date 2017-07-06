@@ -182,7 +182,7 @@ public class LexerTest {
 
     @Test
     public void testLexingAllPossibleTokens() {
-        final String source = "# Comment\n\t\r{[(<;,.>)]}:+-*/%=-><=>=@atom 01 0b0100 0c712 0d0 0xAFcd 0.1923 123abc123 and or if mod==/=^";
+        final String source = "# Comment\n\t\r{[(<;,.>)]}:+-*/%=-><=>=@atom 01 0b0100 0c712 0d0 0xAFcd 0.1923 123abc123 and or if mod==/=^ do end";
         final Object[] expected = {
             // # Comment\n\t\r => Nothing
             // {[(<
@@ -210,7 +210,9 @@ public class LexerTest {
             // and or if mod
             new Token(Token.Type.K_AND, "and"), new Token(Token.Type.K_OR, "or"), new Token(Token.Type.K_IF, "if"), new Token(Token.Type.MOD, "mod"),
             // ==/=^
-            new Token(Token.Type.EQL, "=="), new Token(Token.Type.NEQ, "/="), new Token(Token.Type.POW, "^")
+            new Token(Token.Type.EQL, "=="), new Token(Token.Type.NEQ, "/="), new Token(Token.Type.POW, "^"),
+            // do end
+            new Token(Token.Type.K_DO, "do"), new Token(Token.Type.K_END, "end")
         };
         try {
             final Object[] toks1 = Lexer.lexFromString(source).toArray();

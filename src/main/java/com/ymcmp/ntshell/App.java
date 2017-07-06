@@ -107,12 +107,16 @@ public class App {
         session = new InteractiveModeVisitor(environment);
     }
 
-    public static void loadStartupFile(final FileReader reader, final Visitor<?> session) {
+    public static void loadStartupFile(final FileReader reader, final InteractiveModeVisitor session) {
         try {
             final List<Token> toks = Lexer.lexFromReader(reader);
             while (!toks.isEmpty()) {
                 final AST tree = new Parser().consumeExpr(toks);
-                session.visit(tree);
+                if (tree == null) {
+                    break;
+                }
+
+                session.eval(tree);
 
                 while (!toks.isEmpty() && toks.get(0).type == Token.Type.SEMI) {
                     toks.remove(0);
@@ -187,6 +191,10 @@ public class App {
 
                 while (!toks.isEmpty()) {
                     AST ast = parser.consumeExpr(toks);
+                    if (ast == null) {
+                        break;
+                    }
+
                     if (showAST) {
                         environment.writeLine("showast:  " + ast);
                     }
@@ -194,7 +202,7 @@ public class App {
                     ast = procRuleRewrite(ast.unfoldConstant());
 
                     if (evaluate) {
-                        environment.writeLine(session.visit(ast));
+                        environment.writeLine(session.eval(ast));
                     }
                     while (!toks.isEmpty() && toks.get(0).type == Token.Type.SEMI) {
                         toks.remove(0);

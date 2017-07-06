@@ -293,10 +293,27 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
     }
 
     @Override
-    public NtValue visitAssignExpr(AssignExpr assign) {
+    public NtValue visitAssignExpr(final AssignExpr assign) {
         final NtValue val = eval(assign.value);
         vars.put(assign.to.text, val);
         return val;
+    }
+
+    @Override
+    public NtValue visitDoEndExpr(final DoEndExpr assign) {
+        if (assign.exprs.length == 0) {
+            // throws exception
+            throw new UndefinedHandleException("Do-end expression does not contain body");
+        }
+        // do <expr 1> ... <expr n> end => <expr n> is tail-called
+        for (int i = 0; i < assign.exprs.length - 1; ++i) {
+            eval(assign.exprs[i]);
+        }
+        final boolean prevConf = this.tailCall;
+        this.tailCall = true;
+        final NtValue ret = visit(assign.exprs[assign.exprs.length - 1]);
+        this.tailCall = prevConf;
+        return ret;
     }
 
     private class UserDefLambda extends CoreLambda {

@@ -57,4 +57,6 @@ public abstract class Visitor<T> {
     public abstract T visitCommutativeExpr(CommutativeExpr commutative);
 
     public abstract T visitAssignExpr(AssignExpr assign);
+
+    public abstract T visitDoEndExpr(DoEndExpr assign);
 }

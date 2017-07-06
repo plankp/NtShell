@@ -43,7 +43,7 @@ public class Token implements Serializable {
         ADD, SUB, MUL, DIV, MOD, POW,
         PERCENT,
         SCOPE, SEMI, COMMA, YIELD, COMPOSE,
-        K_IF, K_AND, K_OR,
+        K_IF, K_AND, K_OR, K_DO, K_END,
         IDENT, NUMBER, ATOM,
     }
 

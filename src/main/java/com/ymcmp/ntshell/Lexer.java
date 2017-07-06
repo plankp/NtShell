@@ -38,6 +38,8 @@ public class Lexer {
         KWORDS.put("if", Token.Type.K_IF);
         KWORDS.put("and", Token.Type.K_AND);
         KWORDS.put("or", Token.Type.K_OR);
+        KWORDS.put("do", Token.Type.K_DO);
+        KWORDS.put("end", Token.Type.K_END);
     }
 
     public static List<Token> lexFromReader(final Reader reader) throws LexerException {

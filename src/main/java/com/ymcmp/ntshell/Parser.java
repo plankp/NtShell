@@ -233,6 +233,8 @@ public class Parser {
             return consumePiecewiseFunc(tokens);
         case LBLK:
             return consumeMatrix(tokens);
+        case K_DO:
+            return consumeDoEnd(tokens);
         case LBRACE: {
             // = LBRACE <expr> RBRACE                                        (0)
             // | LBRACE RBRACE YIELD <expr>                                  (1)
@@ -293,6 +295,27 @@ public class Parser {
         default:
             return null;
         }
+    }
+
+    private AST consumeDoEnd(final List<Token> tokens) throws ParserException {
+        // = K_DO K_END
+        // | K_DO <expr> SEMI? K_END
+        // | K_DO <expr> (SEMI <expr>)+ SEMI? K_END
+        tokens.remove(0);
+        final List<AST> exprs = new ArrayList<>();
+        while (peekNextToken(tokens).type != Token.Type.K_END) {
+            exprs.add(consumeExpr(tokens));
+            switch (peekNextToken(tokens).type) {
+            case SEMI:
+                tokens.remove(0);
+                break;
+            case K_END:
+                continue; // let while loop handle this case
+            default:
+                throw new ParserException("Expressions in do-end are separated by semicolons");
+            }
+        }
+        return new DoEndExpr(exprs.toArray(new AST[exprs.size()]));
     }
 
     private AST consumeMatrix(final List<Token> tokens) throws ParserException {

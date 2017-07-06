@@ -31,6 +31,22 @@ public class ParserTest {
     final Parser parser = new Parser();
 
     @Test
+    public void parseDoEndBlock() {
+        try {
+            final String expr = "do a = 1; b = 2; a + b end";
+            final AST tree = parser.consumeExpr(Lexer.lexFromString(expr));
+            final AST expected = new DoEndExpr(new AssignExpr(makeIdent("a"), NumberVal.fromLong(1)),
+                                               new AssignExpr(makeIdent("b"), NumberVal.fromLong(2)),
+                                               new BinaryExpr(new VariableVal(makeIdent("a")),
+                                                              new VariableVal(makeIdent("b")),
+                                                              new Token(Token.Type.ADD, "+")));
+            assertEquals(expected.toString(), tree.toString());
+        } catch (LexerException ex) {
+            fail("No exception should be thrown");
+        }
+    }
+
+    @Test
     public void parseMulLikeExpr() {
         try {
             final String expr = "2 / 3k(@a)";
