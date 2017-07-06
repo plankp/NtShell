@@ -24,135 +24,16 @@ import com.ymcmp.ntshell.value.*;
 
 import java.io.FileReader;
 import java.io.IOException;
-import java.math.RoundingMode;
 
 import java.util.Map;
 import java.util.Arrays;
 import java.util.HashMap;
-
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import org.apfloat.Apfloat;
-import org.apfloat.ApfloatMath;
 
 /**
  *
  * @author YTENG
  */
 public class InteractiveModeVisitor extends Visitor<NtValue> {
-
-    private static final Pattern LIM_ROUND_UP = Pattern.compile("9\\.9999|99\\.999|999\\.99|9999\\.9|99999");
-    private static final Pattern LIM_ROUND_DOWN = Pattern.compile("0\\.0000|00\\.000|000\\.00|0000\\.0|00000");
-    private static final Map<String, NtValue> PREDEF = new HashMap<>();
-
-    static {
-        // Math Functions
-        PREDEF.put("ceil", new CoreLambda(new CoreLambda.Info("ceil", "number -> number", "Calculates the ceiling of a value")) {
-               @Override
-               public NtValue applyCall(NtValue[] input) {
-                   if (input.length == 1 && input[0] instanceof CoreNumber) {
-                       return CoreNumber.from(ApfloatMath.ceil(((CoreNumber) input[0]).toApfloat()));
-                   }
-                   throw new DispatchException("ceil", "Expected a number but got " + input.length);
-               }
-           });
-        PREDEF.put("floor", new CoreLambda(new CoreLambda.Info("floor", "number -> number", "Calculates the floor of a value")) {
-               @Override
-               public NtValue applyCall(NtValue[] input) {
-                   if (input.length == 1 && input[0] instanceof CoreNumber) {
-                       return CoreNumber.from(ApfloatMath.floor(((CoreNumber) input[0]).toApfloat()));
-                   }
-                   throw new DispatchException("floor", "Expected a number but got " + input.length);
-               }
-           });
-        PREDEF.put("round", new CoreLambda(new CoreLambda.Info("round", "number -> number", "Rounds value to the nearest integer")) {
-               @Override
-               public NtValue applyCall(NtValue[] input) {
-                   if (input.length == 1 && input[0] instanceof CoreNumber) {
-                       return CoreNumber.from(ApfloatMath.round(((CoreNumber) input[0]).toApfloat(), 0, RoundingMode.HALF_UP));
-                   }
-                   throw new DispatchException("round", "Expected a number but got " + input.length);
-               }
-           });
-        PREDEF.put("ln", new CoreLambda(new CoreLambda.Info("ln", "number -> number", "Calculates the natural logarithm of a value")) {
-               @Override
-               public NtValue applyCall(NtValue[] input) {
-                   if (input.length == 1 && input[0] instanceof CoreNumber) {
-                       return CoreNumber.from(ApfloatMath.log(((CoreNumber) input[0]).toApfloat()));
-                   }
-                   throw new DispatchException("ln", "Expected a number but got " + input.length);
-               }
-           });
-        PREDEF.put("log", new CoreLambda(new CoreLambda.Info("log", "number -> number", "Calculates the base 10 logarithm of a value")) {
-               @Override
-               public NtValue applyCall(NtValue[] input) {
-                   if (input.length == 1 && input[0] instanceof CoreNumber) {
-                       return CoreNumber.from(ApfloatMath.log(((CoreNumber) input[0]).toApfloat(), new Apfloat(10L)));
-                   }
-                   throw new DispatchException("log", "Expected a number but got " + input.length);
-               }
-           });
-        PREDEF.put("log_base", new CoreLambda(new CoreLambda.Info("log_base", "func(number) -> func", "Creates a logarithm with the specified base")) {
-               @Override
-               public NtValue applyCall(final NtValue[] params) {
-                   if (params.length == 1 && params[0] instanceof CoreNumber) {
-                       // log_base (10)(100) => 2
-                       final Apfloat base = ((CoreNumber) params[0]).toApfloat();
-                       return new CoreLambda(new CoreLambda.Info("$$log_base", "func(number) -> number", "Calculates the logarithm of a value with a predefined base")) {
-                           @Override
-                           public NtValue applyCall(final NtValue[] params) {
-                               if (params.length == 1 && params[0] instanceof CoreNumber) {
-                                   return CoreNumber.from(ApfloatMath.log(((CoreNumber) params[0]).toApfloat(), base));
-                               }
-                               throw new DispatchException("Expected one number but got " + params.length);
-                           }
-                       };
-                   }
-                   throw new DispatchException("log_base", "Expected one number but got " + params.length);
-               }
-           });
-        PREDEF.put("lim_left", new CoreLambda(new CoreLambda.Info("lim_left", "func(func) -> number", "Calculates the left-handed limit of a function")) {
-               @Override
-               public NtValue applyCall(NtValue... f) {
-                   if (f.length == 1) {
-                       // lim_left (x -> 1/x)(0) => -Inf
-                       return genLimitBody(f[0], true);
-                   }
-                   throw new DispatchException("lim_left", "Expected one parameter but got " + f.length);
-               }
-           });
-        PREDEF.put("lim_right", new CoreLambda(new CoreLambda.Info("lim_right", "func(func) -> number", "Calculates the right-handed limit of a function")) {
-               @Override
-               public NtValue applyCall(NtValue... f) {
-                   if (f.length == 1) {
-                       // lim_right (x -> 1/x)(0) => Inf
-                       return genLimitBody(f[0], false);
-                   }
-                   throw new DispatchException("lim_right", "Expected one parameter but got " + f.length);
-               }
-           });
-        PREDEF.put("lim", new CoreLambda(new CoreLambda.Info("lim", "func(func) -> number", "Calculates the two-sided limit of a function")) {
-               @Override
-               public NtValue applyCall(NtValue[] f) {
-                   if (f.length == 1) {
-                       return new CoreLambda() {
-                           @Override
-                           public NtValue applyCall(NtValue[] x) {
-                               final NtValue[] xRight = Arrays.copyOf(x, x.length);
-                               final NtValue llim = genLimitBody(f[0], true).applyCall(x);
-                               final NtValue rlim = genLimitBody(f[0], false).applyCall(xRight);
-                               if (llim instanceof CoreNumber && ((CoreNumber) llim).isFinite() && llim.equals(rlim)) {
-                                   return llim;
-                               }
-                               return CoreNumber.from(Double.NaN);
-                           }
-                       };
-                   }
-                   throw new DispatchException("lim", "Expected one parameter but got " + f.length);
-               }
-           });
-    }
 
     private final CoreLambda FUNC_LOAD_FILE = new CoreLambda(new CoreLambda.Info("Load file", "atom -> number", "Tries to load a NtShell script into the current context. Returns anything but zero on success")) {
         @Override
@@ -218,13 +99,10 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
         if (val == null) {
             val = env.findDefinition(name);
             if (val == null) {
-                val = PREDEF.get(name);
-                if (val == null) {
-                    if (name.equals("load_file")) {
-                        return FUNC_LOAD_FILE;
-                    }
-                    throw new UndefinedHandleException("Variable " + name + " has not been defined");
+                if (name.equals("load_file")) {
+                    return FUNC_LOAD_FILE;
                 }
+                throw new UndefinedHandleException("Variable " + name + " has not been defined");
             }
         }
         return val;
@@ -268,63 +146,6 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
             }
         }
         throw new UndefinedHandleException("Piecewise function did not handle all possible values!");
-    }
-
-    /**
-     * Attempts to round a finite double when digits form a pattern of 99999 or
-     * 00000. The input is directly returned otherwise. This does not always
-     * round to the nearest non-floating point number.
-     *
-     * @param d The double being rounded
-     * @return The rounded value (or the value if not finite)
-     */
-    private static CoreNumber limitRound(final CoreNumber d) {
-        if (!d.isFinite()) {
-            return d;
-        }
-
-        final String s = d.abs().toString();
-        final boolean positive = d.compareTo(CoreNumber.from(0)) >= 0;
-
-        final Matcher roundUpMatcher = LIM_ROUND_UP.matcher(s);
-        if (roundUpMatcher.find()) {
-            final int roundUpIdx = roundUpMatcher.start();
-            if (roundUpIdx == 0) {
-                // 99999 => 100000
-                return CoreNumber.from((positive ? '1' : "-1") + s.replaceAll("\\d", "0"));
-            }
-            if (roundUpIdx >= 0 && roundUpIdx < s.length()) {
-                //  199999 =>  200000
-                // -199999 => -200000
-                final char[] head = s.substring(0, roundUpIdx).toCharArray();
-                final String tail = s.substring(roundUpIdx).replaceAll("\\d", "0");
-                // Round
-                if (head[head.length - 1] == '.') {
-                    ++head[head.length - 2];
-                } else {
-                    ++head[head.length - 1];
-                }
-                return CoreNumber.from((positive ? '+' : '-') + String.valueOf(head) + tail);
-            }
-        }
-
-        final Matcher roundDownMatcher = LIM_ROUND_DOWN.matcher(s);
-        if (roundDownMatcher.find()) {
-            final int roundDownIdx = roundDownMatcher.start();
-            if (roundDownIdx == 0) {
-                // 0.00001 => 0
-                return CoreNumber.from((positive ? '+' : '-') + s.replaceAll("\\d", "0"));
-            }
-            if (roundDownIdx >= 0 && roundDownIdx < s.length()) {
-                //  100001 =>  100000
-                // -100001 => -100000
-                final String head = s.substring(0, roundDownIdx);
-                final String tail = s.substring(roundDownIdx).replaceAll("\\d", "0");
-                return CoreNumber.from((positive ? '+' : '-') + head + tail);
-            }
-        }
-        // Cannot be rounded: value was already in most rounded form
-        return d;
     }
 
     @Override
@@ -476,50 +297,6 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
         final NtValue val = eval(assign.value);
         vars.put(assign.to.text, val);
         return val;
-    }
-
-    private static CoreLambda genLimitBody(final NtValue base,
-                                           final boolean leftSide) {
-        return new CoreLambda() {
-            @Override
-            public NtValue applyCall(NtValue[] y) {
-                final NtValue ret = TailCallTrigger.call(base, y);
-                if (ret instanceof CoreNumber) {
-                    final CoreNumber tmp = (CoreNumber) ret;
-                    if (tmp.isFinite()) {
-                        return ret;
-                    }
-
-                    final NtValue ky = y[0];
-                    NtValue gap = CoreNumber.from(1, 100);
-                    CoreNumber prev = CoreNumber.from(0);
-
-                    CoreNumber delta = CoreNumber.from(Double.POSITIVE_INFINITY);
-                    for (int i = 0; i < 5; ++i) {
-                        gap = gap.applyMul(CoreNumber.from(1, 10));
-                        if (leftSide) {
-                            y[0] = ky.applySub(gap);
-                        } else {
-                            y[0] = ky.applyAdd(gap);
-                        }
-
-                        final CoreNumber current = (CoreNumber) TailCallTrigger.call(base, y);
-                        final CoreNumber newDelta = ((CoreNumber) current.applySub(prev)).abs();
-
-                        if (newDelta.compareTo(delta) <= 0) {
-                            delta = newDelta;
-                            prev = current;
-                        } else if (current.compareTo(prev) < 0) {
-                            return CoreNumber.from(Double.NEGATIVE_INFINITY);
-                        } else if (current.compareTo(prev) > 0) {
-                            return CoreNumber.from(Double.POSITIVE_INFINITY);
-                        }
-                    }
-                    return limitRound(prev);
-                }
-                return CoreNumber.from(Double.NaN);
-            }
-        };
     }
 
     private class UserDefLambda extends CoreLambda {

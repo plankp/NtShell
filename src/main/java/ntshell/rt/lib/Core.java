@@ -84,6 +84,24 @@ public final class Core implements NtLibrary {
             return Cube.getInstance();
         case "abs":
             return Abs.getInstance();
+        case "ceil":
+            return Ceil.getInstance();
+        case "floor":
+            return Floor.getInstance();
+        case "round":
+            return Round.getInstance();
+        case "ln":
+            return NaturalLog.getInstance();
+        case "log":
+            return Log10.getInstance();
+        case "log_base":
+            return LogBase.getInstance();
+        case "lim_left":
+            return Limits.getLeftSided();
+        case "lim_right":
+            return Limits.getRightSided();
+        case "lim":
+            return Limits.getBothSided();
         default:
         }
         return null;
