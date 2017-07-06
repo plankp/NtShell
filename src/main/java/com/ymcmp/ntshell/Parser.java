@@ -320,6 +320,7 @@ public class Parser {
                 throw new ParserException("Expressions in do-end are separated by semicolons");
             }
         }
+        tokens.remove(0);
         return new DoEndExpr(exprs.toArray(new AST[exprs.size()]));
     }
 
