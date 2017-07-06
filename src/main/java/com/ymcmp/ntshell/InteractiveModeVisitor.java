@@ -294,6 +294,13 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
 
     @Override
     public NtValue visitAssignExpr(final AssignExpr assign) {
+        if (!assign.allocateNew) {
+            // check if variable exists. crash if not
+            if (!vars.containsKey(assign.to.text)) {
+                throw new UndefinedHandleException("Attempt to mutate value of non-existent variable " + assign.to.text);
+            }
+        }
+
         final NtValue val = eval(assign.value);
         vars.put(assign.to.text, val);
         return val;
@@ -337,6 +344,11 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                 @Override
                 public NtValue visitAssignExpr(final AssignExpr assign) {
                     final NtValue val = super.visitAssignExpr(assign);
+                    if (!assign.allocateNew && !lambdaLocals.containsKey(assign.to.text)) {
+                        // only mutate the outer scope, do *not* save it locally
+                        vars.put(assign.to.text, val);
+                        return val;
+                    }
                     // save it as a local variable
                     lambdaLocals.put(assign.to.text, val);
                     return val;

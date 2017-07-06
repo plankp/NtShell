@@ -39,7 +39,7 @@ public class Token implements Serializable {
     public enum Type {
         S_EOF,
         LCURL, RCURL, LBLK, RBLK, LBRACE, RBRACE,
-        SET, EQL, NEQ, LT, LE, GE, GT,
+        DECL, SET, EQL, NEQ, LT, LE, GE, GT,
         ADD, SUB, MUL, DIV, MOD, POW,
         PERCENT,
         SCOPE, SEMI, COMMA, YIELD, COMPOSE,

@@ -182,7 +182,7 @@ public class LexerTest {
 
     @Test
     public void testLexingAllPossibleTokens() {
-        final String source = "# Comment\n\t\r{[(<;,.>)]}:+-*/%=-><=>=@atom 01 0b0100 0c712 0d0 0xAFcd 0.1923 123abc123 and or if mod==/=^ do end";
+        final String source = "# Comment\n\t\r{[(<;,.>)]}:+-*/%=-><-<=>=@atom 01 0b0100 0c712 0d0 0xAFcd 0.1923 123abc123 and or if mod==/=^ do end";
         final Object[] expected = {
             // # Comment\n\t\r => Nothing
             // {[(<
@@ -194,9 +194,9 @@ public class LexerTest {
             // :+-*/%=
             new Token(Token.Type.SCOPE, ":"),
             new Token(Token.Type.ADD, "+"), new Token(Token.Type.SUB, "-"), new Token(Token.Type.MUL, "*"), new Token(Token.Type.DIV, "/"),
-            new Token(Token.Type.PERCENT, "%"), new Token(Token.Type.SET, "="),
-            // -><=>=
-            new Token(Token.Type.YIELD, "->"), new Token(Token.Type.LE, "<="), new Token(Token.Type.GE, ">="),
+            new Token(Token.Type.PERCENT, "%"), new Token(Token.Type.DECL, "="),
+            // -><-<=>=
+            new Token(Token.Type.YIELD, "->"), new Token(Token.Type.SET, "<-"), new Token(Token.Type.LE, "<="), new Token(Token.Type.GE, ">="),
             // @atom
             new Token(Token.Type.ATOM, "@atom"),
             // 01

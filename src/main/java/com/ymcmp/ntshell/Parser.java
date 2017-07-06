@@ -214,16 +214,21 @@ public class Parser {
         case IDENT: {
             final Token name = tokens.remove(0);
             // = IDENT YIELD <expr>  (0)
-            // | IDENT SET <expr>    (1)
+            // | IDENT DECL <expr>   (1)
             // | IDENT               (2)
+            // | IDENT SET <expr>    (3)
             switch (peekNextToken(tokens).type) {
             case YIELD:
                 // (0)
                 return new AnonFuncVal(name, consumeYield(tokens));
-            case SET:
+            case DECL:
                 // (1)
                 tokens.remove(0);
-                return new AssignExpr(name, consumeExpr(tokens));
+                return new AssignExpr(name, consumeExpr(tokens), true);
+            case SET:
+                // (3)
+                tokens.remove(0);
+                return new AssignExpr(name, consumeExpr(tokens), false);
             default:
                 // (2)
                 return new VariableVal(name);

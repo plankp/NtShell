@@ -33,13 +33,14 @@ public class ParserTest {
     @Test
     public void parseDoEndBlock() {
         try {
-            final String expr = "do a = 1; b = 2; a + b end";
+            final String expr = "do a = 1; b = 2; a <- a + b end";
             final AST tree = parser.consumeExpr(Lexer.lexFromString(expr));
-            final AST expected = new DoEndExpr(new AssignExpr(makeIdent("a"), NumberVal.fromLong(1)),
-                                               new AssignExpr(makeIdent("b"), NumberVal.fromLong(2)),
-                                               new BinaryExpr(new VariableVal(makeIdent("a")),
-                                                              new VariableVal(makeIdent("b")),
-                                                              new Token(Token.Type.ADD, "+")));
+            final AST expected = new DoEndExpr(new AssignExpr(makeIdent("a"), NumberVal.fromLong(1), true),
+                                               new AssignExpr(makeIdent("b"), NumberVal.fromLong(2), true),
+                                               new AssignExpr(makeIdent("a"),
+                                                              new BinaryExpr(new VariableVal(makeIdent("a")),
+                                                                             new VariableVal(makeIdent("b")),
+                                                                             new Token(Token.Type.ADD, "+")), false));
             assertEquals(expected.toString(), tree.toString());
         } catch (LexerException ex) {
             fail("No exception should be thrown");
@@ -149,7 +150,7 @@ public class ParserTest {
                                                                 new AnonFuncVal(makeIdent("m"),
                                                                                 new ApplyExpr(
                                                                                         new PartialApplyExpr(new AST[]{new VariableVal(makeIdent("x")), new VariableVal(makeIdent("y"))},
-                                                                                                             new VariableVal(makeIdent("m"))), new AST[0]))));
+                                                                                                             new VariableVal(makeIdent("m"))), new AST[0]))), true);
             assertEquals(expected.toString(), tree.toString());
         } catch (LexerException ex) {
             fail("No exception should be thrown");
@@ -165,7 +166,7 @@ public class ParserTest {
                                                 new AnonFuncVal(makeIdent("z"),
                                                                 new ApplyExpr(new VariableVal(makeIdent("z")),
                                                                               new AST[]{new AnonFuncVal(new Token[]{makeIdent("p"), makeIdent("q")},
-                                                                                                        new VariableVal(makeIdent("p")))})));
+                                                                                                        new VariableVal(makeIdent("p")))})), true);
             assertEquals(expected.toString(), tree.toString());
         } catch (LexerException ex) {
             fail("No exception should be thrown");
@@ -192,8 +193,8 @@ public class ParserTest {
                                                                                                          new PiecewiseFuncVal.CaseBlock(new BinaryExpr(new VariableVal(makeIdent("i")), new VariableVal(makeIdent("n")), new Token(Token.Type.NEQ, "/=")),
                                                                                                                                         new ApplyExpr(new VariableVal(makeIdent("fib")),
                                                                                                                                                       new AST[]{new BinaryExpr(new VariableVal(makeIdent("i")), NumberVal.fromLong(1), new Token(Token.Type.ADD, "+")), new VariableVal(makeIdent("b")), new BinaryExpr(new VariableVal(makeIdent("a")), new VariableVal(makeIdent("b")), new Token(Token.Type.ADD, "+"))})
-                                                                                                         )}))),
-                                                                              new AST[]{NumberVal.fromLong(0), NumberVal.fromLong(0), NumberVal.fromLong(1)})));
+                                                                                                         )})), true),
+                                                                              new AST[]{NumberVal.fromLong(0), NumberVal.fromLong(0), NumberVal.fromLong(1)})), true);
             assertEquals(expected.toString(), tree.toString());
         } catch (LexerException ex) {
             fail("No exception should be thrown");

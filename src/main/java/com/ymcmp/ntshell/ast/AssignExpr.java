@@ -28,10 +28,12 @@ public class AssignExpr implements AST {
 
     public final Token to;
     public final AST value;
+    public final boolean allocateNew;
 
-    public AssignExpr(Token to, AST value) {
+    public AssignExpr(Token to, AST value, boolean allocateNew) {
         this.to = to;
         this.value = value;
+        this.allocateNew = allocateNew;
     }
 
     @Override
@@ -41,7 +43,7 @@ public class AssignExpr implements AST {
 
     @Override
     public String toString() {
-        return String.format("assign{ to:%s, value:%s }", to.text, value);
+        return String.format("assign{ to:%s, value:%s, allocNew:%s }", to.text, value, allocateNew);
     }
 
     @Override
@@ -50,7 +52,7 @@ public class AssignExpr implements AST {
         if (nval.equals(value)) {
             return this;
         }
-        return new AssignExpr(to, nval);
+        return new AssignExpr(to, nval, allocateNew);
     }
 
     @Override
@@ -59,7 +61,7 @@ public class AssignExpr implements AST {
         if (nval.equals(value)) {
             return this;
         }
-        return new AssignExpr(to, nval);
+        return new AssignExpr(to, nval, allocateNew);
     }
 
     @Override
@@ -68,7 +70,7 @@ public class AssignExpr implements AST {
         if (nval.equals(value)) {
             return this;
         }
-        return new AssignExpr(to, nval);
+        return new AssignExpr(to, nval, allocateNew);
     }
 
     @Override
@@ -77,6 +79,6 @@ public class AssignExpr implements AST {
         if (nval.equals(value)) {
             return this;
         }
-        return new AssignExpr(to, nval);
+        return new AssignExpr(to, nval, allocateNew);
     }
 }

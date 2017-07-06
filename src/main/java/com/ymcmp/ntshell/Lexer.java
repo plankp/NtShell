@@ -150,12 +150,14 @@ public class Lexer {
                     tokens.add(new Token(Token.Type.EQL, "=="));
                 } else {
                     --i;
-                    tokens.add(new Token(Token.Type.SET, "="));
+                    tokens.add(new Token(Token.Type.DECL, "="));
                 }
                 break;
             case '<':
                 if (++i < arr.length && arr[i] == '=') {
                     tokens.add(new Token(Token.Type.LE, "<="));
+                } else if (arr[i] == '-') {
+                    tokens.add(new Token(Token.Type.SET, "<-"));
                 } else {
                     --i;
                     tokens.add(new Token(Token.Type.LT, "<"));
