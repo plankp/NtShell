@@ -53,8 +53,6 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
     private final Map<String, NtValue> vars;
     private final Frontend env;
 
-    private boolean tailCall;
-
     public InteractiveModeVisitor(final Frontend env) {
         this.vars = new HashMap<>();
         this.env = env;
@@ -138,11 +136,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
         // { val if cond }   val is guaranteed in tail call position
         for (final PiecewiseFuncVal.CaseBlock test : piecewiseFunc.cases) {
             if (eval(test.pred).isTruthy()) {
-                final boolean tcSave = tailCall;
-                tailCall = true;
-                final NtValue ret = visit(test.expr);
-                tailCall = tcSave;
-                return ret;
+                return visit(test.expr);
             }
         }
         throw new UndefinedHandleException("Piecewise function did not handle all possible values!");
@@ -152,16 +146,9 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
     public NtValue visitApplyExpr(final ApplyExpr apply) {
         final NtValue instance = eval(apply.instance);
         final NtValue[] params = Arrays.stream(apply.params)
-                .map(this::visit)
+                .map(this::eval)
                 .toArray(NtValue[]::new);
-        return constructTailCall(instance, params);
-    }
-
-    private NtValue constructTailCall(final NtValue instance, final NtValue[] params) throws TailCallTrigger {
-        if (tailCall) {
-            throw new TailCallTrigger(instance, params);
-        }
-        return TailCallTrigger.call(instance, params);
+        throw new TailCallTrigger(instance, params);
     }
 
     @Override
@@ -177,7 +164,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                 final NtValue[] params = new NtValue[placeholders.length + remainder.length];
                 System.arraycopy(placeholders, 0, params, 0, placeholders.length);
                 System.arraycopy(remainder, 0, params, placeholders.length, remainder.length);
-                return constructTailCall(applicant, params);
+                throw new TailCallTrigger(applicant, params);
             }
         };
     }
@@ -316,11 +303,7 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
         for (int i = 0; i < assign.exprs.length - 1; ++i) {
             eval(assign.exprs[i]);
         }
-        final boolean prevConf = this.tailCall;
-        this.tailCall = true;
-        final NtValue ret = visit(assign.exprs[assign.exprs.length - 1]);
-        this.tailCall = prevConf;
-        return ret;
+        return visit(assign.exprs[assign.exprs.length - 1]);
     }
 
     private class UserDefLambda extends CoreLambda {
@@ -344,24 +327,23 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
                 @Override
                 public NtValue visitAssignExpr(final AssignExpr assign) {
                     final NtValue val = super.visitAssignExpr(assign);
-                    if (!assign.allocateNew && !lambdaLocals.containsKey(assign.to.text)) {
+                    final String varName = assign.to.text;
+                    if (!assign.allocateNew && !lambdaLocals.containsKey(varName)) {
                         // only mutate the outer scope, do *not* save it locally
-                        vars.put(assign.to.text, val);
+                        vars.put(varName, val);
                         return val;
                     }
                     // save it as a local variable
-                    lambdaLocals.put(assign.to.text, val);
+                    lambdaLocals.put(varName, val);
                     return val;
                 }
             };
-            vis.tailCall = true;
             // add local variables
             vis.vars.putAll(lambdaLocals);
             for (int i = 0; i < params.length; ++i) {
                 vis.vars.put(decl.inputs[i].text, params[i]);
             }
-            final NtValue ret = vis.visit(decl.output);
-            return ret;
+            return vis.visit(decl.output);
         }
     }
 }
