@@ -46,7 +46,9 @@ public class ConsoleMode extends AbstractFrontend {
 
                     sb.append(s);
                     if (sb.charAt(sb.length() - 1) == '\\') {
-                        sb.setCharAt(sb.length() - 1, '\n');
+                        // The next logical line is still considered to be on the
+                        // same line.
+                        sb.deleteCharAt(sb.length() - 1);
                     } else {
                         break;
                     }
