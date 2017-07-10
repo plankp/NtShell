@@ -42,6 +42,7 @@ public final class Core implements NtLibrary {
     private Core() {
         submodules.add(new ntshell.rt.lib.rout.matrix.Loader());
         submodules.add(new ntshell.rt.lib.rout.trig.Loader());
+        submodules.add(new ntshell.rt.lib.rout.type.Loader());
     }
 
     public static NtLibrary getInstance() {
