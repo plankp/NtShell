@@ -281,11 +281,9 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
 
     @Override
     public NtValue visitAssignExpr(final AssignExpr assign) {
-        if (!assign.allocateNew) {
-            // check if variable exists. crash if not
-            if (!vars.containsKey(assign.to.text)) {
-                throw new UndefinedHandleException("Attempt to mutate value of non-existent variable " + assign.to.text);
-            }
+        // check if variable exists. crash if not
+        if (!assign.allocateNew && !vars.containsKey(assign.to.text)) {
+            throw new UndefinedHandleException("Attempt to mutate value of non-existent variable " + assign.to.text);
         }
 
         final NtValue val = eval(assign.value);
