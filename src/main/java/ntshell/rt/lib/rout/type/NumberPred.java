@@ -28,16 +28,16 @@ import com.ymcmp.ntshell.value.CoreNumber;
 final class NumberPred extends CoreLambda {
 
     public NumberPred() {
-        super(new CoreLambda.Info("number?", "(...) -> number", "Test if value is a number"));
+        super(new CoreLambda.Info("number?", "(...) -> number", "Test if value is a number. All non-finite values (including undefined) will return true."));
     }
 
     @Override
     public NtValue applyCall(final NtValue[] input) {
         for (int i = 0; i < input.length; ++i) {
-            if (input[i] instanceof CoreNumber) {
-                return CoreNumber.from(true);
+            if (!(input[i] instanceof CoreNumber)) {
+                return CoreNumber.from(false);
             }
         }
-        return CoreNumber.from(false);
+        return CoreNumber.from(true);
     }
 }

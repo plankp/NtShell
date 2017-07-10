@@ -35,10 +35,10 @@ final class MatrixPred extends CoreLambda {
     @Override
     public NtValue applyCall(final NtValue[] input) {
         for (int i = 0; i < input.length; ++i) {
-            if (input[i] instanceof CoreMatrix) {
-                return CoreNumber.from(true);
+            if (!(input[i] instanceof CoreMatrix)) {
+                return CoreNumber.from(false);
             }
         }
-        return CoreNumber.from(false);
+        return CoreNumber.from(true);
     }
 }

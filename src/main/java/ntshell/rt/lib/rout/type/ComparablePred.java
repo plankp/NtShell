@@ -34,10 +34,10 @@ final class ComparablePred extends CoreLambda {
     @Override
     public NtValue applyCall(final NtValue[] input) {
         for (int i = 0; i < input.length; ++i) {
-            if (input[i] instanceof Comparable) {
-                return CoreNumber.from(true);
+            if (!(input[i] instanceof Comparable)) {
+                return CoreNumber.from(false);
             }
         }
-        return CoreNumber.from(false);
+        return CoreNumber.from(true);
     }
 }

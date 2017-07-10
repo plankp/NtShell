@@ -35,10 +35,10 @@ final class NilPred extends CoreLambda {
     @Override
     public NtValue applyCall(final NtValue[] input) {
         for (int i = 0; i < input.length; ++i) {
-            if (input[i] instanceof CoreUnit) {
-                return CoreNumber.from(true);
+            if (!(input[i] instanceof CoreUnit)) {
+                return CoreNumber.from(false);
             }
         }
-        return CoreNumber.from(false);
+        return CoreNumber.from(true);
     }
 }
