@@ -100,10 +100,10 @@ public class LexerTest {
     public void testLexIdent() {
         final char[] str = " atom".toCharArray();
         final List<Token> arr = new ArrayList<>();
-        final int end = Lexer.lexIdentifier(1, str, arr);
+        final int end = Lexer.lexIdOrKeyword(1, str, arr);
         assertEquals(4, end);
         assertEquals(Arrays.asList(new Token(Token.Type.IDENT, "atom")), arr);
-        assertEquals(0, Lexer.lexIdentifier(0, str, arr));
+        assertEquals(0, Lexer.lexIdOrKeyword(0, str, arr));
     }
 
     @Test
@@ -182,7 +182,7 @@ public class LexerTest {
 
     @Test
     public void testLexingAllPossibleTokens() {
-        final String source = "# Comment\n\t\r{[(<;,.>)]}:+-*/%=-><-<=>=@atom 01 0b0100 0c712 0d0 0xAFcd 0.1923 123abc123 and or if mod==/=^ do end";
+        final String source = "# Comment\n\t\r{[(<;,.>)]}:+-*/%=-><-<=>=@atom 01 0b0100 0c712 0d0 0xAFcd 0.1923 123abc123 and or if mod==/=^ do end nil? set! @atm? @kc!";
         final Object[] expected = {
             // # Comment\n\t\r => Nothing
             // {[(<
@@ -212,7 +212,9 @@ public class LexerTest {
             // ==/=^
             new Token(Token.Type.EQL, "=="), new Token(Token.Type.NEQ, "/="), new Token(Token.Type.POW, "^"),
             // do end
-            new Token(Token.Type.K_DO, "do"), new Token(Token.Type.K_END, "end")
+            new Token(Token.Type.K_DO, "do"), new Token(Token.Type.K_END, "end"),
+            // nil? set! @atm? @kc!
+            new Token(Token.Type.IDENT, "nil?"), new Token(Token.Type.IDENT, "set!"), new Token(Token.Type.ATOM, "@atm?"), new Token(Token.Type.ATOM, "@kc!")
         };
         try {
             final Object[] toks1 = Lexer.lexFromString(source).toArray();

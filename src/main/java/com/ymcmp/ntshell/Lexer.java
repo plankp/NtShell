@@ -187,7 +187,7 @@ public class Lexer {
                     break;
                 }
                 if (Lexer.isIdent(arr[i])) {
-                    i = Lexer.lexIdentifier(i, arr, tokens);
+                    i = Lexer.lexIdOrKeyword(i, arr, tokens);
                     break;
                 }
                 throw new LexerException("Unrecognized character of `" + arr[i] + "'");
@@ -201,9 +201,7 @@ public class Lexer {
             final StringBuilder buf = new StringBuilder().append(arr[i]);
             ++i;
             if (isIdent(arr[i])) {
-                while (i < arr.length && isIdent(arr[i])) {
-                    buf.append(arr[i++]);
-                }
+                i = consumeIdentifier(i, arr, buf);
             } else if (arr[i] == '"') {
                 // @"stuff" => we look for the next ". The quoting *not* nested
                 buf.append('"');
@@ -212,9 +210,8 @@ public class Lexer {
                     buf.append(arr[i++]);
                 }
                 // Append the last " also
-                buf.append(arr[i++]);
+                buf.append(arr[i]);
             }
-            --i;
             final String atom = buf.toString();
             tokens.add(new Token(Token.Type.ATOM, atom));
             return i;
@@ -222,14 +219,32 @@ public class Lexer {
         return i;
     }
 
-    public static int lexIdentifier(final int pos, final char[] arr, final List<Token> tokens) {
+    public static int consumeIdentifier(final int pos, final char[] arr, final StringBuilder buf) {
         int i = pos;
         if (isIdent(arr[i])) {
-            final StringBuilder buf = new StringBuilder();
             while (i < arr.length && isIdent(arr[i])) {
                 buf.append(arr[i++]);
             }
+            // Identifiers can end with ? or !
+            if (i < arr.length) {
+                switch (arr[i]) {
+                case '?':
+                case '!':
+                    buf.append(arr[i++]);
+                    break;
+                default:
+                }
+            }
             --i;
+        }
+        return i;
+    }
+
+    public static int lexIdOrKeyword(final int pos, final char[] arr, final List<Token> tokens) {
+        int i = pos;
+        if (isIdent(arr[i])) {
+            final StringBuilder buf = new StringBuilder();
+            i = consumeIdentifier(i, arr, buf);
             final String ident = buf.toString();
             tokens.add(new Token(KWORDS.getOrDefault(ident, Token.Type.IDENT), ident));
         }
