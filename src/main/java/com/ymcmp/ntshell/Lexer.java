@@ -172,7 +172,11 @@ public class Lexer {
                 }
                 break;
             case '@':
-                i = Lexer.lexAtom(i, arr, tokens);
+                try {
+                    i = Lexer.lexAtom(i, arr, tokens);
+                } catch (ArrayIndexOutOfBoundsException ex) {
+                    throw new LexerException("Unclosed atom literal");
+                }
                 break;
             case '0':
                 i = Lexer.lexZeroPrefixedNumber(i, arr, tokens);
