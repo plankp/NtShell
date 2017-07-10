@@ -107,4 +107,11 @@ public class CoreAtomTest {
         // Unit on everything else
         assertSame(CoreUnit.getInstance(), atom.applyCall(new NtValue[0]));
     }
+
+    @Test
+    public void testCompareTo() {
+        assertEquals(0, CoreAtom.from("Abc").compareTo(CoreAtom.from("Abc")));
+        assertEquals("Abc".compareTo("abc"), CoreAtom.from("Abc").compareTo(CoreAtom.from("abc")));
+        assertEquals("abc".compareTo("Abc"), CoreAtom.from("abc").compareTo(CoreAtom.from("Abc")));
+    }
 }

@@ -41,7 +41,7 @@ import java.util.regex.Pattern;
  *
  * @author YTENG
  */
-public class CoreMatrix extends NtValue {
+public class CoreMatrix extends NtValue implements Comparable<CoreMatrix> {
 
     private static final Border BORDER_FMT = Border.of(Border.Chars.of('+', '-', '|'));
     private static final Pattern LINE_BREAK_PAT = Pattern.compile("\r?\n");
@@ -463,7 +463,8 @@ public class CoreMatrix extends NtValue {
     }
 
     /**
-     * Performs a left reduction on the matrix. null null     {@link CoreMatrix#reduceLeft(java.util.function.BinaryOperator,
+     * Performs a left reduction on the matrix. null null null null null null
+     * null null null     {@link CoreMatrix#reduceLeft(java.util.function.BinaryOperator,
      * com.ymcmp.ntshell.NtValue)}
      *
      * @param accum Must support
@@ -500,7 +501,8 @@ public class CoreMatrix extends NtValue {
     }
 
     /**
-     * Performs a right reduction on the matrix. null null     {@link CoreMatrix#reduceRight(java.util.function.BinaryOperator,
+     * Performs a right reduction on the matrix. null null null null null null
+     * null null null     {@link CoreMatrix#reduceRight(java.util.function.BinaryOperator,
      * com.ymcmp.ntshell.NtValue)}
      *
      * @param accum Must support
@@ -594,6 +596,29 @@ public class CoreMatrix extends NtValue {
     @Override
     public boolean isTruthy() {
         return mat.length > 0;
+    }
+
+    @Override
+    public int compareTo(final CoreMatrix o) {
+        // Compare each element. As soon as it hits one that returns a non-zero
+        // (not equals), the test terminates and returns that value.
+        if (o == this) {
+            return 0;
+        }
+        if (o.mat.length == 0) {
+            return Integer.compare(mat.length, 0);
+        }
+
+        for (int x = 0; x < mat.length; ++x) {
+            for (int y = 0; y < mat[x].length; ++y) {
+                final Comparable<NtValue> comparator = (Comparable<NtValue>) mat[x][y];
+                final int cmp = comparator.compareTo(o.mat[x][y]);
+                if (cmp != 0) {
+                    return cmp;
+                }
+            }
+        }
+        return 0;
     }
 
     /**

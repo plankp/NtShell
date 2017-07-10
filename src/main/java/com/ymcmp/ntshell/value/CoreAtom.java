@@ -213,4 +213,15 @@ public class CoreAtom extends CoreMatrix {
     public CoreAtom flipOnY() {
         return super.flipOnY().toAtom();
     }
+
+    @Override
+    public int compareTo(final CoreMatrix o) {
+        if (o == this) {
+            return 0;
+        }
+        if (o instanceof CoreAtom) {
+            return this.str.compareTo(((CoreAtom) o).str);
+        }
+        return super.compareTo(o);
+    }
 }

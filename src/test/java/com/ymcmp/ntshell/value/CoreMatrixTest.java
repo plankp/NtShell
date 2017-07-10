@@ -359,4 +359,22 @@ public class CoreMatrixTest {
         });
         assertEquals(CoreNumber.from(0 - 3 - 2 - 1), mat.reduceRight(NtValue::applySub, CoreNumber.from(0)));
     }
+
+    @Test(expected = ClassCastException.class)
+    public void testCompareTo() {
+        final CoreMatrix mat = CoreMatrix.from(new NtValue[][]{
+            {CoreNumber.from(1), CoreNumber.from(2), CoreNumber.from(3)}
+        });
+        assertEquals(Integer.compare(1, 2), mat.compareTo(CoreMatrix.from(new NtValue[][]{
+            {CoreNumber.from(2), CoreNumber.from(3), CoreNumber.from(5)}
+        })));
+        assertEquals(Integer.compare(1, 2), mat.compareTo(CoreMatrix.from(new NtValue[][]{
+            {CoreNumber.from(2)}
+        })));
+
+        // This line is supposed to trigger a ClassCastException
+        mat.compareTo(CoreMatrix.from(new NtValue[][]{
+            {CoreMatrix.from(new NtValue[][]{{CoreNumber.from(2)}})}
+        }));
+    }
 }
