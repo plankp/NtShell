@@ -18,6 +18,7 @@ package com.ymcmp.ntshell.ast;
 
 import com.ymcmp.ntshell.AST;
 import com.ymcmp.ntshell.Visitor;
+
 import java.util.Arrays;
 
 /**
@@ -74,6 +75,19 @@ public class PiecewiseFuncVal implements AST {
                 return this;
             }
             return new CaseBlock(pred, nexpr);
+        }
+    }
+
+    public final static class ElseClause extends CaseBlock {
+
+        public ElseClause(final AST expr) {
+            // Relies on property of 1 being a truthful value
+            super(NumberVal.fromLong(1), expr);
+        }
+
+        @Override
+        public String toString() {
+            return String.format("else:%s", expr);
         }
     }
 

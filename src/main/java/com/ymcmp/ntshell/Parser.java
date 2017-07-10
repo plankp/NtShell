@@ -350,10 +350,18 @@ public class Parser {
         final List<PiecewiseFuncVal.CaseBlock> cases = new ArrayList<>();
         cons_loop:
         while (peekNextToken(tokens).type != Token.Type.RCURL) {
-            cases.add(consumeCase(tokens));
+            final PiecewiseFuncVal.CaseBlock clause = consumeCase(tokens);
+            cases.add(clause);
             switch (peekNextToken(tokens).type) {
             case COMMA:
                 tokens.remove(0);
+                // If its an else clause, its the last clause of the function
+                if (clause instanceof PiecewiseFuncVal.ElseClause) {
+                    if (peekNextToken(tokens).type == Token.Type.RCURL) {
+                        break cons_loop;
+                    }
+                    throw new ParserException("No additional clauses can be placed after an else clause");
+                }
                 break;
             case RCURL:
                 break cons_loop;
@@ -418,12 +426,19 @@ public class Parser {
     }
 
     private PiecewiseFuncVal.CaseBlock consumeCase(final List<Token> tokens) {
+        // = <expr> IF <$pred>
+        // | <expr> ELSE
         final AST action = consumeExpr(tokens);
-        if (peekNextToken(tokens).type == Token.Type.K_IF) {
+        switch (peekNextToken(tokens).type) {
+        case K_IF:
             tokens.remove(0);
             return new PiecewiseFuncVal.CaseBlock(consumePred(tokens), action);
+        case K_ELSE:
+            tokens.remove(0);
+            return new PiecewiseFuncVal.ElseClause(action);
+        default:
+            throw new ParserException("Each piecewise case requires a condition");
         }
-        throw new ParserException("Each piecewise case requires a condition");
     }
 
     public AST consumePred(final List<Token> tokens) {

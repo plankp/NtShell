@@ -201,6 +201,30 @@ public class ParserTest {
         }
     }
 
+    @Test
+    public void testElseClause() {
+        try {
+            final String expr = "{ a if 0, b else }";
+            final AST tree = parser.consumeExpr(Lexer.lexFromString(expr));
+            final AST expected = new PiecewiseFuncVal(new PiecewiseFuncVal.CaseBlock[]{
+                new PiecewiseFuncVal.CaseBlock(NumberVal.fromLong(0), new VariableVal(makeIdent("a"))),
+                new PiecewiseFuncVal.ElseClause(new VariableVal(makeIdent("b")))
+            });
+            assertEquals(expected.toString(), tree.toString());
+        } catch (LexerException ex) {
+            fail("LexerException should not have been thrown");
+        }
+
+        try {
+            final String expr = "{ a if 0, b else, c if 1 }";
+            parser.consumeExpr(Lexer.lexFromString(expr)); // ParserException thrown here
+            fail("ParserException should been thrown");
+        } catch (LexerException ex) {
+            fail("LexerException should not have been thrown");
+        } catch (ParserException ex) {
+        }
+    }
+
     private static Token makeIdent(final String id) {
         return new Token(Token.Type.IDENT, id);
     }

@@ -36,6 +36,7 @@ public class Lexer {
     static {
         KWORDS.put("mod", Token.Type.MOD);
         KWORDS.put("if", Token.Type.K_IF);
+        KWORDS.put("else", Token.Type.K_ELSE);
         KWORDS.put("and", Token.Type.K_AND);
         KWORDS.put("or", Token.Type.K_OR);
         KWORDS.put("do", Token.Type.K_DO);
