@@ -103,6 +103,8 @@ public final class Core implements NtLibrary {
             return Limits.getRightSided();
         case "lim":
             return Limits.getBothSided();
+        case "joining!":
+            return new Joining();
         default:
         }
         return null;
