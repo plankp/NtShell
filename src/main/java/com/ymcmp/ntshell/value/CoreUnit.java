@@ -25,7 +25,7 @@ import com.ymcmp.ntshell.NtValue;
  *
  * @author YTENG
  */
-public final class CoreUnit extends NtValue {
+public final class CoreUnit implements NtValue {
 
     private static class Helper {
 

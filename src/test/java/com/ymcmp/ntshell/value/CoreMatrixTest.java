@@ -16,10 +16,12 @@
  */
 package com.ymcmp.ntshell.value;
 
-import com.ymcmp.ntshell.rte.DispatchException;
 import com.ymcmp.ntshell.NtValue;
 
+import com.ymcmp.ntshell.rte.DispatchException;
+
 import java.util.function.Function;
+
 import java.util.stream.IntStream;
 
 import org.junit.Test;
@@ -34,19 +36,19 @@ public class CoreMatrixTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void matrixFromEnforcesShape() {
-        CoreMatrix.from(new NtValue[][]{
+        CoreMatrix.from(new AbstractNtValue[][]{
             {null}, {null, null}
         });
     }
 
     public void matrixFromEmptyArrayYieldsSameInstance() {
         assertSame(CoreMatrix.getEmptyMatrix(), CoreMatrix.from(null));
-        assertSame(CoreMatrix.getEmptyMatrix(), CoreMatrix.from(new NtValue[0][0]));
+        assertSame(CoreMatrix.getEmptyMatrix(), CoreMatrix.from(new AbstractNtValue[0][0]));
     }
 
     @Test
     public void testGetSetCell() {
-        final CoreMatrix mat = CoreMatrix.from(new NtValue[1][1]);
+        final CoreMatrix mat = CoreMatrix.from(new AbstractNtValue[1][1]);
         assertNull(mat.getCell(0, 0));
         mat.setCell(0, 0, CoreNumber.from(true));
         assertEquals(CoreNumber.from(true), mat.getCell(0, 0));
@@ -55,10 +57,9 @@ public class CoreMatrixTest {
     @Test
     public void testToAtom() {
         assertSame(CoreAtom.from(""), CoreMatrix.getEmptyMatrix().toAtom());
-        assertSame(CoreAtom.from("A"), CoreMatrix.from(new NtValue[][]{{CoreNumber.from('A')}}).toAtom());
+        assertSame(CoreAtom.from("A"), CoreMatrix.from(new AbstractNtValue[][]{{CoreNumber.from('A')}}).toAtom());
 
-        final CoreMatrix mat = CoreMatrix.from(
-                new NtValue[][]{
+        final CoreMatrix mat = CoreMatrix.from(new AbstractNtValue[][]{
                     {CoreNumber.from('A'), CoreAtom.from("bc")}
                 }
         );
@@ -69,30 +70,28 @@ public class CoreMatrixTest {
     public void testFlipOnX() {
         assertSame(CoreMatrix.getEmptyMatrix(), CoreMatrix.getEmptyMatrix().flipOnX());
 
-        assertEquals(CoreMatrix.from(new NtValue[][]{{CoreNumber.from(true)}, {CoreNumber.from(false)}}),
-                     CoreMatrix.from(new NtValue[][]{{CoreNumber.from(false)}, {CoreNumber.from(true)}}).flipOnX());
+        assertEquals(CoreMatrix.from(new AbstractNtValue[][]{{CoreNumber.from(true)}, {CoreNumber.from(false)}}),
+                     CoreMatrix.from(new AbstractNtValue[][]{{CoreNumber.from(false)}, {CoreNumber.from(true)}}).flipOnX());
     }
 
     @Test
     public void testFlipOnY() {
         assertSame(CoreMatrix.getEmptyMatrix(), CoreMatrix.getEmptyMatrix().flipOnY());
 
-        assertEquals(CoreMatrix.from(new NtValue[][]{{CoreNumber.from(true), CoreNumber.from(false)}}),
-                     CoreMatrix.from(new NtValue[][]{{CoreNumber.from(false), CoreNumber.from(true)}}).flipOnY());
+        assertEquals(CoreMatrix.from(new AbstractNtValue[][]{{CoreNumber.from(true), CoreNumber.from(false)}}),
+                     CoreMatrix.from(new AbstractNtValue[][]{{CoreNumber.from(false), CoreNumber.from(true)}}).flipOnY());
     }
 
     @Test
     public void testTranspose() {
         assertSame(CoreMatrix.getEmptyMatrix(), CoreMatrix.getEmptyMatrix().transpose());
 
-        final CoreMatrix a = CoreMatrix.from(
-                new NtValue[][]{
+        final CoreMatrix a = CoreMatrix.from(new AbstractNtValue[][]{
                     {CoreNumber.from(0), CoreNumber.from(1), CoreNumber.from(0)},
                     {CoreNumber.from(1), CoreNumber.from(0), CoreNumber.from(1)}
                 }
         );
-        final CoreMatrix expected = CoreMatrix.from(
-                new NtValue[][]{
+        final CoreMatrix expected = CoreMatrix.from(new AbstractNtValue[][]{
                     {CoreNumber.from(0), CoreNumber.from(1)},
                     {CoreNumber.from(1), CoreNumber.from(0)},
                     {CoreNumber.from(0), CoreNumber.from(1)}
@@ -103,8 +102,8 @@ public class CoreMatrixTest {
 
     @Test
     public void testSameShape() {
-        final CoreMatrix mat1 = CoreMatrix.from(new NtValue[][]{{CoreNumber.from(true), CoreNumber.from(false)}});
-        final CoreMatrix mat2 = CoreMatrix.from(new NtValue[][]{{CoreNumber.from(false), CoreNumber.from(true)}});
+        final CoreMatrix mat1 = CoreMatrix.from(new AbstractNtValue[][]{{CoreNumber.from(true), CoreNumber.from(false)}});
+        final CoreMatrix mat2 = CoreMatrix.from(new AbstractNtValue[][]{{CoreNumber.from(false), CoreNumber.from(true)}});
 
         assertFalse(CoreMatrix.getEmptyMatrix().sameShape(mat1));
         assertTrue(mat2.sameShape(mat1));
@@ -136,26 +135,23 @@ public class CoreMatrixTest {
         }
 
         try {
-            CoreMatrix.getEmptyMatrix().bimap(CoreMatrix.from(new NtValue[1][1]), (a, b) -> a);
+            CoreMatrix.getEmptyMatrix().bimap(CoreMatrix.from(new AbstractNtValue[1][1]), (a, b) -> a);
             fail("MatrixBoundMismatchException should have been thrown");
         } catch (CoreMatrix.MatrixBoundMismatchException ex) {
         }
 
-        final CoreMatrix a = CoreMatrix.from(
-                new NtValue[][]{
+        final CoreMatrix a = CoreMatrix.from(new AbstractNtValue[][]{
                     {CoreNumber.from(1), CoreNumber.from(2), CoreNumber.from(3)},
                     {CoreNumber.from(4), CoreNumber.from(5), CoreNumber.from(6)}
                 }
         );
-        final CoreMatrix b = CoreMatrix.from(
-                new NtValue[][]{
+        final CoreMatrix b = CoreMatrix.from(new AbstractNtValue[][]{
                     {CoreNumber.from(7), CoreNumber.from(8)},
                     {CoreNumber.from(9), CoreNumber.from(10)},
                     {CoreNumber.from(11), CoreNumber.from(12)}
                 }
         );
-        final CoreMatrix expected = CoreMatrix.from(
-                new NtValue[][]{
+        final CoreMatrix expected = CoreMatrix.from(new AbstractNtValue[][]{
                     {CoreNumber.from(58), CoreNumber.from(64)},
                     {CoreNumber.from(139), CoreNumber.from(154)}
                 }
@@ -172,14 +168,12 @@ public class CoreMatrixTest {
     public void testMap() {
         assertSame(CoreMatrix.getEmptyMatrix(), CoreMatrix.getEmptyMatrix().map(Function.identity()));
 
-        final CoreMatrix a = CoreMatrix.from(
-                new NtValue[][]{
+        final CoreMatrix a = CoreMatrix.from(new AbstractNtValue[][]{
                     {CoreNumber.from(true), CoreNumber.from(false)},
                     {CoreNumber.from(false), CoreNumber.from(true)}
                 }
         );
-        final CoreMatrix expected = CoreMatrix.from(
-                new NtValue[][]{
+        final CoreMatrix expected = CoreMatrix.from(new AbstractNtValue[][]{
                     {CoreNumber.from(true), CoreNumber.from(false)},
                     {CoreNumber.from(false), CoreNumber.from(true)}
                 }
@@ -190,20 +184,17 @@ public class CoreMatrixTest {
 
     @Test
     public void testBimap() {
-        final CoreMatrix a = CoreMatrix.from(
-                new NtValue[][]{
+        final CoreMatrix a = CoreMatrix.from(new AbstractNtValue[][]{
                     {CoreNumber.from(0), CoreNumber.from(0)},
                     {CoreNumber.from(0), CoreNumber.from(0)}
                 }
         );
-        final CoreMatrix b = CoreMatrix.from(
-                new NtValue[][]{
+        final CoreMatrix b = CoreMatrix.from(new AbstractNtValue[][]{
                     {CoreNumber.from(true), CoreNumber.from(false)},
                     {CoreNumber.from(false), CoreNumber.from(true)}
                 }
         );
-        final CoreMatrix expected = CoreMatrix.from(
-                new NtValue[][]{
+        final CoreMatrix expected = CoreMatrix.from(new AbstractNtValue[][]{
                     {CoreNumber.from(true), CoreNumber.from(false)},
                     {CoreNumber.from(false), CoreNumber.from(true)}
                 }
@@ -233,11 +224,11 @@ public class CoreMatrixTest {
     @Test
     public void testReshape() {
         try {
-            final CoreMatrix a = CoreMatrix.from(new NtValue[][]{
-                IntStream.rangeClosed(1, 11).mapToObj(CoreNumber::from).toArray(NtValue[]::new)});
-            final CoreMatrix expected = CoreMatrix.from(new NtValue[][]{
-                IntStream.rangeClosed(1, 5).mapToObj(CoreNumber::from).toArray(NtValue[]::new),
-                IntStream.rangeClosed(6, 10).mapToObj(CoreNumber::from).toArray(NtValue[]::new)});
+            final CoreMatrix a = CoreMatrix.from(new AbstractNtValue[][]{
+                IntStream.rangeClosed(1, 11).mapToObj(CoreNumber::from).toArray(AbstractNtValue[]::new)});
+            final CoreMatrix expected = CoreMatrix.from(new AbstractNtValue[][]{
+                IntStream.rangeClosed(1, 5).mapToObj(CoreNumber::from).toArray(AbstractNtValue[]::new),
+                IntStream.rangeClosed(6, 10).mapToObj(CoreNumber::from).toArray(AbstractNtValue[]::new)});
 
             assertEquals(expected, a.reshape(2, 5));
         } catch (CoreMatrix.MatrixBoundMismatchException ex) {
@@ -247,12 +238,10 @@ public class CoreMatrixTest {
 
     @Test
     public void testApplyPositive() {
-        final CoreMatrix a = CoreMatrix.from(
-                new NtValue[][]{
+        final CoreMatrix a = CoreMatrix.from(new AbstractNtValue[][]{
                     {CoreNumber.from(1), CoreNumber.from(-1)},
                     {CoreNumber.from(-1), CoreNumber.from(1)}});
-        final CoreMatrix expected = CoreMatrix.from(
-                new NtValue[][]{
+        final CoreMatrix expected = CoreMatrix.from(new AbstractNtValue[][]{
                     {CoreNumber.from(1), CoreNumber.from(-1)},
                     {CoreNumber.from(-1), CoreNumber.from(1)}});
         assertEquals(expected, a.applyPositive());
@@ -260,12 +249,10 @@ public class CoreMatrixTest {
 
     @Test
     public void testApplyNegative() {
-        final CoreMatrix a = CoreMatrix.from(
-                new NtValue[][]{
+        final CoreMatrix a = CoreMatrix.from(new AbstractNtValue[][]{
                     {CoreNumber.from(1), CoreNumber.from(-1)},
                     {CoreNumber.from(-1), CoreNumber.from(1)}});
-        final CoreMatrix expected = CoreMatrix.from(
-                new NtValue[][]{
+        final CoreMatrix expected = CoreMatrix.from(new AbstractNtValue[][]{
                     {CoreNumber.from(-1), CoreNumber.from(1)},
                     {CoreNumber.from(1), CoreNumber.from(-1)}});
         assertEquals(expected, a.applyNegative());
@@ -273,12 +260,10 @@ public class CoreMatrixTest {
 
     @Test
     public void testApplyPercentage() {
-        final CoreMatrix a = CoreMatrix.from(
-                new NtValue[][]{
+        final CoreMatrix a = CoreMatrix.from(new AbstractNtValue[][]{
                     {CoreNumber.from(1), CoreNumber.from(-1)},
                     {CoreNumber.from(-1), CoreNumber.from(1)}});
-        final CoreMatrix expected = CoreMatrix.from(
-                new NtValue[][]{
+        final CoreMatrix expected = CoreMatrix.from(new AbstractNtValue[][]{
                     {CoreNumber.from(0.01), CoreNumber.from(-0.01)},
                     {CoreNumber.from(-0.01), CoreNumber.from(0.01)}});
         assertEquals(expected, a.applyPercentage());
@@ -286,30 +271,26 @@ public class CoreMatrixTest {
 
     @Test
     public void testApplyCall() {
-        final CoreMatrix a = CoreMatrix.from(new NtValue[][]{{CoreNumber.from(true)}});
-        assertEquals(CoreNumber.from(true), a.applyCall(new NtValue[]{CoreNumber.from(1), CoreNumber.from(1)}));
-        assertEquals(CoreUnit.getInstance(), a.applyCall(new NtValue[]{CoreNumber.from(5), CoreNumber.from(2)}));
+        final CoreMatrix a = CoreMatrix.from(new AbstractNtValue[][]{{CoreNumber.from(true)}});
+        assertEquals(CoreNumber.from(true), a.applyCall(new AbstractNtValue[]{CoreNumber.from(1), CoreNumber.from(1)}));
+        assertEquals(CoreUnit.getInstance(), a.applyCall(new AbstractNtValue[]{CoreNumber.from(5), CoreNumber.from(2)}));
     }
 
     @Test
     public void testApplyAdd() {
-        final CoreMatrix a = CoreMatrix.from(
-                new NtValue[][]{
+        final CoreMatrix a = CoreMatrix.from(new AbstractNtValue[][]{
                     {CoreNumber.from(1), CoreNumber.from(-1)},
                     {CoreNumber.from(-1), CoreNumber.from(1)}});
-        final CoreMatrix b = CoreMatrix.from(
-                new NtValue[][]{
+        final CoreMatrix b = CoreMatrix.from(new AbstractNtValue[][]{
                     {CoreNumber.from(-1), CoreNumber.from(1)},
                     {CoreNumber.from(1), CoreNumber.from(-1)}});
 
-        final CoreMatrix expectedMat = CoreMatrix.from(
-                new NtValue[][]{
+        final CoreMatrix expectedMat = CoreMatrix.from(new AbstractNtValue[][]{
                     {CoreNumber.from(0), CoreNumber.from(0)},
                     {CoreNumber.from(0), CoreNumber.from(0)}});
         assertEquals(expectedMat, a.applyAdd(b));
 
-        final CoreMatrix expectedNum = CoreMatrix.from(
-                new NtValue[][]{
+        final CoreMatrix expectedNum = CoreMatrix.from(new AbstractNtValue[][]{
                     {CoreNumber.from(2), CoreNumber.from(0)},
                     {CoreNumber.from(0), CoreNumber.from(2)}});
         assertEquals(expectedNum, a.applyAdd(CoreNumber.from(1)));
@@ -317,23 +298,19 @@ public class CoreMatrixTest {
 
     @Test
     public void testApplySub() {
-        final CoreMatrix a = CoreMatrix.from(
-                new NtValue[][]{
+        final CoreMatrix a = CoreMatrix.from(new AbstractNtValue[][]{
                     {CoreNumber.from(1), CoreNumber.from(-1)},
                     {CoreNumber.from(-1), CoreNumber.from(1)}});
-        final CoreMatrix b = CoreMatrix.from(
-                new NtValue[][]{
+        final CoreMatrix b = CoreMatrix.from(new AbstractNtValue[][]{
                     {CoreNumber.from(-1), CoreNumber.from(1)},
                     {CoreNumber.from(1), CoreNumber.from(-1)}});
 
-        final CoreMatrix expectedMat = CoreMatrix.from(
-                new NtValue[][]{
+        final CoreMatrix expectedMat = CoreMatrix.from(new AbstractNtValue[][]{
                     {CoreNumber.from(2), CoreNumber.from(-2)},
                     {CoreNumber.from(-2), CoreNumber.from(2)}});
         assertEquals(expectedMat, a.applySub(b));
 
-        final CoreMatrix expectedNum = CoreMatrix.from(
-                new NtValue[][]{
+        final CoreMatrix expectedNum = CoreMatrix.from(new AbstractNtValue[][]{
                     {CoreNumber.from(0), CoreNumber.from(-2)},
                     {CoreNumber.from(-2), CoreNumber.from(0)}});
         assertEquals(expectedNum, a.applySub(CoreNumber.from(1)));
@@ -346,7 +323,7 @@ public class CoreMatrixTest {
 
     @Test
     public void testReduceLeft() {
-        final CoreMatrix mat = CoreMatrix.from(new NtValue[][]{
+        final CoreMatrix mat = CoreMatrix.from(new AbstractNtValue[][]{
             {CoreNumber.from(1), CoreNumber.from(2), CoreNumber.from(3)}
         });
         assertEquals(CoreNumber.from(0 - 1 - 2 - 3), mat.reduceLeft(NtValue::applySub, CoreNumber.from(0)));
@@ -354,7 +331,7 @@ public class CoreMatrixTest {
 
     @Test
     public void testReduceRight() {
-        final CoreMatrix mat = CoreMatrix.from(new NtValue[][]{
+        final CoreMatrix mat = CoreMatrix.from(new AbstractNtValue[][]{
             {CoreNumber.from(1), CoreNumber.from(2), CoreNumber.from(3)}
         });
         assertEquals(CoreNumber.from(0 - 3 - 2 - 1), mat.reduceRight(NtValue::applySub, CoreNumber.from(0)));
@@ -362,19 +339,19 @@ public class CoreMatrixTest {
 
     @Test(expected = ClassCastException.class)
     public void testCompareTo() {
-        final CoreMatrix mat = CoreMatrix.from(new NtValue[][]{
+        final CoreMatrix mat = CoreMatrix.from(new AbstractNtValue[][]{
             {CoreNumber.from(1), CoreNumber.from(2), CoreNumber.from(3)}
         });
-        assertEquals(Integer.compare(1, 2), mat.compareTo(CoreMatrix.from(new NtValue[][]{
+        assertEquals(Integer.compare(1, 2), mat.compareTo(CoreMatrix.from(new AbstractNtValue[][]{
             {CoreNumber.from(2), CoreNumber.from(3), CoreNumber.from(5)}
         })));
-        assertEquals(Integer.compare(1, 2), mat.compareTo(CoreMatrix.from(new NtValue[][]{
+        assertEquals(Integer.compare(1, 2), mat.compareTo(CoreMatrix.from(new AbstractNtValue[][]{
             {CoreNumber.from(2)}
         })));
 
         // This line is supposed to trigger a ClassCastException
-        mat.compareTo(CoreMatrix.from(new NtValue[][]{
-            {CoreMatrix.from(new NtValue[][]{{CoreNumber.from(2)}})}
+        mat.compareTo(CoreMatrix.from(new AbstractNtValue[][]{
+            {CoreMatrix.from(new AbstractNtValue[][]{{CoreNumber.from(2)}})}
         }));
     }
 }

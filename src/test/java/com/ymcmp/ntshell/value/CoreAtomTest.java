@@ -16,7 +16,6 @@
  */
 package com.ymcmp.ntshell.value;
 
-import com.ymcmp.ntshell.NtValue;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -84,8 +83,7 @@ public class CoreAtomTest {
 
     @Test
     public void testToMatrix() {
-        final CoreMatrix expected = CoreMatrix.from(
-                new NtValue[][]{
+        final CoreMatrix expected = CoreMatrix.from(new AbstractNtValue[][]{
                     {CoreNumber.from('h'), CoreNumber.from('e'), CoreNumber.from('l'), CoreNumber.from('l'), CoreNumber.from('o')}
                 }
         );
@@ -97,15 +95,15 @@ public class CoreAtomTest {
         final CoreAtom atom = CoreAtom.from("Abc");
 
         // Char at when number
-        assertEquals(CoreNumber.from('A'), atom.applyCall(new NtValue[]{CoreNumber.from(1)}));
-        assertEquals(CoreNumber.from('c'), atom.applyCall(new NtValue[]{CoreNumber.from(-1)}));
+        assertEquals(CoreNumber.from('A'), atom.applyCall(new AbstractNtValue[]{CoreNumber.from(1)}));
+        assertEquals(CoreNumber.from('c'), atom.applyCall(new AbstractNtValue[]{CoreNumber.from(-1)}));
 
         // Slice when two numbers
-        assertEquals(CoreAtom.from("Ab"), atom.applyCall(new NtValue[]{CoreNumber.from(1), CoreNumber.from(3)}));
-        assertEquals(CoreAtom.from("bc"), atom.applyCall(new NtValue[]{CoreNumber.from(-2), CoreNumber.from(-1)}));
+        assertEquals(CoreAtom.from("Ab"), atom.applyCall(new AbstractNtValue[]{CoreNumber.from(1), CoreNumber.from(3)}));
+        assertEquals(CoreAtom.from("bc"), atom.applyCall(new AbstractNtValue[]{CoreNumber.from(-2), CoreNumber.from(-1)}));
 
         // Unit on everything else
-        assertSame(CoreUnit.getInstance(), atom.applyCall(new NtValue[0]));
+        assertSame(CoreUnit.getInstance(), atom.applyCall(new AbstractNtValue[0]));
     }
 
     @Test

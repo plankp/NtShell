@@ -102,7 +102,7 @@ public class CoreAtom extends CoreMatrix {
      * @return
      */
     @Override
-    public NtValue applyCall(NtValue[] params) {
+    public NtValue applyCall(final NtValue[] params) {
         switch (params.length) {
         case 1:
             if (params[0] instanceof CoreNumber) {

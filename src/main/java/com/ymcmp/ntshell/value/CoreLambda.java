@@ -26,7 +26,7 @@ import java.util.function.Function;
  *
  * @author YTENG
  */
-public abstract class CoreLambda extends NtValue {
+public abstract class CoreLambda extends AbstractNtValue {
 
     /**
      * Optional information of the function. If the function has none, it is set
@@ -73,7 +73,7 @@ public abstract class CoreLambda extends NtValue {
                                                              "any -> any",
                                                              "Takes a parameter of any type and returns it without modifying it.")) {
             @Override
-            public NtValue applyCall(NtValue[] params) {
+            public NtValue applyCall(final NtValue[] params) {
                 if (params.length == 1) {
                     return params[0];
                 }
@@ -137,7 +137,7 @@ public abstract class CoreLambda extends NtValue {
     public static CoreLambda from(Function<NtValue[], NtValue> f) {
         return new CoreLambda() {
             @Override
-            public NtValue applyCall(NtValue[] params) {
+            public NtValue applyCall(final NtValue[] params) {
                 return f.apply(params);
             }
         };

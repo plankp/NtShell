@@ -31,7 +31,7 @@ import org.apfloat.Apfloat;
  *
  * @author YTENG
  */
-public class CoreNumber extends NtValue implements Comparable<CoreNumber> {
+public class CoreNumber extends AbstractNtValue implements Comparable<CoreNumber> {
 
     public static final CoreNumber PI = new CoreNumber(884279719003555L, 281474976710656L);
     public static final CoreNumber E = new CoreNumber(6121026514868073L, 2251799813685248L);

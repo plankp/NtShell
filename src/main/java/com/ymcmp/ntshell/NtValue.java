@@ -16,186 +16,20 @@
  */
 package com.ymcmp.ntshell;
 
-import com.ymcmp.ntshell.rte.DispatchException;
-import com.ymcmp.ntshell.rte.TailCallTrigger;
-
-import com.ymcmp.ntshell.value.CoreLambda;
-
 /**
  * A common parent shared by all values used in the NtShell computation.
  *
  * @author YTENG
  */
-public abstract class NtValue {
+public interface NtValue {
 
     /**
-     * Overrides the behavior of the unary percentage operator {@code %} in
-     * NtShell. By default, {@code f%} will be invoked as {@code x -> f(x)%}.
-     *
-     * @return
-     */
-    public NtValue applyPercentage() {
-        return new CoreLambda() {
-            @Override
-            public NtValue applyCall(NtValue[] params) {
-                return TailCallTrigger.call(NtValue.this, params).applyPercentage();
-            }
-        };
-    }
-
-    /**
-     * Overrides the behavior of the unary negative operator {@code -} in
-     * NtShell. By default, {@code -f} will be invoked as {@code x -> -f(x)}.
-     *
-     * @return
-     */
-    public NtValue applyNegative() {
-        return new CoreLambda() {
-            @Override
-            public NtValue applyCall(NtValue[] params) {
-                return TailCallTrigger.call(NtValue.this, params).applyNegative();
-            }
-        };
-    }
-
-    /**
-     * Overrides the behavior of the unary positive operator {@code +} in
-     * NtShell. By default, {@code +f} will be invoked as {@code x -> +f(x)}.
-     *
-     * @return
-     */
-    public NtValue applyPositive() {
-        return new CoreLambda() {
-            @Override
-            public NtValue applyCall(NtValue[] params) {
-                return TailCallTrigger.call(NtValue.this, params).applyPositive();
-            }
-        };
-    }
-
-    /**
-     * Overrides the behavior of the addition operator {@code +} in NtShell. By
-     * default, {@code (f + g)} will be invoked as {@code x -> f(x) + g(x)}.
+     * Overrides the behavior of the addition operator {@code +} in NtShell
      *
      * @param rhs
      * @return
      */
-    public NtValue applyAdd(NtValue rhs) {
-        // (f + 2)(4) => f(4) + (2)(4)
-        return new CoreLambda() {
-            @Override
-            public NtValue applyCall(NtValue[] params) {
-                return TailCallTrigger.call(NtValue.this, params)
-                        .applyAdd(TailCallTrigger.call(rhs, params));
-            }
-        };
-    }
-
-    /**
-     * Overrides the behavior of the subtraction operator {@code -} in NtShell.
-     * By default, {@code (f - g)} will be invoked as {@code x -> f(x) - g(x)}.
-     *
-     * @param rhs
-     * @return
-     */
-    public NtValue applySub(NtValue rhs) {
-        return new CoreLambda() {
-            @Override
-            public NtValue applyCall(NtValue[] params) {
-                return TailCallTrigger.call(NtValue.this, params)
-                        .applySub(TailCallTrigger.call(rhs, params));
-            }
-        };
-    }
-
-    /**
-     * Overrides the behavior of the multiplication operator {@code *} in
-     * NtShell. By default, {@code (f * g)} will be invoked as
-     * {@code x -> f(x) * g(x)}.
-     *
-     * @param rhs
-     * @return
-     */
-    public NtValue applyMul(NtValue rhs) {
-        return new CoreLambda() {
-            @Override
-            public NtValue applyCall(NtValue[] params) {
-                return TailCallTrigger.call(NtValue.this, params)
-                        .applyMul(TailCallTrigger.call(rhs, params));
-            }
-        };
-    }
-
-    /**
-     * Overrides the behavior of the division operator {@code /} in NtShell. By
-     * default, {@code (f / g)} will be invoked as {@code x -> f(x) / g(x)}.
-     *
-     * @param rhs
-     * @return
-     */
-    public NtValue applyDiv(NtValue rhs) {
-        return new CoreLambda() {
-            @Override
-            public NtValue applyCall(NtValue[] params) {
-                return TailCallTrigger.call(NtValue.this, params)
-                        .applyDiv(TailCallTrigger.call(rhs, params));
-            }
-        };
-    }
-
-    /**
-     * Overrides the behavior of the modulo operator {@code mod} in NtShell. By
-     * default, {@code (f mod g)} will be invoked as {@code x -> f(x) mod g(x)}.
-     *
-     * @param rhs
-     * @return
-     */
-    public NtValue applyMod(NtValue rhs) {
-        return new CoreLambda() {
-            @Override
-            public NtValue applyCall(NtValue[] params) {
-                return TailCallTrigger.call(NtValue.this, params)
-                        .applyMod(TailCallTrigger.call(rhs, params));
-            }
-        };
-    }
-
-    /**
-     * Overrides the behavior of the power operator {@code ^} in NtShell. By
-     * default, {@code (f ^ g)} will be invoked as {@code x -> f(x) ^ g(x)}.
-     *
-     * @param rhs
-     * @return
-     */
-    public NtValue applyPow(NtValue rhs) {
-        return new CoreLambda() {
-            @Override
-            public NtValue applyCall(NtValue[] params) {
-                return TailCallTrigger.call(NtValue.this, params)
-                        .applyPow(TailCallTrigger.call(rhs, params));
-            }
-        };
-    }
-
-    /**
-     * Overrides the behavior of the compose operator {@code .} in NtShell. In
-     * most cases, this returns a function (default implementation). For
-     * example: {@code (f . g)} is invoked as
-     * {@code x -> f.applyCall(g.applyCall(x))}.
-     *
-     * @param rhs
-     * @return
-     */
-    public NtValue applyCompose(NtValue rhs) {
-        return new CoreLambda() {
-            @Override
-            public NtValue applyCall(NtValue[] params) {
-                // (f . g)(x) => f(g(x))
-                return TailCallTrigger.call(NtValue.this,
-                                            TailCallTrigger.call(rhs, params));
-            }
-        };
-    }
+    NtValue applyAdd(NtValue rhs);
 
     /**
      * Similar to the effect of overriding the {@code operator()} inside a class
@@ -204,9 +38,80 @@ public abstract class NtValue {
      * @param params The parameters applied
      * @return The result of the call
      */
-    public NtValue applyCall(NtValue... params) {
-        throw new DispatchException("()", this.getClass().getSimpleName() + " cannot be apply with " + params.length + " parameters");
-    }
+    NtValue applyCall(NtValue... params);
+
+    /**
+     * Overrides the behavior of the compose operator {@code .} in NtShell
+     *
+     * @param rhs
+     * @return
+     */
+    NtValue applyCompose(NtValue rhs);
+
+    /**
+     * Overrides the behavior of the division operator {@code /} in NtShell
+     *
+     * @param rhs
+     * @return
+     */
+    NtValue applyDiv(NtValue rhs);
+
+    /**
+     * Overrides the behavior of the modulo operator {@code mod} in NtShell
+     *
+     * @param rhs
+     * @return
+     */
+    NtValue applyMod(NtValue rhs);
+
+    /**
+     * Overrides the behavior of the multiplication operator {@code *} in
+     * NtShell
+     *
+     * @param rhs
+     * @return
+     */
+    NtValue applyMul(NtValue rhs);
+
+    /**
+     * Overrides the behavior of the unary negative operator {@code -} in
+     * NtShell
+     *
+     * @return
+     */
+    NtValue applyNegative();
+
+    /**
+     * Overrides the behavior of the unary percentage operator {@code %} in
+     * NtShell
+     *
+     * @return
+     */
+    NtValue applyPercentage();
+
+    /**
+     * Overrides the behavior of the unary positive operator {@code +} in
+     * NtShell
+     *
+     * @return
+     */
+    NtValue applyPositive();
+
+    /**
+     * Overrides the behavior of the power operator {@code ^} in NtShell
+     *
+     * @param rhs
+     * @return
+     */
+    NtValue applyPow(NtValue rhs);
+
+    /**
+     * Overrides the behavior of the subtraction operator {@code -} in NtShell
+     *
+     * @param rhs
+     * @return
+     */
+    NtValue applySub(NtValue rhs);
 
     /**
      * Indicates whether the value is truthy. Typically, a value resembling zero
@@ -214,7 +119,5 @@ public abstract class NtValue {
      *
      * @return if the value is truthy
      */
-    public boolean isTruthy() {
-        return true;
-    }
+    boolean isTruthy();
 }

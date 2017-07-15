@@ -17,7 +17,7 @@
 package ntshell.rt.lib.rout.trig;
 
 import com.ymcmp.ntshell.NtLibrary;
-import com.ymcmp.ntshell.NtValue;
+import com.ymcmp.ntshell.value.AbstractNtValue;
 
 import java.util.HashMap;
 
@@ -27,7 +27,7 @@ import java.util.HashMap;
  */
 public final class Loader implements NtLibrary {
 
-    private static final HashMap<String, NtValue> INSTANCES = new HashMap<>();
+    private static final HashMap<String, AbstractNtValue> INSTANCES = new HashMap<>();
 
     static {
         INSTANCES.put("asin", new ArcSine());
@@ -44,7 +44,7 @@ public final class Loader implements NtLibrary {
     }
 
     @Override
-    public NtValue findDefinition(String name) {
+    public AbstractNtValue findDefinition(String name) {
         return INSTANCES.get(name);
     }
 }

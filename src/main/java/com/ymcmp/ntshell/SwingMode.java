@@ -242,7 +242,7 @@ public class SwingMode extends AbstractFrontend {
         case "illuminati":
             return new CoreLambda(new CoreLambda.Info("Illuminati", "... -> number", "Illuminati confirmed!")) {
                 @Override
-                public NtValue applyCall(NtValue... params) {
+                public NtValue applyCall(final NtValue[] params) {
                     if (params.length == 3
                             && params[0].equals(CoreNumber.from(3))
                             && params[1].equals(CoreNumber.from(3))
@@ -283,7 +283,7 @@ public class SwingMode extends AbstractFrontend {
         case "plot3d":
             return new CoreLambda(new CoreLambda.Info("plot3d", "(f:func(number, number) -> number, g?:func(number, number) -> number) -> func", "Plots the by feeding the x and y values")) {
                 @Override
-                public NtValue applyCall(NtValue... f) {
+                public NtValue applyCall(final NtValue[] f) {
                     final Plotter plotter;
                     switch (f.length) {
                     case 1:

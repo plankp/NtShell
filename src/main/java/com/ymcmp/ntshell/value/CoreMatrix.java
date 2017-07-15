@@ -41,7 +41,7 @@ import java.util.regex.Pattern;
  *
  * @author YTENG
  */
-public class CoreMatrix extends NtValue implements Comparable<CoreMatrix> {
+public class CoreMatrix extends AbstractNtValue implements Comparable<CoreMatrix> {
 
     private static final Border BORDER_FMT = Border.of(Border.Chars.of('+', '-', '|'));
     private static final Pattern LINE_BREAK_PAT = Pattern.compile("\r?\n");
@@ -429,7 +429,7 @@ public class CoreMatrix extends NtValue implements Comparable<CoreMatrix> {
      * Applies a transformation on every element of the matrix
      *
      * @param transformer Must support
-     * {@link NtValue#applyCall(com.ymcmp.ntshell.NtValue...)}
+     * {@link NtValue#applyCall(com.ymcmp.ntshell.NtValue[])}
      * @return The new matrix
      */
     public CoreMatrix map(final NtValue transformer) {
@@ -464,11 +464,11 @@ public class CoreMatrix extends NtValue implements Comparable<CoreMatrix> {
 
     /**
      * Performs a left reduction on the matrix. null null null null null null
-     * null null null     {@link CoreMatrix#reduceLeft(java.util.function.BinaryOperator,
+     * null null null null     {@link CoreMatrix#reduceLeft(java.util.function.BinaryOperator,
      * com.ymcmp.ntshell.NtValue)}
      *
      * @param accum Must support
-     * {@link NtValue#applyCall(com.ymcmp.ntshell.NtValue...)}
+     * {@link NtValue#applyCall(com.ymcmp.ntshell.NtValue[])}
      * @param initial The initial value
      * @return Either the initial value or the accumulated value
      */
@@ -502,11 +502,11 @@ public class CoreMatrix extends NtValue implements Comparable<CoreMatrix> {
 
     /**
      * Performs a right reduction on the matrix. null null null null null null
-     * null null null     {@link CoreMatrix#reduceRight(java.util.function.BinaryOperator,
+     * null null null null     {@link CoreMatrix#reduceRight(java.util.function.BinaryOperator,
      * com.ymcmp.ntshell.NtValue)}
      *
      * @param accum Must support
-     * {@link NtValue#applyCall(com.ymcmp.ntshell.NtValue...)}
+     * {@link NtValue#applyCall(com.ymcmp.ntshell.NtValue[])}
      * @param initial The initial value
      * @return Either the initial value or the accumulated value
      */
