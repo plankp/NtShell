@@ -28,7 +28,7 @@ import java.util.List;
  *
  * @author YTENG
  */
-public class CommutativeExpr implements AST {
+public class CommutativeExpr extends AST {
 
     public final AST[] nodes;
     public final Token op;

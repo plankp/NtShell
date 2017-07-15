@@ -25,7 +25,7 @@ import java.util.Objects;
  *
  * @author YTENG
  */
-public class NumberVal implements AST {
+public class NumberVal extends AST {
 
     public final Token val;
 

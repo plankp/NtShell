@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
  *
  * @author YTENG
  */
-public class AnonFuncVal implements AST {
+public class AnonFuncVal extends AST {
 
     public final Token[] inputs;
     public final AST output;

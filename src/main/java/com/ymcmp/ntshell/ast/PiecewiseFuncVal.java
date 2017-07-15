@@ -25,7 +25,7 @@ import java.util.Arrays;
  *
  * @author YTENG
  */
-public class PiecewiseFuncVal implements AST {
+public class PiecewiseFuncVal extends AST {
 
     public final CaseBlock[] cases;
 

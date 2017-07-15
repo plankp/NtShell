@@ -25,7 +25,7 @@ import java.util.Objects;
  *
  * @author YTENG
  */
-public class PartialApplyExpr implements AST {
+public class PartialApplyExpr extends AST {
 
     public final AST[] placeholders;
     public final AST applicant;

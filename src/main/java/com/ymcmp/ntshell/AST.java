@@ -22,11 +22,11 @@ import java.io.Serializable;
  *
  * @author YTENG
  */
-public interface AST extends Serializable {
+public abstract class AST implements Serializable, NtValue {
 
-    public <T> T accept(Visitor<T> vis);
+    public abstract <T> T accept(Visitor<T> vis);
 
-    public default AST ruleRewrite() {
+    public AST ruleRewrite() {
         return this
                 .transformNegatives()
                 .levelOperators()
@@ -34,19 +34,75 @@ public interface AST extends Serializable {
                 .unfoldConstant();
     }
 
-    public default AST transformNegatives() {
+    public AST transformNegatives() {
         return this;
     }
 
-    public default AST levelOperators() {
+    public AST levelOperators() {
         return this;
     }
 
-    public default AST simplifyRationals() {
+    public AST simplifyRationals() {
         return this;
     }
 
-    public default AST unfoldConstant() {
+    public AST unfoldConstant() {
         return this;
+    }
+
+    @Override
+    public NtValue applyAdd(NtValue rhs) {
+        throw new UnsupportedOperationException("Illegal operation on syntax tree");
+    }
+
+    @Override
+    public NtValue applyCall(NtValue... params) {
+        throw new UnsupportedOperationException("Illegal operation on syntax tree");
+    }
+
+    @Override
+    public NtValue applyDiv(NtValue rhs) {
+        throw new UnsupportedOperationException("Illegal operation on syntax tree");
+    }
+
+    @Override
+    public NtValue applyMod(NtValue rhs) {
+        throw new UnsupportedOperationException("Illegal operation on syntax tree");
+    }
+
+    @Override
+    public NtValue applyMul(NtValue rhs) {
+        throw new UnsupportedOperationException("Illegal operation on syntax tree");
+    }
+
+    @Override
+    public NtValue applyNegative() {
+        throw new UnsupportedOperationException("Illegal operation on syntax tree");
+    }
+
+    @Override
+    public NtValue applyPercentage() {
+        throw new UnsupportedOperationException("Illegal operation on syntax tree");
+    }
+
+    @Override
+    public NtValue applyPositive() {
+        throw new UnsupportedOperationException("Illegal operation on syntax tree");
+    }
+
+    @Override
+    public NtValue applyPow(NtValue rhs) {
+        throw new UnsupportedOperationException("Illegal operation on syntax tree");
+    }
+
+    @Override
+    public NtValue applySub(NtValue rhs) {
+        throw new UnsupportedOperationException("Illegal operation on syntax tree");
+    }
+
+    @Override
+    public boolean isTruthy() {
+        // All syntax trees are true by default
+        return true;
     }
 }

@@ -24,7 +24,7 @@ import java.util.Arrays;
  *
  * @author YTENG
  */
-public final class DoEndExpr implements AST {
+public final class DoEndExpr extends AST {
 
     public final AST[] exprs;
 

@@ -28,7 +28,7 @@ import java.util.function.Function;
  *
  * @author YTENG
  */
-public class ApplyExpr implements AST {
+public class ApplyExpr extends AST {
 
     public final AST instance;
     public final AST[] params;

@@ -187,27 +187,6 @@ public abstract class AbstractNtValue implements NtValue {
     }
 
     /**
-     * Overrides the behavior of the compose operator {@code .} in NtShell. In
-     * most cases, this returns a function (default implementation). For
-     * example: {@code (f . g)} is invoked as
-     * {@code x -> f.applyCall(g.applyCall(x))}.
-     *
-     * @param rhs
-     * @return
-     */
-    @Override
-    public NtValue applyCompose(NtValue rhs) {
-        return new CoreLambda() {
-            @Override
-            public NtValue applyCall(NtValue[] params) {
-                // (f . g)(x) => f(g(x))
-                return TailCallTrigger.call(AbstractNtValue.this,
-                                            TailCallTrigger.call(rhs, params));
-            }
-        };
-    }
-
-    /**
      * Similar to the effect of overriding the {@code operator()} inside a class
      * in C++
      *

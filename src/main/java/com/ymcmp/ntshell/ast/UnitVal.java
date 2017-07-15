@@ -23,7 +23,7 @@ import com.ymcmp.ntshell.Visitor;
  *
  * @author YTENG
  */
-public final class UnitVal implements AST {
+public final class UnitVal extends AST {
 
     @Override
     public <T> T accept(Visitor<T> vis) {

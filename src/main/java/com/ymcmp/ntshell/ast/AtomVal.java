@@ -25,7 +25,7 @@ import java.util.Objects;
  *
  * @author YTENG
  */
-public class AtomVal implements AST {
+public class AtomVal extends AST {
 
     public final Token val;
 

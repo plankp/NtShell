@@ -28,7 +28,7 @@ import java.util.List;
  *
  * @author YTENG
  */
-public class BinaryExpr implements AST {
+public class BinaryExpr extends AST {
 
     public final AST lhs;
     public final AST rhs;

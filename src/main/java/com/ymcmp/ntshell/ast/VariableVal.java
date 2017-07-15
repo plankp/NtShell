@@ -25,7 +25,7 @@ import java.util.Objects;
  *
  * @author YTENG
  */
-public class VariableVal implements AST {
+public class VariableVal extends AST {
 
     public final Token val;
 

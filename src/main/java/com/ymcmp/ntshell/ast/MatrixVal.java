@@ -25,7 +25,7 @@ import java.util.Arrays;
  *
  * @author YTENG
  */
-public class MatrixVal implements AST {
+public class MatrixVal extends AST {
 
     public final Column[] columns;
 

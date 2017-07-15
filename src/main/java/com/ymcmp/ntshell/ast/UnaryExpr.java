@@ -24,7 +24,7 @@ import com.ymcmp.ntshell.Visitor;
  *
  * @author YTENG
  */
-public class UnaryExpr implements AST {
+public class UnaryExpr extends AST {
 
     public final AST base;
     public final Token op;
@@ -69,7 +69,7 @@ public class UnaryExpr implements AST {
             default:
             }
         }
-        return AST.super.transformNegatives();
+        return super.transformNegatives();
     }
 
     @Override

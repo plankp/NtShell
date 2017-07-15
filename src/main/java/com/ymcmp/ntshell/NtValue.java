@@ -16,6 +16,9 @@
  */
 package com.ymcmp.ntshell;
 
+import com.ymcmp.ntshell.rte.TailCallTrigger;
+import com.ymcmp.ntshell.value.CoreLambda;
+
 /**
  * A common parent shared by all values used in the NtShell computation.
  *
@@ -41,12 +44,22 @@ public interface NtValue {
     NtValue applyCall(NtValue... params);
 
     /**
-     * Overrides the behavior of the compose operator {@code .} in NtShell
+     * Overrides the behavior of the compose operator {@code .} in NtShell. By
+     * default, a function composing the two values together is returned.
      *
      * @param rhs
      * @return
      */
-    NtValue applyCompose(NtValue rhs);
+    default NtValue applyCompose(NtValue rhs) {
+        return new CoreLambda() {
+            @Override
+            public NtValue applyCall(final NtValue[] params) {
+                // (f . g)(x) => f(g(x))
+                return TailCallTrigger.call(NtValue.this,
+                                            TailCallTrigger.call(rhs, params));
+            }
+        };
+    }
 
     /**
      * Overrides the behavior of the division operator {@code /} in NtShell

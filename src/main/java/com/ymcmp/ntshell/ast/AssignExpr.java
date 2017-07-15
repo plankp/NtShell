@@ -24,7 +24,7 @@ import com.ymcmp.ntshell.Visitor;
  *
  * @author YTENG
  */
-public class AssignExpr implements AST {
+public class AssignExpr extends AST {
 
     public final Token to;
     public final AST value;
