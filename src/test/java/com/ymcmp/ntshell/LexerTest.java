@@ -182,13 +182,13 @@ public class LexerTest {
 
     @Test
     public void testLexingAllPossibleTokens() {
-        final String source = "# Comment\n\t\r{[(<;,.>)]}:+-*/%=-><-<=>=@atom 01 0b0100 0c712 0d0 0xAFcd 0.1923 123abc123 and or if mod==/=^ do end else lazy nil? set! @atm? @kc!";
+        final String source = "# Comment\n\t\r{[(<;,.&>)]}:+-*/%=-><-<=>=@atom 01 0b0100 0c712 0d0 0xAFcd 0.1923 123abc123 and or if mod==/=^ do end else lazy nil? set! @atm? @kc!";
         final Object[] expected = {
             // # Comment\n\t\r => Nothing
             // {[(<
             new Token(Token.Type.LCURL, "{"), new Token(Token.Type.LBLK, "["), new Token(Token.Type.LBRACE, "("), new Token(Token.Type.LT, "<"),
-            // ;,.
-            new Token(Token.Type.SEMI, ";"), new Token(Token.Type.COMMA, ","), new Token(Token.Type.COMPOSE, "."),
+            // ;,.&
+            new Token(Token.Type.SEMI, ";"), new Token(Token.Type.COMMA, ","), new Token(Token.Type.COMPOSE, "."), new Token(Token.Type.QEXPR, "&"),
             // >)]}
             new Token(Token.Type.GT, ">"), new Token(Token.Type.RBRACE, ")"), new Token(Token.Type.RBLK, "]"), new Token(Token.Type.RCURL, "}"),
             // :+-*/%=

@@ -147,6 +147,9 @@ public class Lexer {
             case '^':
                 tokens.add(new Token(Token.Type.POW, "^"));
                 break;
+            case '&':
+                tokens.add(new Token(Token.Type.QEXPR, "&"));
+                break;
             case '=':
                 if (++i < arr.length && arr[i] == '=') {
                     tokens.add(new Token(Token.Type.EQL, "=="));

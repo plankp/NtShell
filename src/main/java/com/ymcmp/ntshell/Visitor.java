@@ -36,6 +36,8 @@ public abstract class Visitor<T> {
 
     public abstract T visitUnitVal(UnitVal atom);
 
+    public abstract T visitQexprVal(QexprVal qexpr);
+
     public abstract T visitNumberVal(NumberVal number);
 
     public abstract T visitVariableVal(VariableVal variable);

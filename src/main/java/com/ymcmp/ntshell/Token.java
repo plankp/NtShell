@@ -41,7 +41,7 @@ public class Token implements Serializable {
         LCURL, RCURL, LBLK, RBLK, LBRACE, RBRACE,
         DECL, SET, EQL, NEQ, LT, LE, GE, GT,
         ADD, SUB, MUL, DIV, MOD, POW,
-        PERCENT,
+        PERCENT, QEXPR,
         SCOPE, SEMI, COMMA, YIELD, COMPOSE,
         K_AND, K_OR,
         K_IF, K_ELSE, K_DO, K_END, K_LAZY,

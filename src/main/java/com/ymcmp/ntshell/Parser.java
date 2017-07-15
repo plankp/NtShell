@@ -48,14 +48,9 @@ public class Parser {
     public AST consumeLazyExpr(final List<Token> tokens) {
         // = <addlike>
         // | LAZY <addlike>
-        boolean genLazyTemplate = false;
-        if (peekNextToken(tokens).type == Token.Type.K_LAZY) {
+        switch (peekNextToken(tokens).type) {
+        case K_LAZY:
             tokens.remove(0);
-            genLazyTemplate = true;
-        }
-
-        final AST expr = consumeAddLikeExpr(tokens);
-        if (genLazyTemplate) {
             // Pseudo-NtShell code
             // DEFINE-SYNTAX lazy<<expr>> -> (() -> do
             //   evaled? = ();
@@ -68,25 +63,24 @@ public class Parser {
             //     end    else
             //   };
             // end)();
-            
+
             // Prefix these two names with space guarantees the user cannot
             // reference its value at runtime!
             final Token tEvaled = new Token(Token.Type.IDENT, " evaled?");
             final Token tValue = new Token(Token.Type.IDENT, " value");
 
             return new ApplyExpr(new AnonFuncVal(new Token[0], new DoEndExpr(
-                    new AssignExpr(tEvaled, new UnitVal(), true),
-                    new AssignExpr(tValue, new UnitVal(), true),
-                    new AnonFuncVal(new Token[0], new PiecewiseFuncVal(new PiecewiseFuncVal.CaseBlock[]{
-                        new PiecewiseFuncVal.CaseBlock(new VariableVal(tEvaled), new VariableVal(tValue)),
-                        new PiecewiseFuncVal.ElseClause(new DoEndExpr(
-                                new AssignExpr(tEvaled, NumberVal.fromLong(1), false),
-                                new AssignExpr(tValue, expr, false)
-                        ))
-                    }))
-            )), new AST[0]);
+                                                 new AssignExpr(tEvaled, new UnitVal(), true),
+                                                 new AssignExpr(tValue, new UnitVal(), true),
+                                                 new AnonFuncVal(new Token[0], new PiecewiseFuncVal(new PiecewiseFuncVal.CaseBlock[]{
+                                             new PiecewiseFuncVal.CaseBlock(new VariableVal(tEvaled),
+                                                                            new VariableVal(tValue)),
+                                             new PiecewiseFuncVal.ElseClause(new DoEndExpr(new AssignExpr(tEvaled, NumberVal.fromLong(1), false),
+                                                                                           new AssignExpr(tValue, consumeAddLikeExpr(tokens), false)))})))),
+                                 new AST[0]);
+        default:
+            return consumeAddLikeExpr(tokens);
         }
-        return expr;
     }
 
     public AST consumeAddLikeExpr(final List<Token> tokens) {
@@ -278,6 +272,10 @@ public class Parser {
                 return new VariableVal(name);
             }
         }
+        case QEXPR:
+            // QEXPR <val>
+            tokens.remove(0);
+            return new QexprVal(consumeVal(tokens));
         case LCURL:
             return consumePiecewiseFunc(tokens);
         case LBLK:

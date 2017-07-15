@@ -50,6 +50,24 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
         }
     };
 
+    private final CoreLambda FUNC_EVAL = new CoreLambda(new CoreLambda.Info("eval", "any -> any OR () -> unit", "Returns the result if parameter is a quoted expression. The parameter is returned otherwise")) {
+        @Override
+        public NtValue applyCall(final NtValue[] params) {
+            switch (params.length) {
+            case 0:
+                return CoreUnit.getInstance();
+            case 1:
+                final NtValue base = params[0];
+                if (base instanceof AST) {
+                    return InteractiveModeVisitor.this.eval((AST) base);
+                }
+                return base;
+            default:
+                throw new DispatchException("eval", "Expected less than two parameters, got " + params.length);
+            }
+        }
+    };
+
     private final Map<String, NtValue> vars;
     private final Frontend env;
 
@@ -91,16 +109,25 @@ public class InteractiveModeVisitor extends Visitor<NtValue> {
     }
 
     @Override
+    public AST visitQexprVal(final QexprVal qexpr) {
+        return qexpr.expr;
+    }
+
+    @Override
     public NtValue visitVariableVal(final VariableVal variable) {
         final String name = variable.val.text;
         NtValue val = vars.get(name);
         if (val == null) {
             val = env.findDefinition(name);
             if (val == null) {
-                if (name.equals("load_file")) {
+                switch (name) {
+                case "load_file":
                     return FUNC_LOAD_FILE;
+                case "eval":
+                    return FUNC_EVAL;
+                default:
+                    throw new UndefinedHandleException("Variable " + name + " has not been defined");
                 }
-                throw new UndefinedHandleException("Variable " + name + " has not been defined");
             }
         }
         return val;

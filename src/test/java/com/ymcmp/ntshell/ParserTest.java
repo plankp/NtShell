@@ -31,6 +31,21 @@ public class ParserTest {
     final Parser parser = new Parser();
 
     @Test
+    public void parseQexpr() {
+        try {
+            final String expr = "eval(&(eval(&1) + 2));";
+            final AST tree = parser.consumeExpr(Lexer.lexFromString(expr));
+            final AST expected = new ApplyExpr(new VariableVal(makeIdent("eval")),
+                                               new AST[]{new QexprVal(new BinaryExpr(new ApplyExpr(new VariableVal(makeIdent("eval")), new AST[]{new QexprVal(NumberVal.fromLong(1))}),
+                                                                                     NumberVal.fromLong(2),
+                                                                                     new Token(Token.Type.ADD, "+")))});
+            assertEquals(expected.toString(), tree.toString());
+        } catch (LexerException ex) {
+            fail("No exception should be thrown");
+        }
+    }
+
+    @Test
     public void parseDoEndBlock() {
         try {
             final String expr = "do a = 1; b = 2; do a <- a + b end end";

@@ -45,6 +45,11 @@ public final class MockVisitor extends Visitor<Object> {
     }
 
     @Override
+    public Object visitQexprVal(QexprVal qexpr) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
     public Object visitVariableVal(VariableVal variable) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
