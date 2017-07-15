@@ -97,12 +97,6 @@ public class ApplyExpr implements AST {
         final AST[] nparams = Arrays.stream(params)
                 .map(AST::unfoldConstant)
                 .toArray(AST[]::new);
-        if (nparams.length == 0 && ninst instanceof AnonFuncVal) {
-            final AnonFuncVal f = (AnonFuncVal) ninst;
-            if (f.inputs.length == 0) {
-                return f.output;
-            }
-        }
         return new ApplyExpr(ninst, nparams);
     }
 }

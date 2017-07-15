@@ -41,6 +41,7 @@ public class Lexer {
         KWORDS.put("or", Token.Type.K_OR);
         KWORDS.put("do", Token.Type.K_DO);
         KWORDS.put("end", Token.Type.K_END);
+        KWORDS.put("lazy", Token.Type.K_LAZY);
     }
 
     public static List<Token> lexFromReader(final Reader reader) throws LexerException {

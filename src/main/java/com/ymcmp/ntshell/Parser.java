@@ -42,7 +42,51 @@ public class Parser {
     }
 
     public AST consumeExpr(final List<Token> tokens) {
-        return consumeAddLikeExpr(tokens);
+        return consumeLazyExpr(tokens);
+    }
+
+    public AST consumeLazyExpr(final List<Token> tokens) {
+        // = <addlike>
+        // | LAZY <addlike>
+        boolean genLazyTemplate = false;
+        if (peekNextToken(tokens).type == Token.Type.K_LAZY) {
+            tokens.remove(0);
+            genLazyTemplate = true;
+        }
+
+        final AST expr = consumeAddLikeExpr(tokens);
+        if (genLazyTemplate) {
+            // Pseudo-NtShell code
+            // DEFINE-SYNTAX lazy<<expr>> -> (() -> do
+            //   evaled? = ();
+            //   value   = ();
+            //   () -> {
+            //     value  if evaled?,
+            //     do
+            //       evaled? <- 1;
+            //       value   <- EVAL<<expr>>
+            //     end    else
+            //   };
+            // end)();
+            
+            // Prefix these two names with space guarantees the user cannot
+            // reference its value at runtime!
+            final Token tEvaled = new Token(Token.Type.IDENT, " evaled?");
+            final Token tValue = new Token(Token.Type.IDENT, " value");
+
+            return new ApplyExpr(new AnonFuncVal(new Token[0], new DoEndExpr(
+                    new AssignExpr(tEvaled, new UnitVal(), true),
+                    new AssignExpr(tValue, new UnitVal(), true),
+                    new AnonFuncVal(new Token[0], new PiecewiseFuncVal(new PiecewiseFuncVal.CaseBlock[]{
+                        new PiecewiseFuncVal.CaseBlock(new VariableVal(tEvaled), new VariableVal(tValue)),
+                        new PiecewiseFuncVal.ElseClause(new DoEndExpr(
+                                new AssignExpr(tEvaled, NumberVal.fromLong(1), false),
+                                new AssignExpr(tValue, expr, false)
+                        ))
+                    }))
+            )), new AST[0]);
+        }
+        return expr;
     }
 
     public AST consumeAddLikeExpr(final List<Token> tokens) {
