@@ -158,7 +158,7 @@ public class ParserTest {
     @Test
     public void parseConsFunction() {
         try {
-            final String expr = "cons = (x, y) -> m -> x:y:m()";
+            final String expr = "cons = (x, y) -> m -> (x:y:m)()";
             final AST tree = parser.consumeExpr(Lexer.lexFromString(expr));
             final AST expected = new AssignExpr(makeIdent("cons"),
                                                 new AnonFuncVal(new Token[]{makeIdent("x"), makeIdent("y")},

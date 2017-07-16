@@ -191,19 +191,6 @@ public class Parser {
             }
             final AST applicant = params.remove(params.size() - 1);
             final AST[] placeholders = params.toArray(new AST[params.size()]);
-            if (applicant instanceof ApplyExpr) {
-//                partialApply {
-//                  placeholders: [iota(5)],
-//                  applicant: reshape()(2, 2)
-//                } # wrong!
-//
-//                partialApply {
-//                  placeholders: [iota(5)],
-//                  applicant: reshape
-//                }()(2,2) # correct!
-                final ApplyExpr expr = (ApplyExpr) applicant;
-                return expr.wrapLeftMostApplicant(e -> new PartialApplyExpr(placeholders, e));
-            }
             return new PartialApplyExpr(placeholders, applicant);
         }
         return base;
