@@ -400,7 +400,7 @@ public class Parser {
         }
         tokens.remove(0);
         if (cases.isEmpty()) {
-            return new NumberVal(new Token(Token.Type.NUMBER, "0"));
+            return new UnitVal();
         }
         return new PiecewiseFuncVal(cases.toArray(new PiecewiseFuncVal.CaseBlock[cases.size()]));
     }
