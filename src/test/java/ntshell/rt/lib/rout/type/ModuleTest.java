@@ -19,6 +19,9 @@ package ntshell.rt.lib.rout.type;
 import com.ymcmp.ntshell.NtValue;
 import com.ymcmp.ntshell.value.*;
 
+import com.ymcmp.ntshell.ast.UnitVal;
+import com.ymcmp.ntshell.ast.NumberVal;
+
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -42,6 +45,16 @@ public class ModuleTest {
         assertEquals(CoreNumber.from(false), val.applyCall(CoreUnit.getInstance(), CoreNumber.ONE));
         assertEquals(CoreNumber.from(true), val.applyCall(CoreUnit.getInstance(), CoreUnit.getInstance()));
         assertEquals(CoreNumber.from(false), val.applyCall(CoreNumber.ONE));
+    }
+
+    @Test
+    public void testASTPred() {
+        final NtValue val = loader.findDefinition("syntree?");
+        assertNotNull(val);
+        assertEquals(CoreNumber.from(true), val.applyCall());
+        assertEquals(CoreNumber.from(true), val.applyCall(new UnitVal()));
+        assertEquals(CoreNumber.from(false), val.applyCall(CoreUnit.getInstance()));
+        assertEquals(CoreNumber.from(true), val.applyCall(NumberVal.fromLong(1), new UnitVal()));
     }
 
     @Test

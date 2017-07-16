@@ -16,31 +16,29 @@
  */
 package ntshell.rt.lib.rout.type;
 
+import com.ymcmp.ntshell.AST;
 import com.ymcmp.ntshell.NtValue;
-import com.ymcmp.ntshell.NtLibrary;
 
-import java.util.HashMap;
+import com.ymcmp.ntshell.value.CoreLambda;
+import com.ymcmp.ntshell.value.CoreNumber;
 
 /**
  *
  * @author YTENG
  */
-public final class Loader implements NtLibrary {
+final class ASTPred extends CoreLambda {
 
-    private static final HashMap<String, NtValue> INSTANCES = new HashMap<>();
-
-    static {
-        INSTANCES.put("comparable?", new ComparablePred());
-        INSTANCES.put("atom?", new AtomPred());
-        INSTANCES.put("number?", new NumberPred());
-        INSTANCES.put("matrix?", new MatrixPred());
-        INSTANCES.put("function?", new FunctionPred());
-        INSTANCES.put("nil?", new NilPred());
-        INSTANCES.put("syntree?", new ASTPred());
+    public ASTPred() {
+        super(new CoreLambda.Info("syntree?", "(...) -> number", "Test if value is a syntax tree"));
     }
 
     @Override
-    public NtValue findDefinition(String name) {
-        return INSTANCES.get(name);
+    public NtValue applyCall(final NtValue[] input) {
+        for (int i = 0; i < input.length; ++i) {
+            if (!(input[i] instanceof AST)) {
+                return CoreNumber.from(false);
+            }
+        }
+        return CoreNumber.from(true);
     }
 }
